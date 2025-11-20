@@ -4,5 +4,3 @@ end
 
 return greet
 
-
-print(greet("World"))  -- Output: Hello, World!
