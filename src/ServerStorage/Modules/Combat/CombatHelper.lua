@@ -33,7 +33,7 @@ local Connections = {
 
 local MaxCombo = 4
 
-local function getUniqueId(char: Model)
+local function getUniqueId(char)
 	local uid = char.Humanoid:FindFirstChild("UniqueId")
 	return uid.Value or nil
 end
