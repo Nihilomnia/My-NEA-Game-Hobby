@@ -242,16 +242,15 @@ DodgeEvent.OnServerEvent:Connect(function(plr, action)
     if action == "Dodge" then
         -- Play sound and animation (unchanged)
         SoundsModule.PlaySound(WeaponsSounds[currentWeapon].Combat.Dodging, HRP)
-
         DodgeAnims[plr] = hum:LoadAnimation(WeaponsAnimations[currentWeapon].Dodging.Dodge)
         DodgeAnims[plr]:Play()
 
         -- *** MODIFIED MOVEMENT PARAMETERS ***
         local direction = HRP.CFrame.LookVector 
-        local reducedDodgeForce = 2000 -- Significantly reduced the force from 20000
+        local DodgeForce = 2000 
         local duration = 0.2 
 
-        -- 1. Disable Head Collision
+        char:SetAttribute("Dodging", true)
         Head.CanCollide = false
 		Torso.CanCollide = false
 		rightArm.CanCollide = false
@@ -259,11 +258,11 @@ DodgeEvent.OnServerEvent:Connect(function(plr, action)
 		Rightleg.CanCollide = false
 		Leftleg.CanCollide = false
 		
-        -- 2. Apply Movement
+       
         HRP:SetNetworkOwner(nil) 
-        HRP:ApplyImpulse(direction * reducedDodgeForce) -- Use the reduced force
+        HRP:ApplyImpulse(direction * DodgeForce) 
         
-        -- 3. End of Dodge Logic
+        
         hum.PlatformStand = true
         local totalDodgeTime = DodgeAnims[plr].Length
 
@@ -282,6 +281,7 @@ DodgeEvent.OnServerEvent:Connect(function(plr, action)
             if hum.PlatformStand then
                 hum.PlatformStand = false
             end
+			char:SetAttribute("Dodging", false)
         end)
     end
 end)
