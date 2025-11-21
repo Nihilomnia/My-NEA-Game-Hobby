@@ -1,12 +1,10 @@
 -- [Global Varilbles]
-local uis = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
 local Debris = game:GetService("Debris")
 local StarterPlayer = game:GetService("StarterPlayer")
-local ChatService = game:GetService("Chat")
 local ServerScriptService = game:GetService("ServerScriptService")
 local Runservice = game:GetService("RunService")
 
