@@ -48,5 +48,7 @@ MoveEvent.OnServerEvent:Connect(function(plr, action)
 		module.C(char)
 	elseif action == "R Move" then
 		module.R(char)
+	elseif action == "V Move" then
+		module.V(char)
 	end
 end)
