@@ -342,40 +342,12 @@ end)
 
 TransformEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
-	local hum = char:WaitForChild("Humanoid")
-	local torso = char.Torso
-	local rightArm = char["Right Arm"]
-	local LeftArm = char["Left Arm"]
-
-	local currentWeapon = char:GetAttribute("CurrentWeapon")
-
-	local attacking = char:GetAttribute("Attacking")
-	local stunned = char:GetAttribute("Stunned")
-	local isRagdoll = char:GetAttribute("IsRagdoll")
 	local Race= char:GetAttribute("Race")
-	
-	
-	local Element = plr.Character:GetAttribute("Element")
-	local ElementName = ElementInfo.getStats(Element)
-	
-	local Mode1Callout = ElementName.Mode1Callout
-	local torso = char.Torso
-	
-	
 	if HelpfullModule.CheckForAttributes(char,true,true,true,nil,true) then return end
-
-
 
 	if action == "Mode 1" then
 		Mode_Module.Mode1(char,WeaponsAnimations,Race,EquipDebounce,Welds,TransformAnims,EquipAnims,IdleAnims,WeaponsWeld,ChangeWeapon)
-		
-		
-
 	elseif action == "Mode 2" and char:GetAttribute("Mode1") and char:GetAttribute("ModeEnergy",100) then 
 		Mode_Module.Mode2(char,WeaponsAnimations,Race,EquipDebounce,Welds,TransformAnims,EquipAnims,IdleAnims,WeaponsWeld,ChangeWeapon)
-		
 	end 
-	
-	
-
 end)

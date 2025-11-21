@@ -2,12 +2,6 @@ local module = {}
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local SSModules = SS.Modules
-local SSEvents = SS.Server_Events
-
-
-local DataTransferEvent = SSEvents.DataTransferEvent
-
-
 
 -- Module references
 local ElementInfo = require(SSModules.Element.ElementInfo)
@@ -27,7 +21,7 @@ local WeaponsModels = Models.Weapons
 local TransformConnections = {}
 
 -- Utility: Get a unique ID if player reference is unavailable
-local function getUniqueId(char: Model)
+local function getUniqueId(char)
 	local uid = char.Humanoid:FindFirstChild("UniqueId")
 	return uid.Value or nil
 end
@@ -36,8 +30,8 @@ end
 -- MODE 1 TRANSFORMATION
 ---------------------------------------------------------------------
 function module.Mode1(
-	char: Model,
-	WeaponsAnimations: Folder,
+	char,
+	WeaponsAnimations,
 	Race,
 	EquipDebounce,
 	Welds,
@@ -139,8 +133,8 @@ end
 -- MODE 2 TRANSFORMATION
 ---------------------------------------------------------------------
 function module.Mode2(
-	char: Model,
-	WeaponsAnimations: Folder,
+	char,
+	WeaponsAnimations,
 	Race,
 	EquipDebounce,
 	Welds,
