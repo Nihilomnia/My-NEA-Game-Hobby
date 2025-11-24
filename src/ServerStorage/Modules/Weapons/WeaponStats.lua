@@ -8,7 +8,7 @@ local info ={
 		SwingReset =0.3,
 		StunTime = 1,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
 
 	},
 	
@@ -20,7 +20,7 @@ local info ={
 		SwingReset =0.25,
 		StunTime = 1.5,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(4, 5.5, 6),
+		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
 	},
 	 
 	["Katana"]={
@@ -31,7 +31,7 @@ local info ={
 		SwingReset =.2,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
 	},
 	
 	["DrakeFang"]={
@@ -42,7 +42,7 @@ local info ={
 		SwingReset =.1,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(4, 5, 6.219),
+		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
 	},
 
 	
@@ -54,7 +54,7 @@ local info ={
 		SwingReset = .75,
 		StunTime = 1.2,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(4, 5, 6.219),
+		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
   },
   
 	["Shooting Star"]={
@@ -65,27 +65,8 @@ local info ={
 		SwingReset = .75,
 		StunTime = 1.2,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(4, 5, 6.219),
-	},
-	
-	["Glock"]={
-		Damage = 25,
-		BlockDmg = 20,
-		Knockback = 8,
-		RagdollTime =1.5,	
-		SwingReset = .15,
-		StunTime = 1.2,
-		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(4, 5, 6.219),
-	},
-
-
-
-
-
-  
-  
-		
+		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
+	},	
 	
 }
 function module.getStats(weapon)
