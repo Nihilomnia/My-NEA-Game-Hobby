@@ -15,9 +15,13 @@ local plr = game:GetService("Players").LocalPlayer
 local char = plr.Character
 local hrp = char:WaitForChild("HumanoidRootPart")
 local hum = char:WaitForChild("Humanoid")
+local CurrentWeapon = char:GetAttribute("CurrentWeapon")
 
-local DODGE_SPEED = 130
-local DODGE_TIME = 0.18
+local DODGE_SPEED = 80
+local DODGE_TIME = 0.25
+local DODGE_ANIM_ID = RS.Animations.Weapons[CurrentWeapon].Dodging.Dodge.AnimationId	
+local currentDodgeForce
+
 
 
 --------------------------------------------------------------------------------------
@@ -37,14 +41,36 @@ local function stopBlocking()
 	blockingEvent:FireServer("UnBlocking")
 end
 
-local function doDodge()
-	local bv = Instance.new("BodyVelocity")
-	bv.MaxForce = Vector3.new(1e6, 0, 1e6)
-	bv.Velocity = hrp.CFrame.LookVector * DODGE_SPEED
-	bv.Parent = hrp
+local function resetVelocity()
+    if currentDodgeForce then
+        currentDodgeForce:Destroy()
+        currentDodgeForce = nil
+    end
 
-	game.Debris:AddItem(bv, DODGE_TIME)
+    hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+    hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+
+    print("Velocity Reset")
 end
+
+
+local function doDodge()
+    if currentDodgeForce then
+        currentDodgeForce:Destroy()
+        currentDodgeForce = nil
+    end
+
+    local lv = Instance.new("LinearVelocity")
+    lv.Attachment0 = hrp:FindFirstChild("DodgeAttachment") or Instance.new("Attachment", hrp)
+    lv.MaxForce = 1e6
+    lv.VectorVelocity = hrp.CFrame.LookVector * DODGE_SPEED
+    lv.RelativeTo = Enum.ActuatorRelativeTo.World
+    lv.Parent = hrp
+
+    currentDodgeForce = lv
+    game.Debris:AddItem(lv, DODGE_TIME)
+end
+
 
 
 
@@ -53,25 +79,40 @@ uis.InputBegan:Connect(function(input,isTyping)
 	if char:GetAttribute("IsTransforming") then return end
 
 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
-		if char:GetAttribute("Dodging") then return end	
-		blockingEvent:FireServer("Parry")
-	end
-end)
-
-uis.InputBegan:Connect(function(input, gp)
-	if gp then return end
-	if input.KeyCode == Enum.KeyCode.Q then
-		DodgeEvent:FireServer("Dodge")
-
-		for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
-			if anim.Name == "Dodge" then
-				anim.GetMarkerReachedSignal("Dodge"):Connect(function()
-					doDodge()
-				end)
-			end
+		if char:GetAttribute("Dodging") then  
+			resetVelocity()
+			DodgeEvent:FireServer("DodgeCancel")
+			
+			
+		else 
+			blockingEvent:FireServer("Parry")
 		end
+		
 	end
 end)
+
+
+
+
+uis.InputBegan:Connect(function(input, isTyping)
+    if isTyping then return end
+    if input.KeyCode == Enum.KeyCode.Q then
+        
+        DodgeEvent:FireServer("Dodge")
+
+        for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
+            if anim.Animation 
+               and anim.Animation.AnimationId == DODGE_ANIM_ID then
+                
+                anim:GetMarkerReachedSignal("Dodge"):Connect(function()
+                    doDodge()
+                end)
+            end
+        end
+    end
+end)
+
+
 
 
 uis.InputBegan:Connect(function(key,istyping)
@@ -83,7 +124,8 @@ uis.InputBegan:Connect(function(key,istyping)
 	end
 end)
 
-uis.InputEnded:Connect(function(key)
+uis.InputEnded:Connect(function(key,IsTyping)
+	if IsTyping then return end
 	if char:GetAttribute("IsTransforming") then return end
 	if key.KeyCode == Enum.KeyCode.F then
 		stopBlocking()

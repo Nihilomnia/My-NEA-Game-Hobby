@@ -18,7 +18,6 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 	
 	if action == "SwingEffect" then
 		local effect, char =...
-		print(char, "In the server")
 
 		CombatEffectsModule.triggerEffects(effect,char)
 	end

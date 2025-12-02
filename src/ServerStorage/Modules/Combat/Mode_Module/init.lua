@@ -58,6 +58,10 @@ function module.Mode1(
 	char:SetAttribute("Mode1", true)
 
 	local element = char:GetAttribute("Element")
+	if element == nil or element == "..." then  
+		warn("[Mode_Module] Element attribute is invalid for character: "..char.Name)
+		return
+	end
 	local elementStats = ElementInfo.getStats(element)
 	local newWeapon = elementStats.Mode1
 
@@ -161,6 +165,10 @@ function module.Mode2(
 	char:SetAttribute("Mode2", true)
 
 	local element = char:GetAttribute("Element")
+	if element == nil or element == "..." then  
+		warn("[Mode_Module] Element attribute is invalid for character: "..char.Name)
+		return
+	end
 	local elementStats = ElementInfo.getStats(element)
 	local newWeapon = elementStats.Mode2
 	local dialogue = elementStats.Text

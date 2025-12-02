@@ -52,6 +52,7 @@ return {
 		-- Inventory information
 		Inventory = {},
 		Hotbar = {},
+		Cash = 0,
 	
 	
 		
@@ -118,6 +119,7 @@ return {
 		-- Inventory information
 		Inventory = {},
 		Hotbar = {},
+		Cash = 0,
 		
 		
 		

@@ -3,10 +3,8 @@ local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
-local Debris = game:GetService("Debris")
 local StarterPlayer = game:GetService("StarterPlayer")
-local ServerScriptService = game:GetService("ServerScriptService")
-local Runservice = game:GetService("RunService")
+
 
 local Models = RS.Models
 local WeaponsModels = Models.Weapons
@@ -15,13 +13,11 @@ local Events = RS.Events
 local AnimationsFolder = RS.Animations
 local WeaponsAnimations = AnimationsFolder.Weapons
 local WeaponsSounds = SoundService.SFX.Weapons
-local RSModules = RS.Modules
 local SSModules = SS.Modules
 
 local WeaponsEvent = Events.WeaponsEvent
 local BlockingEvent = Events.Blocking
 local TransformEvent = Events.Tranform
-local CombatEvent = Events.Combat
 local DataTransferEvent= SS.Server_Events.DataTransferEvent
 local DodgeEvent = Events.Dodge
 
@@ -30,9 +26,6 @@ local HelpfullModule = require(SSModules.Other.Helpful)
 local WeaponsStatsModule = require(SSModules.Weapons.WeaponStats)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local Mode_Module = require(SSModules.Combat.Mode_Module)
-local ElementInfo = require(SSModules.Element.ElementInfo)
-local TransformationModule = require(SSModules.Other.Transformations)
-local Textmod = require(SSModules.text)
 
 
 -- Local Tables
@@ -46,6 +39,7 @@ local ParryAnims = Combat_Data.ParryAnims
 local DodgeAnims = Combat_Data.DodgeAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 local DodgeDebounce = Combat_Data.DodgeDebounce
+local AlreadyDodgeCancelled = {}
 
 local function ChangeWeapon(plr,char,torso)
 	char:SetAttribute("Equipped", false)
@@ -140,11 +134,6 @@ WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 
-	local attacking = char:GetAttribute("Attacking")
-	local stunned = char:GetAttribute("Stunned")
-
-
-
 	if action == "Equip/UnEquip" and not char:GetAttribute("Equipped") and not EquipDebounce[plr] then
 		if char:GetAttribute("Mode1", true) then return end
 		EquipDebounce[plr] = true
@@ -170,15 +159,12 @@ WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 			EquipDebounce[plr] = false
 		end)
 		EquipAnims[plr].Stopped:Connect(function()
-			local isRagdoll = char:GetAttribute("IsRagdoll")
 			if char:GetAttribute("Stunned") then
 				Welds[plr].Part0 = rightArm
 				Welds[plr].C1 = WeaponsWeld[currentWeapon].HoldingWeaponWeld.C1 
 				IdleAnims[plr]:Play()
 				char:SetAttribute("Equipped",true)
 				EquipDebounce[plr] = false
-				
-				
 			end
 		end)
 
@@ -222,31 +208,69 @@ end)
 
 
 DodgeEvent.OnServerEvent:Connect(function(plr, action)
-	if action ~= "Dodge" then return end
+	if action == "Dodge" then
+		local char = plr.Character
+		local hum = char and char:FindFirstChild("Humanoid")
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hum or not hrp then
+			return
+		end
+
+		-- Block spamming if needed
+		if HelpfullModule.CheckForAttributes(char, true, true, true, nil, nil, true, false) then return end
+		
+		if DodgeDebounce[plr] then return end
+		
+		DodgeDebounce[plr] = true
+		print(AlreadyDodgeCancelled[plr])
+		char:SetAttribute("Dodging", true)
+
 	
-	local char = plr.Character
-	local hum = char and char:FindFirstChild("Humanoid")
-	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	if not hum or not hrp then return end
+		SoundsModule.PlaySound(WeaponsSounds[char:GetAttribute("CurrentWeapon")].Combat.Dodging, hrp)
+		DodgeAnims[plr] = hum:LoadAnimation(WeaponsAnimations[char:GetAttribute("CurrentWeapon")].Dodging.Dodge)
+		DodgeAnims[plr]:Play()
 
-	-- Block spamming if needed
-	if HelpfullModule.CheckForAttributes(char,true,true,true,nil,true,true,false) then return end
-	if DodgeDebounce[plr] then return end
-	DodgeDebounce[plr] = true
-	char:SetAttribute("Dodging", true)
+		for i, parts in pairs(char:GetChildren()) do
+			if parts:IsA("BasePart") then
+				parts.CanCollide = false
+			end
+		end
 
-	-- Play animation and sound (server)
-	SoundsModule.PlaySound(WeaponsSounds[char:GetAttribute("CurrentWeapon")].Combat.Dodging, hrp)
+		task.delay((DodgeAnims[plr].Length)+0.26, function()
+			char:SetAttribute("Dodging", false)
+			AlreadyDodgeCancelled[plr] = false
+		end)
 
-	local anim = hum:LoadAnimation(WeaponsAnimations[char:GetAttribute("CurrentWeapon")].Dodging.Dodge)
-	anim:Play()
+		task.wait(2.5)
+		DodgeDebounce[plr] = false
+		
+	elseif action == "DodgeCancel" then
+		local char = plr.Character
+		local hum = char:FindFirstChild("Humanoid")
+		if AlreadyDodgeCancelled[plr] == nil then
+			AlreadyDodgeCancelled[plr] = false
+		end
+		
 
-	task.delay(anim.Length, function()
+		DodgeAnims[plr]:Stop()
+		DodgeAnims[plr] = hum:LoadAnimation(WeaponsAnimations[char:GetAttribute("CurrentWeapon")].Dodging.DodgeCancel)
+		DodgeAnims[plr]:Play()
 		char:SetAttribute("Dodging", false)
-	end)
+       if AlreadyDodgeCancelled[plr] == false then  
+		   DodgeDebounce[plr] = false
+		  print("Dodge_Reset was succesfully reset")
+		  AlreadyDodgeCancelled[plr] = true
+       end
+		
+		-- Restore collision
+		for i, parts in pairs(char:GetChildren()) do
+			if parts:IsA("BasePart") then
+				parts.CanCollide = true
+			end
+		end
 
-	task.wait(2)
-	DodgeDebounce[plr] = false
+	end
+	
 end)
 
 
@@ -254,16 +278,9 @@ BlockingEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
 	local hum = char:WaitForChild("Humanoid")
 	local torso = char.Torso
-	local rightArm = char["Right Arm"]
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
-
-	local attacking = char:GetAttribute("Attacking")
-	local stunned = char:GetAttribute("Stunned")
-	local isRagdoll = char:GetAttribute("IsRagdoll")
 	if HelpfullModule.CheckForAttributes(char,true,true,true,nil,true,true,true) then return end
-
-
 
 	if action == "Blocking" then
 
@@ -282,10 +299,6 @@ BlockingEvent.OnServerEvent:Connect(function(plr, action)
 
 		hum.WalkSpeed =walkSpeed
 		hum.JumpHeight = 0
-
-
-
-
 
 
 	elseif action == "UnBlocking" and char:GetAttribute("IsBlocking") then
@@ -319,7 +332,7 @@ BlockingEvent.OnServerEvent:Connect(function(plr, action)
 			char:SetAttribute("Parrying",false)
 			ParryHighlight:Destroy()
 			char:SetAttribute("ParryCD",true)
-			task.wait(3)
+			task.wait(1)
 			char:SetAttribute("ParryCD",false)
 
 		end)
@@ -329,12 +342,6 @@ BlockingEvent.OnServerEvent:Connect(function(plr, action)
 			hum.JumpHeight = StarterPlayer.CharacterJumpHeight
 		end)
 
-
-
-
-
-
-
 	end
 
 
@@ -342,7 +349,7 @@ end)
 
 TransformEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
-	local Race= char:GetAttribute("Race")
+	local Race = char:GetAttribute("Race")
 	if HelpfullModule.CheckForAttributes(char,true,true,true,nil,true,true,true) then return end
 
 	if action == "Mode 1" then

@@ -59,7 +59,7 @@ local info ={
   
 	["Shooting Star"]={
 		Damage = 25,
-		BlockDmg = 20,
+		BlockDmg = 25,
 		Knockback = 8,
 		RagdollTime =1.5,	
 		SwingReset = .75,
