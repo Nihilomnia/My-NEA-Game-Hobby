@@ -18,7 +18,6 @@ local SSModules = SS.Modules
 local WeaponsEvent = Events.WeaponsEvent
 local BlockingEvent = Events.Blocking
 local TransformEvent = Events.Tranform
-local DataTransferEvent= SS.Server_Events.DataTransferEvent
 local DodgeEvent = Events.Dodge
 
 local SoundsModule = require(RS.Modules.Combat.SoundsModule)
@@ -91,7 +90,7 @@ local function ChangeWeapon(plr,char,torso)
 	EquipDebounce[plr] = false
 end
 
-DataTransferEvent:Fire(ChangeWeapon)
+
  
 
 

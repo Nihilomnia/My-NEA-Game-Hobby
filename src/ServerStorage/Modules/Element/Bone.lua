@@ -13,8 +13,7 @@ local WeaponsAnimations = AnimationsFolder.Weapons
 local WeaponsModels = RS.Models.Weapons
 
 
-local ServerEvents = SS.Server_Events
-local DataTransferEvent = ServerEvents.DataTransferEvent
+
 
 
 local function getUniqueId(char)
@@ -35,10 +34,7 @@ local WeaponArsenal = {
 }
 
 
-DataTransferEvent.Event:Connect(function(ChangeWeapon)
-	print("ChangeWeapon Function Recvied from Server!")
-	Bone.ChangeWeapon = ChangeWeapon
-end)
+
 
 local Welds = Combat_Data.Welds
 local EquipAnims = Combat_Data.EquipAnims
@@ -150,7 +146,7 @@ local function Mode1_R(char)
 				end
 			end
 			
-			Bone.ChangeWeapon(Identifier,char,torso)
+			--Bone.ChangeWeapon(Identifier,char,torso)
 			
 			if Welds[Identifier] then
 				Welds[Identifier].Part0 = rightArm

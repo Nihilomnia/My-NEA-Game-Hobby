@@ -45,18 +45,18 @@ local info ={
 		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
 	},
 
-	
-  ["Scythe"]={
-		Damage = 25,
-		BlockDmg = 20,
-		Knockback = 8,
-		RagdollTime =1.5,	
-		SwingReset = .75,
-		StunTime = 1.2,
+	["TwinSpears"]={
+		Damage = 15,
+		BlockDmg = 12,
+		Knockback =5,
+		RagdollTime =1.2,
+		SwingReset =.1,
+		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
 		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
-  },
-  
+	},
+
+	
 	["Shooting Star"]={
 		Damage = 25,
 		BlockDmg = 25,

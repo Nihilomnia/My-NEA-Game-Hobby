@@ -69,9 +69,6 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 			local KarmaDamage = BoneModule.applyKarmaDot(eHum, Karma, damage)
 			eChar:SetAttribute("Karma",math.min(Karma + 5, 50))-- Karma max is 50
 			
-
-			-- Send a single RemoteEvent update after the effect is applied
-			
 			if player then
 				UI_Update:FireClient(player, KarmaDamage, eHum.Health, eHum.MaxHealth, damage)
 			end

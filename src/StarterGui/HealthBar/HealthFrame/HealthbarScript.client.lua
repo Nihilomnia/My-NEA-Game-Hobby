@@ -4,10 +4,9 @@ local Ui_Update = ReplicatedStorage.Events.UI_Update
 
 local player = game.Players.LocalPlayer
 local char = player.Character
-local gui = player.PlayerGui
-local healthBarFrame = gui.HealthBar.HealthFrame
-local healthBar = healthBarFrame.HealthBar  -- Green bar
-local karmaBar = healthBarFrame.KarmaBar -- Purple bar
+local healthBarGui = script.Parent
+local healthBar = healthBarGui.HealthBar  
+local karmaBar = healthBarGui.KarmaBar 
 
 local function clamp(value, min, max)
 	return math.max(min, math.min(max, value))
@@ -22,11 +21,14 @@ local function updateHealthBars(karmaDamage, currentHealth, maxHealth, damage)
 	local tweenInfoFast = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) -- Immediate drop
 	local tweenInfoSlow = TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) -- Slow decay
 
-	TweenService:Create(healthBar, tweenInfoFast, { Size = UDim2.new(healthPercent, 0, 1, 0) }):Play()
+	TweenService:Create(healthBar, tweenInfoFast, { Size = UDim2.new(healthPercent, 0, healthBar.Size.Y.Scale, healthBar.Size.Y.Offset)
+	}):Play()
 	if char:GetAttribute("Karma",0) then
-		TweenService:Create(karmaBar, tweenInfoFast, { Size = UDim2.new(healthPercent, 0, 1, 0) }):Play()
+		TweenService:Create(karmaBar, tweenInfoFast, { Size = UDim2.new(healthPercent, 0, healthBar.Size.Y.Scale, healthBar.Size.Y.Offset)
+		}):Play()
 	else
-		TweenService:Create(karmaBar, tweenInfoSlow, { Size = UDim2.new(healthPercent, 0, 1, 0) }):Play()
+		TweenService:Create(karmaBar, tweenInfoSlow, { Size = UDim2.new(karmaPercent, 0, healthBar.Size.Y.Scale, healthBar.Size.Y.Offset)
+		}):Play()
 	end
 	
 end
