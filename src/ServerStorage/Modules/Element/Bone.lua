@@ -388,12 +388,13 @@ function Bone.C(char: Model)
 		Mode2_C()
 	elseif char:GetAttribute("Mode1") then
 		Mode1_C()
+		
+		print("log")
 
 	else
 		return
 	end
 end
-
 
 
 
