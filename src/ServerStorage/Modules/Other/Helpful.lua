@@ -18,6 +18,12 @@ local BlockingAnims = Combat_Data.BlockingAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 local WeaponsWeld = RS.Welds.Weapons
 
+-- Constants	
+local k = 0.02 -- This is the rate of the drop off for DEX Crit Rate Scaling
+local BaseCritRate = 0.15 -- Base Crit Rate %
+local MaxCritRate = 0.45 -- Max Crit Rate %
+
+
 
 
 
@@ -147,6 +153,20 @@ function module.CheckForAttributes(char,attack,swing,stun,ragdoll,equipped,block
 	if Dodging ~= nil and isDodging then stop = true end
 	
 	return stop
+end
+
+function module.CalculateCrit(DEX_Points)
+	
+	local roll = math.random(1,100)
+
+	local CritChance = BaseCritRate + (MaxCritRate - BaseCritRate) * (1 - math.exp(-k * DEX_Points))
+	CritChance = CritChance * 100
+	
+	if roll <= CritChance then
+		return true
+	else
+		return false
+	end
 end
 
 

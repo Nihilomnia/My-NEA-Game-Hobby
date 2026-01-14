@@ -2,16 +2,12 @@ local module = {}
 
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
-local StarterPlayer = game:GetService("StarterPlayer") 
-local ServerScriptService = game:GetService("ServerScriptService")
 local SoundService = game:GetService("SoundService") 
 local Debris = game:GetService("Debris")
 
 local Events = RS.Events
 local WeaponSounds = SoundService.SFX.Weapons
-local RSModules = RS.Modules
 local SSModules = SS.Modules
-local Models = RS.Models
 local WeaponsAnimations = RS.Animations.Weapons
 
 local CombatEvent = Events.Combat
@@ -25,11 +21,16 @@ local HelpfulModule = require(SSModules.Other.Helpful)
 local StunHandler = require(SSModules.Other.StunHandlerV2)
 local BoneModule = require(SSModules.Element.Bone)
 local Hitboxes_Module = require(SSModules.Hitboxes.VolumeHitboxes)
-local DataManager = require(ServerScriptService.Data.Modules.DataManager)
 
---- Math varibles  DO NOT TOUCH THIS WILL EFFECT ALL WEAPON SCALING
-local P_Cap = 80 -- This where the Plateau  for dmg drop off starts
-local k = 0.2 -- This is the rate of the drop off
+
+
+--- Math Constants  DO NOT TOUCH THIS WILL EFFECT ALL WEAPON SCALING
+local Point_Cap = 80 -- This where the Plateau  for dmg drop off starts
+local k = 0.2 -- This is the rate of the drop off for Wepaon Scaling
+local BaseCritDmg = 1.5 -- Base Crit Dmg Multiplier
+local MaxBonus = 1.7 -- Max Crit Dmg Multiplier
+local p = 2.0 -- Soft Cap Exponent for Crit Dmg
+
 
 
 
@@ -53,16 +54,61 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 	if eHum and eHum.Parent ~= char then
 		
 		local eChar = eHum.Parent
-		local player = game.Players:GetPlayerFromCharacter(eChar)
+		local CurrentSlot = char:GetAttribute("CurrentSlot")
+		local Eplr = game.Players:GetPlayerFromCharacter(eChar)
+		local plr = game.Players:GetPlayerFromCharacter(char)
 		local eHRP = eChar.HumanoidRootPart
+
+
 		local Karma = eChar:GetAttribute("Karma")
 
 		local WeaponStats = WeaponsStatsModule.getStats(weapon)
-		local damage = WeaponStats.Damage
+		-- Dmg Varibles
+		local BaseDmg = WeaponStats.Damage
+		local Scaling = WeaponStats.Scaling
+		local WPN_Points  = char:GetAttribute("WPN")
+		local DEX_Points  = char:GetAttribute("DEX")
+
+
+
+
+		local DamageModifiers = 0  -- example: 0%
+		local TotalRes = 0.25       -- defender takes 25% less damage 
+		local isCrit
+
+		if char:GetAttribute("CritTest") then  
+			isCrit = true
+		else 
+			isCrit = HelpfulModule.CalculateCrit(DEX_Points)
+			print(isCrit)
+		end
+		local CritDmgMult = BaseCritDmg + (MaxBonus - BaseCritDmg) * (DEX_Points / 99)^p
+		
+		
+
+		local P_eff = Point_Cap + (WPN_Points - Point_Cap) / (1 + math.exp(k * (WPN_Points - Point_Cap))) -- Soft Cap Formula
+
+		local Truedamage = BaseDmg + P_eff * ((BaseDmg / 1000) * Scaling) -- True Damage Formula
+
+		-- Apply  Modifiers
+		local MultipliedDamage = Truedamage * (1 + DamageModifiers/100)
+		-- Apply Crit
+		if isCrit then 
+			MultipliedDamage = MultipliedDamage * CritDmgMult
+		end
+		
+
+
+	
+		
+
+
+        --Misc Varibles
 		local Knockback = WeaponStats.Knockback
 		local RagdollTime= WeaponStats.RagdollTime
 		local stunTime =WeaponStats.StunTime
 		local Karma = eChar:GetAttribute("Karma")
+	
 
 		local function handleKarmaDamage(eChar, eHum, damage, Karma)
 			if not eHum then return end
@@ -72,15 +118,15 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 			local KarmaDamage = BoneModule.applyKarmaDot(eHum, Karma, damage)
 			eChar:SetAttribute("Karma",math.min(Karma + 5, 50))-- Karma max is 50
 			
-			if player then
-				UI_Update:FireClient(player, KarmaDamage, eHum.Health, eHum.MaxHealth, damage)
+			if Eplr then
+				UI_Update:FireClient(Eplr, KarmaDamage, eHum.Health, eHum.MaxHealth, damage)
 			end
 		end
 
 
 		local Dodges = eChar:GetAttribute("Dodges")
 
-		if HelpfulModule.CheckForStatus(eChar,char,damage,Hit.CFrame,true,true) then  return end
+		if HelpfulModule.CheckForStatus(eChar,char,MultipliedDamage,Hit.CFrame,true,true) then  return end
 
 
 		if Dodges > 1 then
@@ -89,16 +135,18 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 			eChar:SetAttribute("InCombat",true)
 
 		elseif char:GetAttribute("Element") == "Bone" and char:GetAttribute("Mode2",true) then
-			handleKarmaDamage(eChar,eHum,damage,Karma)
+			MultipliedDamage = MultipliedDamage * (1 - TotalRes)
+			handleKarmaDamage(eChar,eHum,MultipliedDamage,Karma)
 			eChar:SetAttribute("InCombat",true)
 			return handleKarmaDamage	
 			
 		else
-			eHum:TakeDamage(damage)
+			MultipliedDamage = MultipliedDamage * (1 - TotalRes)
+			eHum:TakeDamage(MultipliedDamage)
 			eChar:SetAttribute("InCombat",true)
 			local KarmaDamage = 0
-			if player then 
-				UI_Update:FireClient(player, KarmaDamage, eHum.Health, eHum.MaxHealth, damage)
+			if Eplr then 
+				UI_Update:FireClient(Eplr, KarmaDamage, eHum.Health, eHum.MaxHealth, MultipliedDamage)
 			end
 			
 		end
@@ -121,13 +169,18 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 		end
 
 
-
-		VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(255, 255, 255))
+        if isCrit then 
+			VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 0, 0),Color3.fromRGB(255, 255, 255))
+          
+		else	
+			VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(255, 255, 255))
+        end
+		
 
 		SoundsModule.PlaySound(WeaponSounds[weapon].Combat.Hit, eChar.Torso)
 
 		if eChar:GetAttribute("Dodges") > 1 then
-			local hitAnim = WeaponsAnimations.Scythe.Dodge["Dodge"..char:GetAttribute("Combo")]
+			local hitAnim = WeaponsAnimations.Scythe.Dodge["Dodge"..char:GetAttribute("Combo")] -- Replace with actual dodge animations from the twinspears
 			eHum.Animator:LoadAnimation(hitAnim):Play()
 
 

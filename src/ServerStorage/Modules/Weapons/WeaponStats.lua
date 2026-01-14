@@ -1,7 +1,7 @@
 local module = {}
 local info ={
 	["Fists"]={
-		Damage = 8,
+		Damage = 5,
 		Scaling = 5,
 		BlockDmg = 6.6,
 		Knockback =4,

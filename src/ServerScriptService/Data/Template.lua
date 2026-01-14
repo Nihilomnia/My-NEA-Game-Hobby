@@ -96,26 +96,26 @@ return {
 		FreePoints = 0, -- Free Points to spend on Attributes without the need for EXP
 		SkillPoints = 0, -- Points used to unlock skills and talents
 		AttributeExp = {
-			Vitality = 0,
-			Endurance = 0,
-			Strength =0,
-			Spirit = 0,
-			Dexterity = 0,
-			Agility = 0,
-			WeaponProficiency = 0,
+			VIT = 0,
+			END = 0,
+			STR = 0,
+			SPT = 0,
+			DEX = 0,
+			AGL = 0,
+			WPN = 0,
 		},
 		
 		
 		
 		-- Stats information
 		STAT_POINTS = {
-			Vitality = 10,
-			Endurance = 10,
-			Strength =10,
-			Dexterity =10,
-			Spirit = 10,
-			Agility= 10,
-			WeaponProficiency = 10,
+			VIT = 10,
+			END = 10,
+			STR = 10,
+			SPT = 10,
+			DEX = 10,
+			AGL = 10,
+			WPN = 10,
 		},
 
 
