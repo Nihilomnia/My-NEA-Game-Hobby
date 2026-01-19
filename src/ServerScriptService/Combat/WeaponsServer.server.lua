@@ -86,6 +86,10 @@ WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 
+
+	if HelpfullModule.CheckForAttributes(char,true,true,true,true,nil,true,true,nil) then return end 
+	
+
 	if action == "Equip/UnEquip" and not char:GetAttribute("Equipped") and not EquipDebounce[plr] then
 		if char:GetAttribute("Mode1", true) then
 			return
@@ -180,7 +184,7 @@ DodgeEvent.OnServerEvent:Connect(function(plr, action, direction)
 	----------------------------------------------------------------
 	if action == "Dodge" then
 		
-		if HelpfullModule.CheckForAttributes(char, true, true, true, nil, nil, true, false) then
+		if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true,nil) then
 			return
 		end
 		if DodgeIsCancelling[plr] then
@@ -286,7 +290,7 @@ BlockingEvent.OnServerEvent:Connect(function(plr, action)
 	local torso = char.Torso
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
-	if HelpfullModule.CheckForAttributes(char, true, true, true, nil, true, true, true) then
+	if HelpfullModule.CheckForAttributes(char, true, true, true, nil, true, false, true,nil) then
 		return
 	end
 

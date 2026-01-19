@@ -23,6 +23,7 @@ local DODGE_SPEED = 35
 local DODGE_TIME = 0.73
 local currentDodgeForce
 
+
 local MOVE_KEYS = {
 	[Enum.KeyCode.W] = "W",
 	[Enum.KeyCode.A] = "A",

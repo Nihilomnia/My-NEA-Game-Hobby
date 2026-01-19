@@ -86,7 +86,7 @@ function module.Mode1(
 				end
 			end
 
-			if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true,true) then return end
+			if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true,true,nil) then return end
 
 			char:SetAttribute("CurrentWeapon", newWeapon)
 
@@ -199,7 +199,7 @@ function module.Mode2(
 				end
 			end
 
-			if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true,true) then return end
+			if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true,true,nil) then return end
 
 			char:SetAttribute("CurrentWeapon", newWeapon)
 

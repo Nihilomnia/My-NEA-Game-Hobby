@@ -42,6 +42,7 @@ function module.ChangeWeapon(plr,char,torso)
 	char:SetAttribute("Mode1", false)
 	char:SetAttribute("Mode2", false)
 	char:SetAttribute("Parrying",false)
+	char:SetAttribute("Sprinting",false)
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 
@@ -65,7 +66,7 @@ function module.ChangeWeapon(plr,char,torso)
 	Welds[plr].Part0 = torso
 	Welds[plr].Part1 = Weapon
 
-	if module.CheckForAttributes(char,true,true,true,true,nil,true,true) then return end 
+	if module.CheckForAttributes(char,true,true,true,true,nil,true,true,true) then return end 
 
 
     if EquipAnims[plr] then EquipAnims[plr]:Stop() end
@@ -132,26 +133,27 @@ function module.CheckForStatus(eChar,char,blockingDamage,hitPos,CheckForBlocking
 		
 end
 
-function module.CheckForAttributes(char,attack,swing,stun,ragdoll,equipped,blocking,Dodging)
+function module.CheckForAttributes(char,attack,swing,stun,ragdoll,equipped,blocking,Dodging,Sprinting)
 	local attacking = char:GetAttribute("Attacking")
-	local swing   = char:GetAttribute("Swing")
+	local swinging   = char:GetAttribute("Swing")
 	local stunned  = char:GetAttribute("Stunned")
 	local isEquipped = char:GetAttribute("Equipped")
 	local isRagdoll = char:GetAttribute("IsRagdoll")
 	local isBlocking = char:GetAttribute("isBlocking")
 	local isDodging = char:GetAttribute("Dodging")
+	local isSprinting = char:GetAttribute("Sprinting")
 	
 	local stop = false
 	
 	
 	if attacking and attack then stop = true end
-	if swing and swing then stop = true end
+	if swinging and swing then stop = true end
 	if stunned and stun then stop = true end
 	if isRagdoll and ragdoll then stop = true end
-	if equipped ~= nil and not isEquipped then stop = true end
-	if blocking ~= nil and isBlocking then stop = true end
-	if Dodging ~= nil and isDodging then stop = true end
-	
+	if equipped and not isEquipped then stop = true end
+	if blocking  and isBlocking then stop = true end
+	if Dodging  and isDodging then stop = true end
+	if Sprinting  and isSprinting then stop = true end
 	return stop
 end
 
