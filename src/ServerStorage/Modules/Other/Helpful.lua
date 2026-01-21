@@ -98,16 +98,32 @@ end
 function module.ResetMobility(char)
 	local hum = char.Humanoid
 	local plr  = Players:GetPlayerFromCharacter(char)
-	if char:GetAttribute("IsLow") and char:GetAttribute("InCombat") then 
-		hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) / 2
-		hum.JumpHeight = (StarterPlayer.CharacterJumpHeight) / 2
-		if plr then 
-			print(char.Name, "Was low so speed is halved")
+	if char:GetAttribute("IsLow") and char:GetAttribute("InCombat") then
+		if char:GetAttribute("Sprinting") then
+			hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) * 1.25
+			if plr then 
+				print(char.Name, "Was low so speed is increased by 25%")
+			end
+		else
+            hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) / 2
+		    hum.JumpHeight = (StarterPlayer.CharacterJumpHeight) / 2
+			if plr then 
+				print(char.Name, "Was low so speed is halved")
+			end
 		end
 		
 	else 
-		hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed
-		hum.JumpHeight = StarterPlayer.CharacterJumpHeight
+		if char:GetAttribute("Sprinting") then
+			hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) * 2
+			hum.JumpHeight = StarterPlayer.CharacterJumpHeight
+			if plr then 
+				print(char.Name, "Was sprinting so speed is doubled")
+			end
+		else
+            hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed
+		    hum.JumpHeight = StarterPlayer.CharacterJumpHeight
+			print(char.Name, " Speed and jump reset to normal")
+		end
 	end
 end
 
@@ -115,15 +131,13 @@ function module.CheckForStatus(eChar,char,blockingDamage,hitPos,CheckForBlocking
 	local stop = false
 	
 	if CheckForParrying and not stop then
-		if eChar:GetAttribute("Parrying") and module.CheckInFront(char,eChar) then 
-			BlockingModule.Parrying(char,eChar,hitPos)  stop = true end
+		if eChar:GetAttribute("Parrying") and module.CheckInFront(char,eChar) then BlockingModule.Parrying(char,eChar,hitPos)  stop = true end
 	end
 	
 	
 	
 	if CheckForBlocking and not stop then
-		if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char,eChar) then
-			 BlockingModule.Blocking(eChar,blockingDamage,hitPos) stop = true end
+		if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char,eChar) then BlockingModule.Blocking(eChar,blockingDamage,hitPos) stop = true end
 		
 	end
 	

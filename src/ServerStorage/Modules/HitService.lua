@@ -20,16 +20,15 @@ local WeaponsStatsModule = require(SSModules.Weapons.WeaponStats)
 local HelpfulModule = require(SSModules.Other.Helpful)
 local StunHandler = require(SSModules.Other.StunHandlerV2)
 local BoneModule = require(SSModules.Element.Bone)
-local Hitboxes_Module = require(SSModules.Hitboxes.VolumeHitboxes)
+local PassiveManger = require(SSModules.Combat.PassiveManger)
 
 
 
 --- Math Constants  DO NOT TOUCH THIS WILL EFFECT ALL WEAPON SCALING
 local Point_Cap = 80 -- This where the Plateau  for dmg drop off starts
 local k = 0.2 -- This is the rate of the drop off for Wepaon Scaling
-local BaseCritDmg = 1.5 -- Base Crit Dmg Multiplier
-local MaxBonus = 1.7 -- Max Crit Dmg Multiplier
-local p = 2.0 -- Soft Cap Exponent for Crit Dmg
+
+
 
 
 
@@ -54,13 +53,10 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 	if eHum and eHum.Parent ~= char then
 		
 		local eChar = eHum.Parent
-		local CurrentSlot = char:GetAttribute("CurrentSlot")
 		local Eplr = game.Players:GetPlayerFromCharacter(eChar)
 		local plr = game.Players:GetPlayerFromCharacter(char)
 		local eHRP = eChar.HumanoidRootPart
 
-
-		local Karma = eChar:GetAttribute("Karma")
 
 		local WeaponStats = WeaponsStatsModule.getStats(weapon)
 		-- Dmg Varibles
@@ -68,21 +64,17 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 		local Scaling = WeaponStats.Scaling
 		local WPN_Points  = char:GetAttribute("WPN")
 		local DEX_Points  = char:GetAttribute("DEX")
+		local SPT_Points  = char:GetAttribute("SPT")
+
+		local STAT_POINTS = {
+			DEX = DEX_Points,
+			WPN = WPN_Points,
+			SPT = SPT_Points,
+		}
 
 
-
-
-		local DamageModifiers = 0  -- example: 0%
-		local TotalRes = 0.25       -- defender takes 25% less damage 
-		local isCrit
-
-		if char:GetAttribute("CritTest") then  
-			isCrit = true
-		else 
-			isCrit = HelpfulModule.CalculateCrit(DEX_Points)
-			print(isCrit)
-		end
-		local CritDmgMult = BaseCritDmg + (MaxBonus - BaseCritDmg) * (DEX_Points / 99)^p
+		
+		local Dodges = char:GetAttribute("Dodges")
 		
 		
 
@@ -90,73 +82,33 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 
 		local Truedamage = BaseDmg + P_eff * ((BaseDmg / 1000) * Scaling) -- True Damage Formula
 
-		-- Apply  Modifiers
-		local MultipliedDamage = Truedamage * (1 + DamageModifiers/100)
-		-- Apply Crit
-		if isCrit then 
-			MultipliedDamage = MultipliedDamage * CritDmgMult
-		end
 		
-
-
-	
-		
-
 
         --Misc Varibles
 		local Knockback = WeaponStats.Knockback
 		local RagdollTime= WeaponStats.RagdollTime
 		local stunTime =WeaponStats.StunTime
-		local Karma = eChar:GetAttribute("Karma")
-	
+		
+		if HelpfulModule.CheckForStatus(eChar,char,BaseDmg,Hit.CFrame,true,true) then  return end
+        
 
-		local function handleKarmaDamage(eChar, eHum, damage, Karma)
-			if not eHum then return end
+		local PassiveCheckDmg, isCrit = PassiveManger.M1LandedPassive(char,eChar,Truedamage,STAT_POINTS)
+			
+			
 
-			-- Apply the Karma Damage Over Time
+		
 			
-			local KarmaDamage = BoneModule.applyKarmaDot(eHum, Karma, damage)
-			eChar:SetAttribute("Karma",math.min(Karma + 5, 50))-- Karma max is 50
-			
-			if Eplr then
-				UI_Update:FireClient(Eplr, KarmaDamage, eHum.Health, eHum.MaxHealth, damage)
-			end
+		eHum:TakeDamage(PassiveCheckDmg)
+		eChar:SetAttribute("InCombat",true)
+		local KarmaDamage = 0
+		if Eplr then 
+			UI_Update:FireClient(Eplr, KarmaDamage, eHum.Health, eHum.MaxHealth, PassiveCheckDmg)
 		end
-
-
-		local Dodges = eChar:GetAttribute("Dodges")
-
-		if HelpfulModule.CheckForStatus(eChar,char,MultipliedDamage,Hit.CFrame,true,true) then  return end
-
-
-		if Dodges > 1 then
-			eChar:SetAttribute("Dodges",Dodges -1)
-			print("Dmg not done as " .. char.Name .. " had a dodge")
-			eChar:SetAttribute("InCombat",true)
-
-		elseif char:GetAttribute("Element") == "Bone" and char:GetAttribute("Mode2",true) then
-			MultipliedDamage = MultipliedDamage * (1 - TotalRes)
-			handleKarmaDamage(eChar,eHum,MultipliedDamage,Karma)
-			eChar:SetAttribute("InCombat",true)
-			return handleKarmaDamage	
 			
-		else
-			MultipliedDamage = MultipliedDamage * (1 - TotalRes)
-			eHum:TakeDamage(MultipliedDamage)
-			eChar:SetAttribute("InCombat",true)
-			local KarmaDamage = 0
-			if Eplr then 
-				UI_Update:FireClient(Eplr, KarmaDamage, eHum.Health, eHum.MaxHealth, MultipliedDamage)
-			end
-			
-		end
-
-
 
 		if char:GetAttribute("Mode1",true) then
 			char:SetAttribute("ModeEnergy",100)
 		end
-
 
 
 		ServerCombatModule.stopAnims(eHum)
@@ -185,7 +137,6 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 
 		else
 			eHum.Animator:LoadAnimation(Truehit):Play()
-
 		end
 
 

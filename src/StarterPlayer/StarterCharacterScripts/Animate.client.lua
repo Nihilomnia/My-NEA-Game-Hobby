@@ -16,7 +16,6 @@ local AnimationsFolder = script.Animations
 local AnimationsTable = {}
 
 local LastKeyPressTime = 0
-local SprintDebounce = false
 local doubleTapThreshold = 0.3
 local isSprinting = false
 local debounce = false

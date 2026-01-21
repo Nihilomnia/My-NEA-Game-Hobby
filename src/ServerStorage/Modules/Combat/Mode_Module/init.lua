@@ -24,6 +24,30 @@ local function getUniqueId(char)
 	return uid.Value or nil
 end
 
+
+local function MakeWeaponInvisible(char,Weapon)
+	if not Weapon and char then return end
+	local HRP = char:FindFirstChild("HumanoidRootPart")
+	local InviblePart = RS.Effects.InvisiblePart:Clone()
+	local Weld = Instance.new("WeldConstraint")
+	Weld.Part0 = HRP
+	Weld.Part1 = InviblePart
+	Weld.Parent = HRP
+	InviblePart.Size = Weapon.Size + Vector3.new(0.5,0.5,0.5)
+	InviblePart.CFrame = Weapon.CFrame
+	InviblePart.Parent = HRP
+end
+
+local function RemoveInvisibleParts(char,Weapon)
+	if not char then return end
+	local HRP = char:FindFirstChild("HumanoidRootPart")
+	if not HRP then return end
+	for _,part in ipairs(HRP:GetChildren()) do
+		if part.Name == "InvisiblePart" then
+			part:Destroy()
+		end
+	end
+end
 ---------------------------------------------------------------------
 -- MODE 1 TRANSFORMATION
 ---------------------------------------------------------------------
@@ -103,6 +127,8 @@ function module.Mode1(
 
 			-- Change to new weapon
 			HelpfulModule.ChangeWeapon(Identifier, char, torso)
+
+			local NewWeapon =  char:FindFirstChild(newWeapon)
 
 			-- Setup weld
 			if Welds[Identifier] then

@@ -126,48 +126,6 @@ local IdleAnims = Combat_Data.IdleAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 
 
-
--- Optimized function to apply DoT
-function Bone.applyKarmaDot(targetHumanoid, initialKarma, baseDamage)
-	if not targetHumanoid or not targetHumanoid.Parent then return end
-
-	local karma = initialKarma
-	local totalDamage = 0
-	local tickRate = 3  -- Default tick rate (Stage 1)
-
-	if karma > 33 then
-		tickRate = 1  -- Stage 3
-	elseif karma > 16 then
-		tickRate = 2  -- Stage 2
-	end
-
-	local dotDamage = 3  -- Damage per tick
-	local maxKarma = 50
-	local karmaDecayRate = 2  -- Karma decreases over time
-
-	
-	task.spawn(function()
-		while totalDamage < baseDamage and karma > 0 and targetHumanoid and targetHumanoid.Health > 0 do
-			-- Apply damage
-			targetHumanoid:TakeDamage(dotDamage)
-			totalDamage += dotDamage
-
-			-- Reduce karma over time
-			karma = math.max(0, karma - (karmaDecayRate * tickRate))
-
-			task.wait(tickRate)
-
-			-- Stop early if needed
-			if totalDamage >= baseDamage or targetHumanoid.Health <= 0 then
-				break
-			end
-		end
-	end)
-
-	-- Return final values
-	return totalDamage
-end
-
 local function Mode1_R(char)
 	local plr = game.Players:GetPlayerFromCharacter(char)
 	local hum = char.humanoid

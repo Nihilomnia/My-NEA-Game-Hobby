@@ -1,0 +1,8 @@
+local ClientPassiveManager = {}
+
+
+
+
+
+
+return ClientPassiveManager
