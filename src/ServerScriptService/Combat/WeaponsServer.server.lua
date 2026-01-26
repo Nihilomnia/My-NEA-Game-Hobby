@@ -56,7 +56,9 @@ Players.PlayerAdded:Connect(function(plr)
 
 	local torso = char.Torso
 	char:SetAttribute("CurrentWeapon", "Fists")
-	char:SetAttribute("Element", "Bone")
+	char:SetAttribute("Element", "Astral")
+	char:SetAttribute("Stamina", 100)
+	char:SetAttribute("MaxStamina", 100)
 	char:SetAttribute("InCombat", false)
 	char:SetAttribute("Dodges", 0)
 	char.Parent = workspace.Characters

@@ -4,7 +4,7 @@ player.CharacterAdded:Connect(function(char)
    
     local torso = char:WaitForChild("Torso")
 
-    local gui = script:WaitForChild("BillboardGui"):Clone()
+    local gui = player:WaitForChild("PlayerGui"):WaitForChild("StatusBars"):Clone()
     gui.Adornee = torso
     gui.Parent = torso
 

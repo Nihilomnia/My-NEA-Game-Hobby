@@ -83,9 +83,12 @@ function module.Blocking(enemyChar,damage,hitPos)
 	if enemyChar:GetAttribute("Blocking") <= 100 then
 		local currentWeapon = enemyChar:GetAttribute("CurrentWeapon")
 		local BlockDmg = WeaponStatsModule.getStats(currentWeapon).BlockDmg
-		
+		local ChipDmgPercent = WeaponStatsModule.getStats(currentWeapon).ChipDamage or 0
+		local ChipDmg = damage * ChipDmgPercent / 100
+
 		enemyChar:SetAttribute("Blocking", enemyChar:GetAttribute("Blocking") + BlockDmg)
 		enemyChar:SetAttribute("InCombat",true)
+		enemyChar.Humanoid:TakeDamage(math.min(ChipDmg,damage))
 		
 		if enemyChar:GetAttribute("Blocking") >= 100 then
 			module.GuardBreak(enemyChar)
@@ -99,8 +102,6 @@ function module.Blocking(enemyChar,damage,hitPos)
 		SoundsModule.PlaySound(WeaponSounds[enemyChar:GetAttribute("CurrentWeapon")].Blocking.Blocked,enemyChar.Torso)
 		
 		enemyChar.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[enemyChar:GetAttribute("CurrentWeapon")].Blocking.Blocked):Play()
-		
-		
 		
 	end
 end

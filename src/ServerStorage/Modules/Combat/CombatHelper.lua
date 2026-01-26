@@ -86,12 +86,13 @@ function module.Attack(char)
 	Connections[Identifier].HitStart = playSwingAnimation
 		:GetMarkerReachedSignal("HitStart")
 		:Connect(function()
-		local HitboxSize = WeaponStats.HitboxSize
+		local HitBoxSize = WeaponStats.HitBox_Data["Combo" .. char:GetAttribute("Combo")].HitboxSize
+		local HitBoxOffset = WeaponStats.HitBox_Data["Combo" .. char:GetAttribute("Combo")].HitboxOffset
 		local Attachment = Instance.new("Attachment")
 		Attachment.Parent = HRP
 		Attachment.Name = "LightAttackHitbox"
-		Attachment.WorldCFrame = HRP.CFrame * CFrame.new(0, 0, -0.894)
-		VolumeHitbox.NormalHitBox(HitboxSize, Attachment, char, function(Ehum, Hit)
+		Attachment.WorldCFrame = HRP.CFrame * HitBoxOffset
+		VolumeHitbox.NormalHitBox(HitBoxSize, Attachment, char, function(Ehum, Hit)
 			HitServiceModule.Normal_Hitbox(char, currentWeapon, Ehum, Hit, HitAnim)
 		end)
 		
@@ -109,7 +110,7 @@ function module.Attack(char)
 		char:SetAttribute("Swing", false)
 
         if char:GetAttribute("Combo") == MaxCombo then 
-			task.wait(1.1)
+			task.wait(1)
         else 
 			task.wait(swingReset)
         end

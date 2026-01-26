@@ -92,13 +92,15 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 		if HelpfulModule.CheckForStatus(eChar,char,BaseDmg,Hit.CFrame,true,true) then  return end
         
 
-		local PassiveCheckDmg, isCrit = PassiveManger.M1LandedPassive(char,eChar,Truedamage,STAT_POINTS)
+		local PassiveCheckDmg, isCrit, damageAlreadydealt = PassiveManger.M1LandedPassive(char,eChar,Truedamage,STAT_POINTS)
 			
 			
 
 		
-			
-		eHum:TakeDamage(PassiveCheckDmg)
+		if damageAlreadydealt == false then
+			eHum:TakeDamage(PassiveCheckDmg)
+		end
+		
 		eChar:SetAttribute("InCombat",true)
 		local KarmaDamage = 0
 		if Eplr then 
@@ -122,8 +124,14 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 
         if isCrit then 
 			VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 0, 0),Color3.fromRGB(255, 0, 0))
+			if char:GetAttribute("Element") == "Astral" then 
+				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 0, 0),Color3.fromRGB(138, 0, 229))
+			end
           
 		else	
+			if char:GetAttribute("Element") == "Astral" then 
+				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(138, 0, 229),Color3.fromRGB(138, 0, 229))
+			end
 			VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(255, 255, 255))
         end
 		

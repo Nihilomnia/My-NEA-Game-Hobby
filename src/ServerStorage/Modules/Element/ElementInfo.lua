@@ -1,4 +1,4 @@
-local module = {}
+
 local module = {}
 local info ={
 	["Bone"]={
@@ -18,7 +18,7 @@ local info ={
 	
 	["Astral"]={
 		Mode1 = "Fractured_Kunai",
-		Mode2 = "Shooting Star",
+		Mode2 = "ShootingStar",
 		Mode1Callout= "Gaze Upon the Stars, Noctis Tempore",
 		Mode2Callout = "Segunda Etpa, Astra Parallaxis ",
 		Text = {

@@ -9,7 +9,27 @@ local info ={
 		SwingReset =0.3,
 		StunTime = 1,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
+		HitBox_Data = {
+			Combo1 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo2 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo3 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+
+			Combo4 = {
+			 HitboxSize = Vector3.new(4, 5, 6),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+		}
 
 	},
 	
@@ -22,7 +42,29 @@ local info ={
 		SwingReset =0.25,
 		StunTime = 1.5,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
+		ChipDamage = 5,
+		HitBox_Data = {
+			Combo1 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo2 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo3 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+
+			Combo4 = {
+			 HitboxSize = Vector3.new(4, 5, 6),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+		}
+		
 	},
 	 
 	["Katana"]={
@@ -34,7 +76,27 @@ local info ={
 		SwingReset =.2,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
+		HitBox_Data = {
+			Combo1 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo2 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo3 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+
+			Combo4 = {
+			 HitboxSize = Vector3.new(4, 5, 6),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+		}
 	},
 	
 	["DrakeFang"]={
@@ -46,11 +108,31 @@ local info ={
 		SwingReset =.1,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
+		HitBox_Data = {
+			Combo1 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo2 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo3 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+
+			Combo4 = {
+			 HitboxSize = Vector3.new(4, 5, 6),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+		}
 	},
 
 	["TwinSpears"]={
-		Damage = 15,
+		Damage = 18,
 		Scaling = 9,
 		BlockDmg = 12,
 		Knockback =5,
@@ -58,20 +140,60 @@ local info ={
 		SwingReset =.1,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
+		HitBox_Data = {
+			Combo1 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo2 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo3 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+
+			Combo4 = {
+			 HitboxSize = Vector3.new(4, 5, 6),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+		}
 	},
 
 	
-	["Shooting Star"]={
-		Damage = 25,
+	["ShootingStar"]={
+		Damage = 20,
 		Scaling = 8,
 		BlockDmg = 25,
 		Knockback = 8,
 		RagdollTime =1.5,	
-		SwingReset = .75,
+		SwingReset = .1,
 		StunTime = 1.2,
 		BlockingWalkSpeed = 6,
-		HitboxSize = Vector3.new(6.152, 8.458, 11.534),
+		HitBox_Data = {
+			Combo1 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo2 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-6.3),
+			},
+
+			Combo3 = {
+			 HitboxSize = Vector3.new(4, 5, 8),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+
+			Combo4 = {
+			 HitboxSize = Vector3.new(4, 5, 6),
+		     HitboxOffset = CFrame.new(0,0,-7.3),
+			},
+		}
 	},	
 	
 }

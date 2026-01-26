@@ -1,10 +1,11 @@
 local PassiveManger = {}
 local RS = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local SSModules = SS.Modules
-local ServerScriptService = game:GetService("ServerScriptService")
 local Events = RS.Events
 local UI_Update = Events.UI_Update
+local Function = require(ReplicatedStorage.Dialogues.Dialogue_Configs.TestDialogue.TurnHeadInvisible.Function)
 local HelpfulModule = require(SSModules.Other.Helpful)
 
 
@@ -19,28 +20,34 @@ local MaxBonus = 1.7 -- Max Crit Dmg Multiplier
 
 
 
-function PassiveManger.M1LandedPassive(echar,char, damage,STAT_POINTS) -- This refers to when a light attack lands on char 
+function PassiveManger.M1LandedPassive(Attacker,Defender,damage,STAT_POINTS) -- This refers to when a light attack lands on char 
     --[[
-    echar - the enemy character that landed the attack
-    char - the character that got hit
+    Attacker - the enemy character that landed the attack
+    Defender - the character that got hit
     damage - the damage that was dealt from base sclaing
     Stats - the stats of the character that landed the attack
     --]]
 
     local DEX_Points = STAT_POINTS.DEX
-    local Element = char:GetAttribute("Element")
-    local Second_ModeCheck = char:GetAttribute("Mode2")
+    local AttackerElement = Attacker:GetAttribute("Element")
+    local DefenderElement = Defender:GetAttribute("Element")
+    local Attacker_Second_ModeCheck = Attacker:GetAttribute("Mode2")
+    local Defender_Second_ModeCheck = Defender:GetAttribute("Mode2")
+    local Attacker_plr = game.Players:GetPlayerFromCharacter(Attacker)
+    local Defender_plr = game.Players:GetPlayerFromCharacter(Defender)
     local DamageModifiers =  10
     local TotalRes = 0.25 
     local isCrit
     local CritDmgMult = BaseCritDmg + (MaxBonus - BaseCritDmg) * (DEX_Points / 99)^p
+    local Attack_Dodged  = {}
+    local damageAlreadydealt  = false
 
     local MultipliedDamage = damage * (1 + DamageModifiers/100)
     MultipliedDamage = MultipliedDamage * (1 - TotalRes)
 
 
     
-    if char:GetAttribute("CritTest") then  
+    if Attacker:GetAttribute("CritTest") then  
      isCrit = true
     else 
      isCrit = HelpfulModule.CalculateCrit(DEX_Points)
@@ -51,21 +58,29 @@ function PassiveManger.M1LandedPassive(echar,char, damage,STAT_POINTS) -- This r
 		MultipliedDamage = MultipliedDamage * CritDmgMult
 	end
 
-    if Element == "Bone"  then
+    if DefenderElement == "Bone" then 
         print("If there was a passive for mode 1 it would be here")
-        if Second_ModeCheck then
-            local TargetHum = char.Humanoid
-            local plr = game.Players:GetPlayerFromCharacter(char)
-            local DodgeCounter = char:GetAttribute("Dodges")
+        if Defender_Second_ModeCheck then
+            local TargetHum = Defender.Humanoid
+            local plr = game.Players:GetPlayerFromCharacter(Defender)
+            local DodgeCounter = Defender:GetAttribute("Dodges")
+            
 
             MultipliedDamage = 0
-            char:SetAttribute("Dodges", DodgeCounter - 1)
-            char:SetAttribute("InCombat",true)   
+            Defender:SetAttribute("Dodges", DodgeCounter - 1)
+            Defender:SetAttribute("InCombat",true)   
             TargetHum:TakeDamage(MultipliedDamage)
-            -- This block here is for if the receiver was the bone user
+            Attack_Dodged[Defender] = true
+            damageAlreadydealt = true
+        end
+    end
 
-            local Karma = char:GetAttribute("Karma")
-            char:SetAttribute("Karma",math.min(Karma + 5, 50))
+    if AttackerElement == "Bone" then
+        print("If there was a passive for mode 1 it would be here")
+        if Attacker_Second_ModeCheck and not Attack_Dodged[Defender] then
+            local TargetHum = Defender.Humanoid
+            local Karma = Defender:GetAttribute("Karma")
+            Defender:SetAttribute("Karma",math.min(Karma + 5, 50))
             local totalDamage = 0
 	        local tickRate = 3  -- Stage 1
 
@@ -89,7 +104,8 @@ function PassiveManger.M1LandedPassive(echar,char, damage,STAT_POINTS) -- This r
 
                     if totalDamage >= MultipliedDamage or TargetHum.Health <= 0 then break end
                 end
-                UI_Update:FireClient(plr, totalDamage, TargetHum.Health, TargetHum.MaxHealth, MultipliedDamage)
+                damageAlreadydealt = true
+                UI_Update:FireClient(Defender_plr, totalDamage, TargetHum.Health, TargetHum.MaxHealth, MultipliedDamage)
             end)
             
 
@@ -100,9 +116,9 @@ function PassiveManger.M1LandedPassive(echar,char, damage,STAT_POINTS) -- This r
        
     end
     
-   if Element == "Astral"  then
+   if AttackerElement == "Astral"  then
         print("If there was a passive for mode 1 it would be here")
-        if Second_ModeCheck then
+        if Attacker_Second_ModeCheck then
            local SPT = STAT_POINTS.SPT
            local SPT_Bonus = 1
            local SPTScalingFactor = 0.001 
@@ -113,7 +129,7 @@ function PassiveManger.M1LandedPassive(echar,char, damage,STAT_POINTS) -- This r
            MultipliedDamage = damage * (1 + DamageModifiers/100)
            MultipliedDamage = MultipliedDamage * (1 - TotalRes)
            
-           if char:GetAttribute("CritTest") then  
+           if Attacker:GetAttribute("CritTest") then  
                 isCrit = true
                else 
                 isCrit = HelpfulModule.CalculateCrit(DEX_Points)
@@ -122,19 +138,14 @@ function PassiveManger.M1LandedPassive(echar,char, damage,STAT_POINTS) -- This r
             
             if isCrit then 
                 MultipliedDamage = MultipliedDamage * CritDmgMult
-            end
-
-
-
-
-           
+            end 
 
         end
 
         
     end
 
-  return MultipliedDamage, isCrit
+  return MultipliedDamage, isCrit, damageAlreadydealt
 
 end
 
@@ -148,6 +159,16 @@ function PassiveManger.DodgePassive(char, damage) -- This refers to when char do
     
 end
 
+
+function PassiveManger.BackStabPassive(char, damage) -- This refers to when char lands a backstab attack
+  
+
+end
+
+
+function PassiveManger.OnSkillLanded(attacker, defender, damage,skill) -- 
+
+end
 
 
 

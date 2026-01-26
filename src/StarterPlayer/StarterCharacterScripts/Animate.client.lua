@@ -14,6 +14,11 @@ local Hum = char:WaitForChild("Humanoid")
 
 local AnimationsFolder = script.Animations
 local AnimationsTable = {}
+local AirBorneStates ={
+	[Enum.HumanoidStateType.Jumping] = true,
+	[Enum.HumanoidStateType.Freefall] = true,
+	[Enum.HumanoidStateType.FallingDown] = true
+}
 
 local LastKeyPressTime = 0
 local doubleTapThreshold = 0.3
@@ -21,6 +26,7 @@ local isSprinting = false
 local debounce = false
 local SprintAnim = nil
 local SprintTrack = nil
+local conn 
 
 -- 1. Function to clear old tracks and load new ones
 local function UpdateWalkTracks()
@@ -126,6 +132,7 @@ local function canSprint()
 		or char:GetAttribute("IsRagdoll")
 		or char:GetAttribute("IsBlocking")
 		or char:GetAttribute("Attacking")
+		or char:GetAttribute("IsCrouching")
 	)
 end
 
@@ -134,6 +141,7 @@ local function ResetSpeedCheck()
 		char:GetAttribute("Stunned")
 		and not char:GetAttribute("IsBlocking")
 		and not char:GetAttribute("Attacking")
+		and not char:GetAttribute("IsCrouching")
 	)
 end
 
@@ -155,7 +163,8 @@ local function selectSprintAnim()
 
     if  char:GetAttribute("Sprinting") then
         SprintAnim = Hum.Animator:LoadAnimation(SprintTrack)
-        SprintAnim:Play()
+        SprintAnim:Play(0.25)
+
     end
 end
 
@@ -174,6 +183,8 @@ local function toggleSprintState()
 		if SprintAnim then
 			SprintAnim:Stop()
 		end
+
+		if conn then conn:Disconnect() end
 
         UpdateWalkTracks()
 
@@ -195,6 +206,16 @@ local function toggleSprintState()
 		isSprinting = true
        
         selectSprintAnim()
+
+		conn = RunService.Heartbeat:Connect(function(deltaTime)
+			
+
+			if AirBorneStates[Hum:GetState()] then
+				SprintAnim:AdjustSpeed(0.25)
+			else
+				SprintAnim:AdjustSpeed(1)
+			end
+		end)
 
 		for _, track in pairs(AnimationsTable) do
 			track:Stop(0.1)
@@ -227,7 +248,7 @@ local function onKeyRelease(Key, isTyping)
 	end
 end
 
-char:GetAtrributeChangedSignal("Equipped"):Connect(function()
+char:GetAttributeChangedSignal("Equipped"):Connect(function()
  selectSprintAnim()   
 end)
 
@@ -241,7 +262,7 @@ end
 
 uis.InputBegan:Connect(onKeyPress)
 uis.InputEnded:Connect(onKeyRelease)
-char:GetAtrributeChangedSignal("Attacking"):Connect(OnCharStateChanged)
-char:GetAtrributeChangedSignal("Stunned"):Connect(OnCharStateChanged)
-char:GetAtrributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
+char:GetAttributeChangedSignal("Attacking"):Connect(OnCharStateChanged)
+char:GetAttributeChangedSignal("Stunned"):Connect(OnCharStateChanged)
+char:GetAttributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
 

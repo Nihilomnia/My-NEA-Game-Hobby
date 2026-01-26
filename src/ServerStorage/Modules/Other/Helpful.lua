@@ -101,28 +101,23 @@ function module.ResetMobility(char)
 	if char:GetAttribute("IsLow") and char:GetAttribute("InCombat") then
 		if char:GetAttribute("Sprinting") then
 			hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) * 1.25
-			if plr then 
-				print(char.Name, "Was low so speed is increased by 25%")
-			end
+			
 		else
             hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) / 2
 		    hum.JumpHeight = (StarterPlayer.CharacterJumpHeight) / 2
-			if plr then 
-				print(char.Name, "Was low so speed is halved")
-			end
+			
 		end
 		
 	else 
 		if char:GetAttribute("Sprinting") then
 			hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) * 2
 			hum.JumpHeight = StarterPlayer.CharacterJumpHeight
-			if plr then 
-				print(char.Name, "Was sprinting so speed is doubled")
-			end
+			
 		else
             hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed
 		    hum.JumpHeight = StarterPlayer.CharacterJumpHeight
-			print(char.Name, " Speed and jump reset to normal")
+			
+			
 		end
 	end
 end
