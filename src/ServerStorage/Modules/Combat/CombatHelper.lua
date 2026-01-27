@@ -22,7 +22,7 @@ local HitServiceModule = require(SSModules.HitService)
 local VFX_Event = Events.VFX
 local RaycastHitbox = require (SSModules.Hitboxes.RaycastHitboxV4)
 local VolumeHitbox = require(SSModules.Hitboxes.VolumeHitboxes)
-local WeaponsStatsModule = require(SSModules.Weapons.WeaponStats)
+local WeaponsStatsModule = require(SSModules.Dictionaries.WeaponStats)
 local HelpfullModule = require(SSModules.Other.Helpful)
 
 local Connections = {
@@ -140,5 +140,16 @@ function module.Attack(char)
 
 	if plr then VFX_Event:FireClient(plr,"CustomShake",1,2,0,.7) end
 end
+
+function module.CancelAttack(char)
+	if not char then return end
+	char:SetAttribute("Attacking", false)
+	char:SetAttribute("Swing", false)
+	VolumeHitbox.DestroyHitboxes(char)
+	ServerCombatModule.stopAnims(char.Humanoid)
+	HelpfullModule.ResetMobility(char)
+end
+
+
 
 return module

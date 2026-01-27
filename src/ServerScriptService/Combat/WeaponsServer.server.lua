@@ -22,7 +22,7 @@ local updateEvent = Events.UpdateMovement
 
 local SoundsModule = require(RS.Modules.Combat.SoundsModule)
 local HelpfullModule = require(SSModules.Other.Helpful)
-local WeaponsStatsModule = require(SSModules.Weapons.WeaponStats)
+local WeaponsStatsModule = require(SSModules.Dictionaries.WeaponStats)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local Mode_Module = require(SSModules.Combat.Mode_Module)
 local ServerCombatModule = require(SSModules.CombatModule)

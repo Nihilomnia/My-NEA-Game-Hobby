@@ -4,7 +4,7 @@ local SS = game:GetService("ServerStorage")
 local SSModules = SS.Modules
 
 -- Module references
-local ElementInfo = require(SSModules.Element.ElementInfo)
+local ElementInfo = require(SSModules.Dictionaries.ElementInfo)
 local HelpfulModule = require(SSModules.Other.Helpful)
 local Textmod = require(SSModules.text)
 
