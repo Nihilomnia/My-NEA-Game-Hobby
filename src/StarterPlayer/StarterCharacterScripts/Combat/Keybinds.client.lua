@@ -44,7 +44,6 @@ local function updateMovementAttribute()
 
 	if currentKey ~= lastSentKey then
 		lastSentKey = currentKey
-		-- We fire the server instead of setting the attribute locally
 		updateEvent:FireServer(currentKey)
 	end
 end
@@ -52,8 +51,8 @@ end
 --------------------------------------------------------------------------------------
 -- Movement  Tracking
 --------------------------------------------------------------------------------------
-uis.InputBegan:Connect(function(input, processed)
-	if processed then return end -- Ignore if typing in chat
+uis.InputBegan:Connect(function(input, isTyping)
+	if isTyping then return end -- Ignore if typing in chat
 	
 	local keyName = MOVE_KEYS[input.KeyCode]
 	if keyName then
@@ -115,7 +114,7 @@ end)
 
 
 
-uis.InputBegan:Connect(function(input, gp)
+uis.InputBegan:Connect(function(input)
     if isActuallyTyping() then return end
 
     if input.UserInputType == Enum.UserInputType.MouseButton2 then

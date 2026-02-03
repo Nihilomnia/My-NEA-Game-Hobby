@@ -6,11 +6,6 @@ local DODGE_SPEED = 35
 local DODGE_TIME = 0.73
 
 
-local function getUniqueId(char)
-    local uid = char.Humanoid:FindFirstChild("UniqueId")
-    return uid.Value or nil
-end
-
 function DodgeVelocity.resetVelocity(char,Identifier)
     local hrp = char:FindFirstChild("HumanoidRootPart")
 
