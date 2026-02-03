@@ -1,8 +1,10 @@
 -- [Global Varilbles]
+local LocalStorageService = game:GetService("LocalStorageService")
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local ServerScripts = game:GetService("ServerScriptService")
 local Players = game:GetService("Players")
+local ServerStorage = game:GetService("ServerStorage")
 local SoundService = game:GetService("SoundService")
 local StarterPlayer = game:GetService("StarterPlayer")
 
@@ -27,6 +29,9 @@ local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local Mode_Module = require(SSModules.Combat.Mode_Module)
 local ServerCombatModule = require(SSModules.CombatModule)
 local DataManager = require(ServerScripts.Data.Modules.DataManager)
+local BlockModule = require(ServerStorage.Modules.BlockModule)
+local ParryModule = require(ServerStorage.Modules.Parrying)
+local DodgeModule = require(ServerStorage.Modules.DodgeModule)
 
 -- Local Tables
 local Welds = Combat_Data.Welds
@@ -44,33 +49,33 @@ local DodgeCanCancel = {}
 local DodgeIsCancelling = {}
 
 Players.PlayerAdded:Connect(function(plr)
-    local char = plr.Character  or plr.CharacterAdded:Wait()
-
-    local profile
-    while true do
-		profile = DataManager.Profiles[plr]
-        if profile then break end
-        task.wait(0.1)
-    end
-
-
-	local torso = char.Torso
-	char:SetAttribute("CurrentWeapon", "Fists")
-	char:SetAttribute("Element", "Astral")
-	char:SetAttribute("Stamina", 100)
-	char:SetAttribute("MaxStamina", 100)
-	char:SetAttribute("InCombat", false)
-	char:SetAttribute("Dodges", 0)
-	char.Parent = workspace.Characters
-	HelpfullModule.ChangeWeapon(plr, char, torso)
-	
-	plr.CharacterAppearanceLoaded:Connect(function(char)
-		for i, v in pairs(char:GetDescendants()) do
-			if v.Parent:IsA("Accessory") and v:IsA("Part") then
-				v.CanTouch = false
-				v.CanQuery = false
+	plr.CharacterAdded:Connect(function(char)
+		local profile
+			while true do
+				profile = DataManager.Profiles[plr]
+				if profile then break end
+				task.wait(0.1)
 			end
-		end
+		
+		
+			local torso = char.Torso
+			char:SetAttribute("CurrentWeapon", "Fists")
+			char:SetAttribute("Element", "Astral")
+			char:SetAttribute("Stamina", 100)
+			char:SetAttribute("MaxStamina", 100)
+			char:SetAttribute("InCombat", false)
+			char:SetAttribute("Dodges", 0)
+			char.Parent = workspace.Characters
+			HelpfullModule.ChangeWeapon(plr, char, torso)
+			
+			plr.CharacterAppearanceLoaded:Connect(function(char)
+				for i, v in pairs(char:GetDescendants()) do
+					if v.Parent:IsA("Accessory") and v:IsA("Part") then
+						v.CanTouch = false
+						v.CanQuery = false
+					end
+				end
+			end)
 	end)
 end)
 
@@ -173,177 +178,29 @@ DodgeEvent.OnServerEvent:Connect(function(plr, action, direction)
 		return
 	end
 
-	local function setCollisions(state)
-		for _, part in pairs(char:GetChildren()) do
-			if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Name ~= char:GetAttribute("CurrentWeapon") then
-				part.CanCollide = state
-			end
-		end
-	end
 
-	----------------------------------------------------------------
-	-- DODGE / ROLL
-	----------------------------------------------------------------
 	if action == "Dodge" then
-		
-		if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true,nil) then
-			return
-		end
-		if DodgeIsCancelling[plr] then
-			return
-		end
-		if DodgeDebounce[plr] and DodgeCancelCooldown[plr] then
-			return
-		end
-
-		DodgeDebounce[plr] = true
-		DodgeCanCancel[plr] = false
-		char:SetAttribute("Dodging", true)
-		setCollisions(false)
-
-		local weapon = char:GetAttribute("CurrentWeapon")
-		ServerCombatModule.stopAnims(hum)
-
-		-- Determine which animation to play
-		local animName = direction
-		if direction == "None" or direction == "S" then
-			animName = "S" -- Default back dodge
-		end
-
-		local dodgeFolder = WeaponsAnimations[weapon].Dodging
-		local animToPlay = dodgeFolder[animName] or dodgeFolder.S -- Fallback to Back dodge
-
-		local anim = hum:LoadAnimation(animToPlay)
-		DodgeAnims[plr] = anim
-		anim:Play()
-
-		anim:GetMarkerReachedSignal("CancelStart"):Connect(function()
-			DodgeCanCancel[plr] = true
-		end)
-
-		anim:GetMarkerReachedSignal("CancelEnd"):Connect(function()
-			DodgeCanCancel[plr] = false
-		end)
-
-		task.delay(anim.Length + 0.25, function()
-			if DodgeAnims[plr] == anim then
-				char:SetAttribute("Dodging", false)
-				setCollisions(true)
-				DodgeCanCancel[plr] = false
-			end
-		end)
-
-		task.delay(3, function()
-
-			DodgeDebounce[plr] = false
-		end)
-
-	----------------------------------------------------------------
-	-- DODGE CANCEL
-	----------------------------------------------------------------
+		DodgeModule.Dodge(char,plr,direction)
 	elseif action == "DodgeCancel" then
-		if not char:GetAttribute("Dodging") then
-			return
-		end
-		if DodgeCancelCooldown[plr] then
-			return
-		end
-		if not DodgeCanCancel[plr] then
-			return
-		end
-		if DodgeIsCancelling[plr] then
-			return
-		end
-
-		DodgeCancelCooldown[plr] = true
-		DodgeCanCancel[plr] = false
-		DodgeIsCancelling[plr] = true
-
-		-- STOP DODGE ANIM
-		if DodgeAnims[plr] then
-			DodgeAnims[plr]:Stop(0.1)
-		end
-
-		local weapon = char:GetAttribute("CurrentWeapon")
-		local cancelAnim = hum:LoadAnimation(WeaponsAnimations[weapon].Dodging.DodgeCancel)
-		cancelAnim:Play()
-
-		setCollisions(true)
-
-		-- CONFIRM CANCEL (CLIENT VELOCITY RESET)
-		DodgeEvent:FireClient(plr, "DodgeCancelConfirmed")
-
-		-- RELEASE LOCK AFTER CANCEL ANIM
-		task.delay(cancelAnim.Length, function()
-			DodgeIsCancelling[plr] = false
-			DodgeDebounce[plr] = false -- allow re-roll
-		end)
-
-		-- CANCEL COOLDOWN
-		task.delay(0.3, function()
-			DodgeCancelCooldown[plr] = nil
-		end)
+		DodgeModule.DodgeCancel(char,plr)
 	end
 end)
 
 BlockingEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
-	local hum = char:WaitForChild("Humanoid")
-	local torso = char.Torso
 
-	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	if HelpfullModule.CheckForAttributes(char, true, true, true, nil, true, false, true,nil) then
 		return
 	end
 
 	if action == "Blocking" then
-		SoundsModule.PlaySound(WeaponsSounds[currentWeapon].Blocking.BlockingStart, torso)
-
-		BlockingAnims[plr] = hum:LoadAnimation(WeaponsAnimations[currentWeapon].Blocking.Blocking)
-		BlockingAnims[plr]:Play()
-
-		char:SetAttribute("IsBlocking", true)
-
-		local walkSpeed = WeaponsStatsModule.getStats(currentWeapon).BlockingWalkSpeed
-
-		hum.WalkSpeed = walkSpeed
-		hum.JumpHeight = 0
+		BlockModule.ActivateBlocking(char)
 	elseif action == "UnBlocking" and char:GetAttribute("IsBlocking") then
-		SoundsModule.PlaySound(WeaponsSounds[currentWeapon].Blocking.BlockingStop, torso)
-
-		BlockingAnims[plr]:Stop()
-		char:SetAttribute("Parrying", false)
-		char:SetAttribute("IsBlocking", false)
-		char:SetAttribute("LastStopTime", tick())
-
-		HelpfullModule.ResetMobility(char)
+		BlockModule.DeactivateBlocking(char)
 	elseif
-		action == "Parry"
-		and not char:GetAttribute("IsBlocking")
-		and not char:GetAttribute("Parrying")
-		and not char:GetAttribute("ParryCD")
+		action == "Parry" and not char:GetAttribute("IsBlocking") and not char:GetAttribute("Parrying") and not char:GetAttribute("ParryCD")
 	then
-		if HelpfullModule.CheckForAttributes(char, true, true, true, true, true, true, true) then
-			return
-		end
-		char:SetAttribute("Parrying", true)
-		hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed / 3)
-		hum.JumpHeight = 0
-		ParryAnims[plr] = hum:LoadAnimation(WeaponsAnimations[currentWeapon].Blocking.TryParry)
-		ParryAnims[plr]:Play()
-
-		VFX_Event:FireAllClients("Highlight", char, 1, Color3.new(1, 1, 0), Color3.new(0.894118, 0.607843, 0.0588235))
-
-		ParryAnims[plr]:GetMarkerReachedSignal("ParryOver"):Connect(function()
-			char:SetAttribute("Parrying", false)
-			char:SetAttribute("ParryCD", true)
-			task.wait(1)
-			char:SetAttribute("ParryCD", false)
-		end)
-
-		ParryAnims[plr]:GetMarkerReachedSignal("StunOver"):Connect(function()
-			HelpfullModule.ResetMobility(char)
-		end)
+		ParryModule.ParryAttempt(char,plr)
 	end
 end)
 

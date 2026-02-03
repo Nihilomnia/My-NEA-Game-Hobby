@@ -1,5 +1,9 @@
 local RS = game:GetService("ReplicatedStorage")
 local uis = game:GetService("UserInputService")
+
+local DodgeVelocity = require(RS.Modules.Combat.DodgeVelocity)
+
+
 local Events = RS.Events
 
 local blockingEvent =  Events.Blocking
@@ -14,14 +18,6 @@ local debounce = false
 
 local plr = game:GetService("Players").LocalPlayer
 local char = plr.Character
-local hrp = char:WaitForChild("HumanoidRootPart")
-local hum = char:WaitForChild("Humanoid")
-local CurrentWeapon = char:GetAttribute("CurrentWeapon")
-
-
-local DODGE_SPEED = 35
-local DODGE_TIME = 0.73
-local currentDodgeForce
 
 
 local MOVE_KEYS = {
@@ -104,65 +100,17 @@ local function stopBlocking()
 	blockingEvent:FireServer("UnBlocking")
 end
 
-local function resetVelocity()
-    if currentDodgeForce then
-        currentDodgeForce:Destroy()
-        currentDodgeForce = nil
-    end
-    -- Stop the momentum so they don't slide after cancelling
-    hrp.AssemblyLinearVelocity = Vector3.zero 
-end
 
 
-local function doDodge()
-    if currentDodgeForce then
-        currentDodgeForce:Destroy()
-    end
-
-    local lv = Instance.new("LinearVelocity")
-    lv.Attachment0 = hrp:FindFirstChild("DodgeAttachment") or Instance.new("Attachment", hrp)
-    lv.MaxForce = 1e6
-    
-    -- Default direction and multipliers
-    local direction = Vector3.new()
-    local multiplier = 1
-
-    -- Logic for Direction and Force (3/4 = 0.75, 2/4 = 0.5)
-    if lastSentKey == "W" then
-        -- Forward
-        direction = hrp.CFrame.LookVector
-        multiplier = 1
-    elseif lastSentKey == "S" or lastSentKey == "None" then
-        -- Back (or Q on its own)
-        direction = -hrp.CFrame.LookVector
-        multiplier = 0.75
-    elseif lastSentKey == "A" then
-        -- Left
-        direction = -hrp.CFrame.RightVector
-        multiplier = 0.75
-    elseif lastSentKey == "D" then
-        -- Right
-        direction = hrp.CFrame.RightVector
-        multiplier = 0.75
-    end
-
-    -- Apply the final velocity
-	if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-		multiplier = multiplier * 0.5
-	end
-	
-    lv.VectorVelocity = direction * (DODGE_SPEED * multiplier)
-    lv.RelativeTo = Enum.ActuatorRelativeTo.World
-    lv.Parent = hrp
-
-    currentDodgeForce = lv
-    game.Debris:AddItem(lv, DODGE_TIME)
-end
 
 DodgeEvent.OnClientEvent:Connect(function(action)
     if action == "DodgeCancelConfirmed" then
-        resetVelocity()
+        DodgeVelocity.resetVelocity(char,plr)
     end
+
+	if action == "Dodge" then
+		DodgeVelocity.dodge(char,plr,lastSentKey)
+	end
 end)
 
 
@@ -175,7 +123,6 @@ uis.InputBegan:Connect(function(input, gp)
             DodgeEvent:FireServer("DodgeCancel")
         else
             blockingEvent:FireServer("Parry")
-			print("Parry instead")
         end
     end
 end)
@@ -190,21 +137,6 @@ uis.InputBegan:Connect(function(input, gp)
 		if lastSentKey == "None" then 
 			lastSentKey = "S"
 		end
-        
-        CurrentWeapon = char:GetAttribute("CurrentWeapon")
-
-
-		local DODGE_ANIM_ID = RS.Animations.Weapons[CurrentWeapon].Dodging[lastSentKey].AnimationId	
-
-        for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
-            if anim.Animation
-            and anim.Animation.AnimationId == DODGE_ANIM_ID then
-
-                anim:GetMarkerReachedSignal("Dodge"):Connect(function()
-                    doDodge()
-                end)
-            end
-        end
     end
 end)
 
@@ -286,7 +218,7 @@ uis.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 
--- Z X C Skills (Theese can be changed to any keys you want later on)
+-- R Z X C V  Skills (Theese can be changed to any keys you want later on)
 ---Comments indicate which move each key corresponds to so I dont get confused when add key rebind options later on
 
 uis.InputEnded:Connect(function(input,isTyping)

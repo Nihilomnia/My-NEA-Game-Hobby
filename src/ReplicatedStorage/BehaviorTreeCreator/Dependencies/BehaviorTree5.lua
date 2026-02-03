@@ -71,6 +71,8 @@ local BehaviorTree = {}
 
 local SUCCESS,FAIL,RUNNING = 1,2,3
 
+print("Hello nope")
+
 
 -- Used by the BehaviorTree Editor plugin 
 local RunningTreesFolder

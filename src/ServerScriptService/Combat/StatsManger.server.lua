@@ -15,20 +15,25 @@ end
 
 
 Players.PlayerAdded:Connect(function(plr)
-    -- Wait for profile to be ready
-    local profile
-    while true do
-		profile = DataManager.Profiles[plr]
-        if profile then break end
-        task.wait(0.1)
-	end
-	
-	local char = plr.Character
 
-	
-	local CurrentSlot = char:GetAttribute("CurrentSlot")
-	for statName, value in pairs(profile.Data[CurrentSlot].STAT_POINTS) do 
-		char:SetAttribute(statName, value)
-	end
-	
+	plr.CharacterAdded:Connect(function(char)
+		local profile
+			while true do
+				profile = DataManager.Profiles[plr]
+				if profile then break end
+				task.wait(0.1)
+			end
+			
+			local char = plr.Character
+		
+			
+			local CurrentSlot = char:GetAttribute("CurrentSlot")
+			for statName, value in pairs(profile.Data[CurrentSlot].STAT_POINTS) do 
+				char:SetAttribute(statName, value)
+			end
+			
+		
+	end)
+    -- Wait for profile to be ready
+    
 end)

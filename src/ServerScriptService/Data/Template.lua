@@ -73,6 +73,33 @@ return {
             Collar = ""
 		},
 
+		Skill_Slots = {
+			Combat = {
+				Slot1 = nil,
+				Slot2 = nil,
+				Slot3 = nil,
+				Slot4 = nil,
+			},
+
+			Mobility = {
+				Slot1 = nil,
+			},
+			
+			Support = {
+				Slot1 = nil,
+				Slot2 = nil,
+			},
+
+
+			WildCard ={
+				Slot1 = nil,
+			},
+
+
+			
+
+		},
+
 
 
 

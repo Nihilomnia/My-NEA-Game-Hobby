@@ -91,7 +91,7 @@ function Hitboxes.DestroyHitboxes(Character)
 	end
 
 	if not hitboxes then
-		print("[Hitboxes] No active hitboxes found for character:", Character.Name)
+		warn("[Hitboxes] No active hitboxes found for character: " .. Character.Name)
 	end
 	
 end

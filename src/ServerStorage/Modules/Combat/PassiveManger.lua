@@ -156,6 +156,16 @@ function PassiveManger.DefensivePassive(char, damage) -- This refers to when cha
 end
 
 function PassiveManger.DodgePassive(char, damage) -- This refers to when char dodges an attack or just dodges in general
+    local Element = char:GetAttribute("Element")
+    local Second_ModeCheck = char:GetAttribute("Mode2")
+
+    if Element == "Astral" then
+        print("If there was a passive for mode 1 it would be here")
+        if Second_ModeCheck then
+           print("This is where the dodge logic would go for the flashstep")
+        end
+    end
+
     
 end
 

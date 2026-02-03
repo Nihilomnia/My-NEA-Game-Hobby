@@ -141,8 +141,6 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 		if eChar:GetAttribute("Dodges") > 1 then
 			local hitAnim = WeaponsAnimations.TwinSpears.Dodge["Dodge"..char:GetAttribute("Combo")] -- Replace with actual dodge animations from the twinspears
 			eHum.Animator:LoadAnimation(hitAnim):Play()
-
-
 		else
 			eHum.Animator:LoadAnimation(Truehit):Play()
 		end
