@@ -16,6 +16,7 @@ local Combat_Data = require(SSModule.Combat.Data.CombatData)
 
 -- Tables
 local ParryAnims = Combat_Data.ParryAnims
+local ConfirmParry = {}
 
 local function getUniqueId(char)
 	local uid = char.Humanoid:FindFirstChild("UniqueId")
@@ -31,6 +32,8 @@ function ParryModule.ParryAttempt(char,plr)
 
 	if HelpfullModule.CheckForAttributes(char, true, true, true, true, true, true, true) then return end
 	char:SetAttribute("Parrying", true)
+	ConfirmParry[plr] = true
+	char:SetAttribute("Stunned", true)
 	hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed / 3)
 	hum.JumpHeight = 0
 
@@ -41,13 +44,17 @@ function ParryModule.ParryAttempt(char,plr)
 
 	ParryAnims[plr]:GetMarkerReachedSignal("ParryOver"):Connect(function()
 		char:SetAttribute("Parrying", false)
+		ConfirmParry[plr] = false
 		char:SetAttribute("ParryCD", true)
 		task.wait(1.2)
 		char:SetAttribute("ParryCD", false)
 	end)
 
-	ParryAnims[plr]:GetMarkerReachedSignal("StunOver"):Connect(function()
+
+	ParryAnims[plr].Stopped:Connect(function()
 		HelpfullModule.ResetMobility(char)
+		char:SetAttribute("Parrying", false)
+		char:SetAttribute("Stunned", false)
 	end)
 end
 

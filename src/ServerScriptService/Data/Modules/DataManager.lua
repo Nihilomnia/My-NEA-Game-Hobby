@@ -5,17 +5,33 @@ local DataManager = {}
 -- Store profiles from  ProfileStore
 DataManager.Profiles = {}
 
-function DataManager.IncreaseStat(plr,statName)
+function DataManager.IncreaseStat(plr,statName) -- This function handles the increase of stats,
     local profile = DataManager.Profiles[plr]
     if profile then
         local char = plr.Character
         local currentSlot = char:GetAttribute("CurrentSlot")
         local currentValue = profile.Data[currentSlot][statName]
-        profile.Data[currentSlot][statName] = currentValue + 1
+
+        if currentValue < 99 then 
+            profile.Data[currentSlot][statName] = currentValue + 1
+        else
+            print("You can't invest anymore into", statName)
+        end
     end
 end
 
-function DataManager.ChangeElemment(plr,newValue)
+
+
+function DataManager.IncreaseSkillPoints(plr,amount)
+    local profile = DataManager.Profiles[plr]
+    if profile then
+        local char = plr.Character
+        local currentSlot = char:GetAttribute("CurrentSlot")
+        profile.Data[currentSlot].SkillPoints = profile.Data[currentSlot].SkillPoints + amount
+    end
+end
+
+function DataManager.ChangeElemment(plr,newValue) -- This function will handle the changing of the player's moveset
     local profile = DataManager.Profiles[plr]
     if profile then
         local char = plr.Character

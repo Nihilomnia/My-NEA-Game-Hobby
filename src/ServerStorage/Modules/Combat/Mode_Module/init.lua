@@ -76,7 +76,7 @@ function module.Mode1(
 	EquipDebounce[Identifier] = true
 	char:SetAttribute("iframes", true)
 	char:SetAttribute("IsTransforming", true)
-	char:SetAttribute("Mode1", true)
+	
 
 	local element = char:GetAttribute("Element")
 	if element == nil or element == "..." then  
@@ -87,7 +87,7 @@ function module.Mode1(
 	local newWeapon = elementStats.Mode1
 
 	-- Load and play transformation animation
-	TransformAnims[Identifier] = hum:LoadAnimation(WeaponsAnimations.Transformations[element].Mode1)
+	TransformAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations.Transformations[element].Mode1)
 	rootPart.Anchored = true
 	TransformAnims[Identifier]:Play()
 
@@ -128,8 +128,7 @@ function module.Mode1(
 			-- Change to new weapon
 			HelpfulModule.ChangeWeapon(Identifier, char, torso)
 
-			local NewWeapon =  char:FindFirstChild(newWeapon)
-
+			
 			-- Setup weld
 			if Welds[Identifier] then
 				Welds[Identifier].Part0 = rightArm
@@ -146,7 +145,7 @@ function module.Mode1(
 			char:SetAttribute("IsTransforming", false)
 			char:SetAttribute("Equipped", true)
 			char:SetAttribute("iframes", false)
-			char:SetAttribute("Mode1", true) -- keep active
+			char:SetAttribute("Mode1", true)
 			EquipDebounce[Identifier] = false
 
 
@@ -199,7 +198,7 @@ function module.Mode2(
 	rootPart.Anchored = true
 
 	-- Load animation (placeholder until Mode2 animation is made)
-	TransformAnims[Identifier] = hum:LoadAnimation(WeaponsAnimations.Transformations[element].Mode1)
+	TransformAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations.Transformations[element].Mode1)
 
 	if plr then
 		Textmod.feed(dialogue, plr)
@@ -270,4 +269,114 @@ function module.Mode2(
 		end)
 end
 
+
+
+function module.Revert(
+	char : Model,
+	WeaponsAnimations,
+	Race,
+	EquipDebounce,
+	Welds,
+	TransformAnims,
+	EquipAnims,
+	IdleAnims,
+	WeaponsWeld
+)
+if not char or not char:FindFirstChild("Humanoid") then return end
+
+local hum = char:FindFirstChild("Humanoid")
+local torso = char:FindFirstChild("Torso")
+local rightArm = char:FindFirstChild("Right Arm")
+local plr = game.Players:GetPlayerFromCharacter(char)
+local Identifier = plr or getUniqueId(char)
+if not Identifier then return end
+if EquipDebounce[Identifier] then return end -- Prevent duplicate calls
+
+if char:GetAttribute("Mode1") then 
+	EquipDebounce[Identifier] = true
+	char:SetAttribute("iframes", true)
+	char:SetAttribute("IsTransforming", true)
+	
+
+	local newWeapon = "Fists"
+	TransformAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations.Transformations.Revert)
+	hum.WalkSpeed = 8
+	TransformAnims[Identifier]:Play()
+
+
+
+	if TransformConnections[Identifier] then
+		TransformConnections[Identifier]:Disconnect()
+	end
+
+
+	TransformConnections[Identifier] = TransformAnims[Identifier]
+		:GetMarkerReachedSignal("Transform")
+		:Connect(function()
+			TransformConnections[Identifier]:Disconnect()
+
+			for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
+				if anim.Name == "Swing1" or anim.Name == "Swing2" or anim.Name == "Swing3" or anim.Name == "Swing4" then
+					return
+				end
+			end
+
+			if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true,true,nil) then return end
+			
+			char:SetAttribute("CurrentWeapon", newWeapon)
+
+			for _, weapon in ipairs(WeaponsModels:GetChildren()) do
+				local existing = char:FindFirstChild(weapon.Name)
+				if existing then
+					existing:Destroy()
+				end
+			end
+
+			HelpfulModule.ChangeWeapon(Identifier, char, torso)
+
+			if Welds[Identifier] then
+				Welds[Identifier].Part0 = rightArm
+				Welds[Identifier].C0 = WeaponsWeld[newWeapon].HoldingWeaponWeld.C0
+			end
+
+			-- Load idle/equip animations
+			IdleAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Idle)
+			EquipAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Equip)
+
+			HelpfulModule.ResetMobility(char)
+			char:SetAttribute("IsTransforming", false)
+			char:SetAttribute("Equipped", true)
+			char:SetAttribute("iframes", false)
+			char:SetAttribute("Mode1", true)
+			EquipDebounce[Identifier] = false
+
+
+			if IdleAnims[Identifier] then
+				IdleAnims[Identifier]:Play()
+			end
+
+		end)
+		
+
+elseif char:GetAttribute("Mode2") then
+	-- It will most likely just be a stanadard Mode 1 call
+	-- But i need to remeber to take into consideration that Mode 2 changes the players/dummies items 
+	--- Also in all this i need to make sure that dummies cant revert
+
+else
+warn(char,"Is perfoming a false revert")
+end
+
+
+
+
+
+	
+end
+	
+
 return module
+
+
+
+

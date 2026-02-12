@@ -4,6 +4,8 @@ local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local SSModules = SS.Modules
+local Events = RS.Events
+local StaminaEvent = Events.Stamina
 
 local WeaponsModels = RS.Models.Weapons
 
@@ -199,4 +201,59 @@ function module.Ragdoll(char,ragdollTime)
 		char:SetAttribute("iframes",false)
 	end)
 end
+
+
+function module.ManageStamina(char,action)
+	local Stamina = char:GetAttribute("Stamina")
+	local Fail = false
+	local plr = Players:GetPlayerFromCharacter(char)
+
+	if action == "Dodge" then 
+		if Stamina >= 20 then 
+			Fail = false
+			char:SetAttribute("Stamina", (Stamina - 20))
+			return Fail
+		else
+			Fail = true
+			print(char, "Did not have enough stamina to perform a dodge")
+			return Fail
+		end
+	end
+
+	if action == "Swing" then
+		if Stamina >= 10 then 
+			Fail = false
+			char:SetAttribute("Stamina", (Stamina - 10))
+			return Fail
+	
+		else
+			Fail = true
+			if plr  then 
+				StaminaEvent:FireClient(plr, 10)
+			end
+			return Fail
+		end
+	end
+
+	if action == "Climb" then 
+		local StaminaDrain = 5
+		if Stamina >= StaminaDrain then
+			-- This is where the stamina drain logic would - tobe honest its possible i could put it as it own function as its going to be a repeat process
+		else
+			print(char,"Did not have enough stamina to climb")
+			Fail = true
+		    return Fail
+		end
+	end
+
+	return Fail
+end
+
+function module.ManageMana(char, Skill)
+	-- This is for when I start the spell and skill system fully
+end
+
+
+
+
 return module

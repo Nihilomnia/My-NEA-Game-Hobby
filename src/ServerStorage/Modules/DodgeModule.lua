@@ -93,11 +93,12 @@ end
 function DodgeModule.Dodge(char,plr,direction)
     local Identifier = plr or getUniqueId(char)
     if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true,nil) then return end
+    if HelpfullModule.ManageStamina(char, "Dodge") then return end
    	if DodgeIsCancelling[plr] then return end
 	if DodgeDebounce[plr] and DodgeCancelCooldown[plr] then return end
 
     local hum = char.Humanoid
-    local Currentweapon = char:GetAttribute("CurrentWeapon")
+    local currentweapon = char:GetAttribute("CurrentWeapon")
  
     DodgeDebounce[Identifier] = true
     DodgeCanCancel[Identifier] = false
@@ -116,7 +117,7 @@ function DodgeModule.Dodge(char,plr,direction)
 		animName = "S" -- Default back dodge
 	end
 
-    local dodgeFolder = WeaponsAnimations[Currentweapon].Dodging
+    local dodgeFolder = WeaponsAnimations[currentweapon].Dodging
     local animToPlay = dodgeFolder[animName] or dodgeFolder.S
 
     local anim = hum:LoadAnimation(animToPlay)
@@ -152,6 +153,7 @@ end
 
 function DodgeModule.DodgeCancel(char,plr)
     local Identifier = plr or getUniqueId(char)
+    local hum = char.Humanoid
     if not char:GetAttribute("Dodging") then return  end
     if DodgeCancelCooldown[Identifier] then
         return
@@ -171,6 +173,10 @@ function DodgeModule.DodgeCancel(char,plr)
     if DodgeAnims[Identifier] then
         DodgeAnims[Identifier]:Stop(0.1)
     end
+
+    local weapon = char:GetAttribute("CurrentWeapon")
+    local cancelAnim = hum:LoadAnimation(WeaponsAnimations[weapon].Dodging.DodgeCancel)
+    cancelAnim:Play()
 
     -- CONFIRM CANCEL (CLIENT VELOCITY RESET)
     if plr then

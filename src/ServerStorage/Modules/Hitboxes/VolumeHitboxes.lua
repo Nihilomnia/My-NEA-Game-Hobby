@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local TS = game:GetService("TweenService")
 
 
 local Hitboxes = {}
@@ -74,11 +75,17 @@ function Hitboxes.DestroyHitboxes(Character)
 		warn("[Hitboxes] DestroyHitboxes called with nil Character.")
 		return
 	end
-
 	local Player = Players:GetPlayerFromCharacter(Character)
 	local Identifier = Player or getUniqueId(Character)
-
 	local hitboxes = Hitboxes.ActiveHitboxes[Identifier]
+
+    if not hitboxes then
+		warn("[Hitboxes] No active hitboxes found for character: " .. Character.Name)
+		return
+	end
+	
+
+	
 	if hitboxes then
 		for _, hitbox in ipairs(hitboxes) do
 			if hitbox and hitbox.Parent then
@@ -90,9 +97,18 @@ function Hitboxes.DestroyHitboxes(Character)
 		Hitboxes.ActiveHitboxes[Identifier] = nil
 	end
 
-	if not hitboxes then
-		warn("[Hitboxes] No active hitboxes found for character: " .. Character.Name)
+	
+	
+end
+
+function Hitboxes.RangedHitbox(Size: Vector3, Attachment:Attachment, Character: Model, ExplodeOnImpact,MultiHit, LifeTime, OnHit)
+	-- This is the start of the ranged hitbox system 
+
+	if not Character or not Attachment then
+		warn("[Hitboxes] Invalid Character or Attachment passed.")
+		return
 	end
+
 	
 end
 
