@@ -1,13 +1,31 @@
-local player = game.Players.LocalPlayer
+local plr = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local PlayerGui = plr:WaitForChild("PlayerGui")
+local StatusBars = PlayerGui:WaitForChild("StatusBars")
 
-player.CharacterAdded:Connect(function(char)
+
+
+local function ManageMDBar(char)
+    
+end
+
+
+
+
+plr.CharacterAdded:Connect(function(char)
    
     local torso = char:WaitForChild("Torso")
 
-    local gui = player:WaitForChild("PlayerGui"):WaitForChild("StatusBars"):Clone()
-    gui.Adornee = torso
-    gui.Parent = torso
+    
+    StatusBars.Adornee = torso
+    StatusBars.Parent = torso
 
     -- Move it right & slightly downward
-    gui.StudsOffset = Vector3.new(4.5, 0, 0) 
+    StatusBars.StudsOffset = Vector3.new(4.5, 0, 0) 
 end)
+
+
+
+
+
+

@@ -19,6 +19,14 @@ local CONFIG = {
 		BASE_HIGH_STAMINA = 25,
 		BASE_LOW_STAMINA = 15,
 	},
+
+	SPT = {
+
+		BASE_MANA = 250,
+		BASE_HIGH_MANA = 50,
+		BASE_LOW_MANA = 30,
+
+	},
 	
 }
 
@@ -81,9 +89,9 @@ local function setupStamina(char)
 	sync(char)
 
 	char:GetAttributeChangedSignal("END"):Connect(function()
+		local Orginal = char:GetAttribute("Stamina")
 		sync(char)
 		if char:GetAttribute("InCombat") then
-			local Orginal = char:GetAttribute("Stamina")
 			char:SetAttribute("Stamina", Orginal)
 		end
 
@@ -93,16 +101,63 @@ local function setupStamina(char)
 end
 
 
-local function setupMF(char) -- MF stands for Mental Fortitude its shorter here for ease of typing 
-	-- What should Mental FOritdude Scale with? Prob SPT(Spirit)
+local function setupMF(char) -- MF stands for Mental Fatigue its shorter here for ease of typing 
+	-- What should Mental Fatigue Scale with? Prob SPT(Spirit)
+	
+
+	
 	
 end
 
+local function setupMana(char)
+	local MaxMana = 0
 
-local function SetupMana(char)
-	-- Mana should definately scale with SPT
-	-- A good idea might be to use the Stamina scaling forulua as a base
+	local function sync(char)
+		local SPT = char:GetAttribute("SPT") or 0
+
+		if SPT == 0 then
+			MaxMana = CONFIG.SPT.BASE_MANA
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+		end
+	
+		if SPT >= 1 and SPT <= 15 then
+			MaxMana = math.ceil(80 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 1) / 14))
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+			print("MaxSet")
+		elseif SPT >= 16 and SPT <= 35 then
+			MaxMana = math.ceil(105 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 15) / 15))
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+		elseif SPT >= 36 and SPT <= 60 then
+			MaxMana = math.ceil(130 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 30) / 20))
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+		elseif SPT >= 61 and SPT <= 99 then
+			MaxMana = math.ceil(155 + CONFIG.SPT.BASE_LOW_MANA * ((SPT - 50) / 49))
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+
+		end
+	end
+	sync(char)
+
+	char:GetAttributeChangedSignal("END"):Connect(function()
+		local Orginal = char:GetAttribute("Stamina")
+		sync(char)
+		if char:GetAttribute("InCombat") then
+			char:SetAttribute("Stamina", Orginal)
+		end
+
+		print("New Target for MANA = {", MaxMana, "}")
+		
+	end)
 end
+
+
+
+
 
 Players.PlayerAdded:Connect(function(plr)
 	plr.CharacterAdded:Connect(function(char)
@@ -122,5 +177,6 @@ Players.PlayerAdded:Connect(function(plr)
 		end
 		setupHealth(char)
 		setupStamina(char)
+		setupMana(char)
 	end)
 end)

@@ -27,6 +27,7 @@ local CONFIG = {
 
 local connectionRunning_Blocking = {}
 local connectionRunning_Stamina = {}
+local connectionRunning_Mana = {}
 
 local function WaitForAttributes(char, attributeList, timeout)
 	timeout = timeout or 5

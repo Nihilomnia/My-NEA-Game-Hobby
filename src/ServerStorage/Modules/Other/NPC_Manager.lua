@@ -13,7 +13,7 @@ local Signal = require(SSModules.Packages.Signal) -- I think using signl to send
 local NPCFolder = game.workspace.NPC
 local NPCModels = RS.Models.NPC 
 local Humanoid_NPC_TEMPLATE = NPCModels.NPC_Template
-local NPC_Brainfolder = ... -- This the folder will store all the brain scripts that call their respective behavior treee
+local NPC_Brainfolder = RS.Brains
 
 
 
