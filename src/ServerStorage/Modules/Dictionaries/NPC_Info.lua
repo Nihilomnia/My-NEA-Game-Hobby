@@ -11,12 +11,26 @@ local info = {
 		Drops = {},
 	},
 
-	[""] = {
+	["Bandit"] = {
 		Type = "SmallFry",
 		Race = "Anomaly",
 		MobType = "Humanoid",
 		Element = "Astral",
-		Health = 10,000,
+		Chest = false,
+		Health = 10000,
+		Skills = {},
+		Talents = {},
+		Drops = {},
+	},
+
+	["Boss"] = {
+		Type = "Boss",
+		Race = "Anomaly",
+		MobType = "Humanoid",
+		Element = "...",
+		Chest = true,
+		ChestType = "...",
+		Health = 10000,
 		Skills = {},
 		Talents = {},
 		Drops = {},

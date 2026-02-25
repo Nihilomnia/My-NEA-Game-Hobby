@@ -13,6 +13,7 @@ local combatEvent = Events.Combat
 local Moves_Event = Events.SkillEvent
 local DodgeEvent = Events.Dodge
 local updateEvent = Events.UpdateMovement
+local InventoryEvent = Events.InventoryEvent
 
 local debounce = false 
 
@@ -27,7 +28,7 @@ local MOVE_KEYS = {
 	[Enum.KeyCode.D] = "D"
 }
 
-local heldKeys = {} -- This acts as our "Stack"
+local heldKeys = {} 
 local lastSentKey = "None"
 
 
@@ -48,15 +49,30 @@ local function updateMovementAttribute()
 	end
 end
 
+
+
+--------------------------------------------------------------------------------------
+-- Misc Keybinds
+--------------------------------------------------------------------------------------
+
+uis.InputBegan:Connect(function(input,isTyping)
+	if isTyping  then return end
+
+	if input == Enum.KeyCode.Backspace then
+		InventoryEvent:FireServer("ItemDrop")
+	end
+
+end)
+
 --------------------------------------------------------------------------------------
 -- Movement  Tracking
 --------------------------------------------------------------------------------------
 uis.InputBegan:Connect(function(input, isTyping)
-	if isTyping then return end -- Ignore if typing in chat
+	if isTyping then return end 
 	
 	local keyName = MOVE_KEYS[input.KeyCode]
 	if keyName then
-		-- Check if key is already in table (to prevent duplicates from key-repeat)
+		
 		for _, v in ipairs(heldKeys) do
 			if v == keyName then return end
 		end
@@ -266,14 +282,22 @@ uis.InputEnded:Connect(function(input,isTyping)
 
 end)
 ------------------------------------------------------------------------------------------
--- Weapon Equip/Unequip
+-- Weapon Equip/Unequip and Revert Transformations
 ------------------------------------------------------------------------------------------
 
 uis.InputEnded:Connect(function(input,isTyping)
 	if isTyping then return end 
 	
 	if input.keyCode == Enum.KeyCode.E then
-		WeaponsEvent:FireServer("Equip/UnEquip")
+		if char:GetAttribute("Mode2") then return end
+
+		if char:GetAttribute("Mode1") then 
+			Transform:FireServer("Revert")
+		else
+           WeaponsEvent:FireServer("Equip/UnEquip")
+		end
+		
+		
 	end
 end)
 

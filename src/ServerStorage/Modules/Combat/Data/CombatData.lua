@@ -9,4 +9,5 @@ CombatData.ParryAnims = {}
 CombatData.DodgeAnims = {}
 CombatData.EquipDebounce = {}
 CombatData.DodgeDebounce = {}
+CombatData.ActiveStatusEffects = {}
 return CombatData

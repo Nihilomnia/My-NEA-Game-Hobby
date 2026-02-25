@@ -1,8 +1,29 @@
 local module = {}
 
-local TweenService = game:GetService("TweenService")
-local Debris = game:GetService("Debris")
-local s = [[info face="Minecraft V3 Final" size=18 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=1,1,1,1 spacing=1,1
+-- Configuration
+local CONFIG = {
+	MAX_LINE_WIDTH = 800, -- Auto-wrap threshold
+	LETTER_DELAY = 0.1, -- Time between letters
+	LINE_GAP = 2, -- Time between dialogue lines
+	FADE_IN_TIME = 0.1, -- Letter fade-in duration
+	FADE_OUT_TIME = 0.03, -- Letter fade-out step time
+	READ_TIME = 1.5, -- Time to read before fade-out
+
+	-- Outline/Shadow settings
+	USE_OUTLINE = true, -- true = 8-way outline, false = shadow only
+	OUTLINE_COLOR = Color3.new(0, 0, 0),
+	OUTLINE_TRANSPARENCY = 0.3, -- 0 = opaque, 1 = invisible
+	SHADOW_OFFSET = Vector2.new(2, 2), -- Only used if USE_OUTLINE = false
+
+	-- Shake settings
+	SHAKE_MAGNITUDE = 5,
+	SHAKE_SPEED = 0.05,
+}
+
+--- S is the raw font info
+
+local s =
+	[[info face="Minecraft V3 Final" size=18 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=1,1,1,1 spacing=1,1
 common lineHeight=18 base=14 scaleW=138 scaleH=138 pages=1 packed=0
 page id=0 file="Minecraft V3 Final.png"
 chars count=91
@@ -100,8 +121,7 @@ char id=8470 x=0 y=102 width=20 height=14 xoffset=-2 yoffset=1 xadvance=18 page=
 
 ]]
 
-local fontMap = 'rbxassetid://140620201788732'
-local RunService = game:GetService("RunService")
+local fontMap = "rbxassetid://140620201788732"
 
 -----
 
@@ -111,14 +131,15 @@ info.fontInfo = {}
 info.characterTable = {}
 info.kernings = {}
 
-local init, _ = s:find('kernings')
+local init, _ = s:find("kernings")
 if init then
-	local kernings = s:sub(init, s:len()):split('\n')
+	local kernings = s:sub(init, s:len()):split("\n")
 
 	local kerningsTable = info.kernings
 
-	for i,v in ipairs(kernings) do
-		local first, second, amount = v:match('kerning first=([%-?%.?%d?]+) second=([%-?%.?%d?]+) amount=([%-?%.?%d?]+)')
+	for i, v in ipairs(kernings) do
+		local first, second, amount =
+			v:match("kerning first=([%-?%.?%d?]+) second=([%-?%.?%d?]+) amount=([%-?%.?%d?]+)")
 		if first then
 			kerningsTable[utf8.char(first)] = kerningsTable[utf8.char(first)] or {}
 			kerningsTable[utf8.char(first)][utf8.char(second)] = amount
@@ -126,16 +147,16 @@ if init then
 	end
 	s = s:sub(1, init - 1)
 end
-local split = s:split('\n')
+local split = s:split("\n")
 
 local characterTable = info.characterTable
 
 for i = 3, 1, -1 do
-	local infoThisIteration = split[i]:split(' ')
-	for i,v in ipairs(infoThisIteration) do
-		local field, value = unpack(v:split('='))
+	local infoThisIteration = split[i]:split(" ")
+	for i, v in ipairs(infoThisIteration) do
+		local field, value = unpack(v:split("="))
 		if field and value then
-			field, value = field:gsub('"', ''), value:gsub('"', '')
+			field, value = field:gsub('"', ""), value:gsub('"', "")
 			info.fontInfo[field] = tonumber(value) or value
 		end
 	end
@@ -145,37 +166,39 @@ table.remove(split, 1)
 
 for i = #split, 1, -1 do
 	local v = split[i]
-	local charId, x, y, width, height, xOffset, yOffset, xAdvance, page, chnl = v:match('char id=([%-?%.?%d?]+) x=([%-?%.?%d?]+) y=([%-?%.?%d?]+) width=([%-?%.?%d?]+) height=([%-?%.?%d?]+) xoffset=([%-?%.?%d?]+) yoffset=([%-?%.?%d?]+) xadvance=([%-?%.?%d?]+) page=([%-?%.?%d?]+) chnl=([%-?%.?%d?]+)')
+	local charId, x, y, width, height, xOffset, yOffset, xAdvance, page, chnl = v:match(
+		"char id=([%-?%.?%d?]+) x=([%-?%.?%d?]+) y=([%-?%.?%d?]+) width=([%-?%.?%d?]+) height=([%-?%.?%d?]+) xoffset=([%-?%.?%d?]+) yoffset=([%-?%.?%d?]+) xadvance=([%-?%.?%d?]+) page=([%-?%.?%d?]+) chnl=([%-?%.?%d?]+)"
+	)
 	if charId then
-		table.remove(split,i)
+		table.remove(split, i)
 		table.insert(characterTable, {
-			charId = charId;
-			x = x;
-			y = y;
-			width = width;
-			height = height;
-			xOffset = xOffset;
-			yOffset = yOffset;
-			xAdvance = xAdvance;
-			page = page;
-			chnl = chnl
+			charId = charId,
+			x = x,
+			y = y,
+			width = width,
+			height = height,
+			xOffset = xOffset,
+			yOffset = yOffset,
+			xAdvance = xAdvance,
+			page = page,
+			chnl = chnl,
 		})
 	end
 end
 
 local size = 36
 
-local stringFolder = Instance.new('Folder')
+local stringFolder = Instance.new("Folder")
 stringFolder.Name = info.fontInfo.face
 stringFolder.Parent = script
 
-for i,v in ipairs(characterTable) do
-	local mainFrame = Instance.new('Frame')
+for i, v in ipairs(characterTable) do
+	local mainFrame = Instance.new("Frame")
 	mainFrame.Size = UDim2.fromOffset(v.xAdvance or v.width, size)
 	mainFrame.BackgroundTransparency = 1
 	mainFrame.Name = utf8.char(v.charId)
 	mainFrame.BackgroundTransparency = 1
-	local newLabel = Instance.new('ImageLabel')
+	local newLabel = Instance.new("ImageLabel")
 	newLabel.Image = fontMap
 	newLabel.Size = UDim2.fromOffset(v.width, v.height)
 	newLabel.Parent = mainFrame
@@ -214,7 +237,11 @@ local function parseTags(str)
 			end
 
 			local tagText = str:sub(startTag + 1, endTag - 1)
-			if tagText:sub(1, 1) == "/" then
+
+			-- Handle pause tag specially (it's self-closing)
+			if tagText:match("^pause:%d+%.?%d*$") then
+				table.insert(segments, { text = "", tags = { tagText }, isPause = true })
+			elseif tagText:sub(1, 1) == "/" then
 				local closing = tagText:sub(2)
 				for idx = #tagStack, 1, -1 do
 					if tagStack[idx]:match("^colour:") and closing:match("^colour:") then
@@ -250,8 +277,20 @@ local function applyShakeEffect(letterFrame, imageLabel)
 
 	task.spawn(function()
 		while isShaking do
-			letterFrame.Position = originalPosition + UDim2.new(0, math.random(-shakeMagnitude, shakeMagnitude), 0, math.random(-shakeMagnitude, shakeMagnitude))
-			imageLabel.Position = originalImagePosition + UDim2.new(0, math.random(-shakeMagnitude, shakeMagnitude), 0, math.random(-shakeMagnitude, shakeMagnitude))
+			letterFrame.Position = originalPosition
+				+ UDim2.new(
+					0,
+					math.random(-shakeMagnitude, shakeMagnitude),
+					0,
+					math.random(-shakeMagnitude, shakeMagnitude)
+				)
+			imageLabel.Position = originalImagePosition
+				+ UDim2.new(
+					0,
+					math.random(-shakeMagnitude, shakeMagnitude),
+					0,
+					math.random(-shakeMagnitude, shakeMagnitude)
+				)
 			task.wait(cycleTime)
 		end
 	end)
@@ -362,6 +401,18 @@ local function feedSingle(str, plr, isLast)
 
 	-- Loop through the parsed message segments and apply effects
 	for _, segment in ipairs(parsed) do
+		-- Handle pause tag
+		if segment.isPause then
+			for _, tag in ipairs(segment.tags) do
+				if tag:match("^pause:%d+%.?%d*$") then
+					local duration = tonumber(tag:match("pause:(%d+%.?%d*)"))
+					task.wait(duration)
+				end
+			end
+			continue 
+		end
+
+	
 		local graphemes = {}
 		for i, v in utf8.graphemes(segment.text) do
 			table.insert(graphemes, segment.text:sub(i, v))
@@ -369,6 +420,7 @@ local function feedSingle(str, plr, isLast)
 
 		for _, char in ipairs(graphemes) do
 			local template = stringFolder:FindFirstChild(char)
+			-- Around line ~240, replace the image creation section with this:
 			if template then
 				local newLetter = template:Clone()
 				newLetter.LayoutOrder = letterCount
@@ -378,6 +430,39 @@ local function feedSingle(str, plr, isLast)
 
 				local image = newLetter:FindFirstChildWhichIsA("ImageLabel")
 				if image then
+					-- CREATE OUTLINE/SHADOW
+					local outline = image:Clone()
+					outline.Name = "Outline"
+					outline.ImageColor3 = Color3.new(0, 0, 0) -- Black outline
+					outline.ZIndex = image.ZIndex - 1
+					outline.ImageTransparency = 1
+					outline.Parent = newLetter
+
+					-- Create 8-directional outline (or 4 for performance)
+					local outlineOffsets = {
+						{ -1, -1 },
+						{ 0, -1 },
+						{ 1, -1 }, -- Top row
+						{ -1, 0 },
+						{ 1, 0 }, -- Middle (skip center)
+						{ -1, 1 },
+						{ 0, 1 },
+						{ 1, 1 }, -- Bottom row
+					}
+
+					-- For simpler shadow (instead of outline), use just this:
+					-- local outlineOffsets = {{2, 2}} -- Shadow offset
+
+					for i, offset in ipairs(outlineOffsets) do
+						local outlineClone = outline:Clone()
+						outlineClone.Position = image.Position + UDim2.fromOffset(offset[1], offset[2])
+						outlineClone.Name = "Outline" .. i
+						outlineClone.Parent = newLetter
+					end
+
+					outline:Destroy() -- Remove the template clone
+
+					-- Set main image transparency
 					image.ImageTransparency = 1
 
 					-- Apply color if specified
@@ -391,24 +476,29 @@ local function feedSingle(str, plr, isLast)
 						end
 					end
 
-					-- Apply fade effect
+					-- Apply fade effect to BOTH main image AND outlines
 					local fade = TweenService:Create(image, TweenInfo.new(0.1), { ImageTransparency = 0 })
 					fade:Play()
 
-					-- Check and play sound if specified in tags
+					for _, child in ipairs(newLetter:GetChildren()) do
+						if child.Name:match("^Outline") and child:IsA("ImageLabel") then
+							local outlineFade =
+								TweenService:Create(child, TweenInfo.new(0.1), { ImageTransparency = 0.3 })
+							outlineFade:Play()
+						end
+					end
+
+					-- Rest of the existing code (shake, sound, etc.)
 					for _, tag in ipairs(segment.tags) do
 						if tag == "shake" then
 							stopShaking = applyShakeEffect(newLetter, image)
 						elseif tag:match("^sound:rbxassetid://%d+$") then
 							local soundId = tag:match("sound:rbxassetid://(%d+)")
-
 							local sound = Instance.new("Sound")
 							sound.SoundId = "rbxassetid://" .. soundId
 							sound.Volume = 1
 							sound.Parent = plr.PlayerGui or workspace.CurrentCamera
 							sound:Play()
-
-							-- Clean up the sound after 2 seconds
 							Debris:AddItem(sound, 2)
 						end
 					end
@@ -425,16 +515,26 @@ local function feedSingle(str, plr, isLast)
 	for t = 0, 1, 0.1 do
 		for _, letter in ipairs(newFrame:GetChildren()) do
 			if letter:IsA("Frame") then
+				-- Fade main image
 				local img = letter:FindFirstChildWhichIsA("ImageLabel")
 				if img then
 					img.ImageTransparency = t
+				end
+
+				-- Fade outlines
+				for _, child in ipairs(letter:GetChildren()) do
+					if child.Name:match("^Outline") and child:IsA("ImageLabel") then
+						child.ImageTransparency = math.clamp(0.3 + (t * 0.7), 0.3, 1)
+					end
 				end
 			end
 		end
 		task.wait(0.03)
 	end
 
-	if stopShaking then stopShaking() end
+	if stopShaking then
+		stopShaking()
+	end
 	newFrame:Destroy()
 
 	-- Fade out header if last message
@@ -451,12 +551,99 @@ local function feedSingle(str, plr, isLast)
 	end
 end
 
-local module = {}
+local MAX_LINE_WIDTH = 800 -- Maximum width in pixels before wrapping
+
+local function calculateTextWidth(text)
+	local width = 0
+	for i, unit in utf8.graphemes(text) do
+		local char = text:sub(i, unit)
+		local template = stringFolder:FindFirstChild(char)
+		if template then
+			width = width + template.Size.X.Offset
+		end
+	end
+	return width
+end
+
+local function wrapText(str, maxWidth)
+	local lines = {}
+	local currentLine = ""
+	local currentWidth = 0
+
+	-- Split by existing newlines first
+	for line in str:gmatch("[^\n]+") do
+		-- Split line into words
+		local words = {}
+		for word in line:gmatch("%S+") do
+			table.insert(words, word)
+		end
+
+		for i, word in ipairs(words) do
+			local wordWidth = calculateTextWidth(word)
+			local spaceWidth = calculateTextWidth(" ")
+
+			-- Check if adding this word would exceed max width
+			if currentWidth + wordWidth + (currentWidth > 0 and spaceWidth or 0) > maxWidth then
+				-- Start new line
+				if currentLine ~= "" then
+					table.insert(lines, currentLine)
+					currentLine = word
+					currentWidth = wordWidth
+				else
+					-- Word itself is too long, force it on its own line
+					table.insert(lines, word)
+					currentLine = ""
+					currentWidth = 0
+				end
+			else
+				-- Add word to current line
+				if currentLine ~= "" then
+					currentLine = currentLine .. " " .. word
+					currentWidth = currentWidth + spaceWidth + wordWidth
+				else
+					currentLine = word
+					currentWidth = wordWidth
+				end
+			end
+		end
+
+		-- Add remaining line
+		if currentLine ~= "" then
+			table.insert(lines, currentLine)
+			currentLine = ""
+			currentWidth = 0
+		end
+	end
+
+	return lines
+end
 
 function module.feed(input, plr)
 	local lines = typeof(input) == "table" and input or { input }
 
+	-- Wrap each line
+	local wrappedLines = {}
 	for _, line in ipairs(lines) do
+		-- Extract header before wrapping
+		local headerText = line:match("<h>(.-)<h>")
+		local mainText = line:gsub("<h>.-<h>", "")
+
+		-- Wrap the main text
+		local wrapped = wrapText(mainText, MAX_LINE_WIDTH)
+
+		-- Add header back to first wrapped line
+		if headerText then
+			wrapped[1] = "<h>" .. headerText .. "<h>" .. wrapped[1]
+		end
+
+		-- Add all wrapped lines to queue
+		for _, wrappedLine in ipairs(wrapped) do
+			table.insert(wrappedLines, wrappedLine)
+		end
+	end
+
+	-- Feed wrapped lines
+	for _, line in ipairs(wrappedLines) do
 		table.insert(messageQueue, line)
 	end
 
@@ -473,4 +660,3 @@ function module.feed(input, plr)
 end
 
 return module
-	

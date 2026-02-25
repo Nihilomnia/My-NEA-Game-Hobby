@@ -1,12 +1,10 @@
 -- [Global Varilbles]
-local LocalStorageService = game:GetService("LocalStorageService")
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local ServerScripts = game:GetService("ServerScriptService")
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 local SoundService = game:GetService("SoundService")
-local StarterPlayer = game:GetService("StarterPlayer")
 
 local WeaponsWeld = RS.Welds.Weapons
 local Events = RS.Events
@@ -19,15 +17,12 @@ local WeaponsEvent = Events.WeaponsEvent
 local BlockingEvent = Events.Blocking
 local TransformEvent = Events.Tranform
 local DodgeEvent = Events.Dodge
-local VFX_Event = Events.VFX
 local updateEvent = Events.UpdateMovement
 
 local SoundsModule = require(RS.Modules.Combat.SoundsModule)
 local HelpfullModule = require(SSModules.Other.Helpful)
-local WeaponsStatsModule = require(SSModules.Dictionaries.WeaponStats)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local Mode_Module = require(SSModules.Combat.Mode_Module)
-local ServerCombatModule = require(SSModules.CombatModule)
 local DataManager = require(ServerScripts.Data.Modules.DataManager)
 local BlockModule = require(ServerStorage.Modules.BlockModule)
 local ParryModule = require(ServerStorage.Modules.Parrying)
@@ -38,15 +33,8 @@ local Welds = Combat_Data.Welds
 local EquipAnims = Combat_Data.EquipAnims
 local UnEquipAnims = Combat_Data.UnEquipAnims
 local IdleAnims = Combat_Data.IdleAnims
-local BlockingAnims = Combat_Data.BlockingAnims
 local TransformAnims = Combat_Data.TransformAnims
-local ParryAnims = Combat_Data.ParryAnims
-local DodgeAnims = Combat_Data.DodgeAnims
 local EquipDebounce = Combat_Data.EquipDebounce
-local DodgeDebounce = Combat_Data.DodgeDebounce
-local DodgeCancelCooldown = {}
-local DodgeCanCancel = {}
-local DodgeIsCancelling = {}
 
 Players.PlayerAdded:Connect(function(plr)
 	plr.CharacterAdded:Connect(function(char)
@@ -235,7 +223,22 @@ TransformEvent.OnServerEvent:Connect(function(plr, action)
 			IdleAnims,
 			WeaponsWeld
 		)
-	end
+
+
+		elseif action == "Revert" then
+			Mode_Module.Revert(
+				char,
+				WeaponsAnimations,
+				Race,
+				EquipDebounce,
+				Welds,
+				TransformAnims,
+				EquipAnims,
+				IdleAnims,
+				WeaponsWeld
+			)
+		end
+	
 end)
 
 

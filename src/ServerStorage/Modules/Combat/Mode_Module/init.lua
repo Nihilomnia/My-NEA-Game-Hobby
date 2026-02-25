@@ -298,7 +298,7 @@ if char:GetAttribute("Mode1") then
 	char:SetAttribute("IsTransforming", true)
 	
 
-	local newWeapon = "Fists"
+	local newWeapon = "Fists" -- This will be a placeholder untill I add non elsement weapons
 	TransformAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations.Transformations.Revert)
 	hum.WalkSpeed = 8
 	TransformAnims[Identifier]:Play()
