@@ -49,6 +49,15 @@ local function updateMovementAttribute()
 	end
 end
 
+local function getEquippedTool(char)
+	for _, child in ipairs(char:GetChildren()) do
+		if child:IsA("Tool") then
+			return child
+		end
+	end
+	return nil
+end
+
 
 
 --------------------------------------------------------------------------------------
@@ -57,9 +66,13 @@ end
 
 uis.InputBegan:Connect(function(input,isTyping)
 	if isTyping  then return end
+	local Tool = getEquippedTool(char)
 
 	if input == Enum.KeyCode.Backspace then
-		InventoryEvent:FireServer("ItemDrop")
+		if Tool then 
+			InventoryEvent:FireServer("Drop",Tool.Name,1, "HotBar")
+		end 
+		
 	end
 
 end)

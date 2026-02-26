@@ -21,6 +21,7 @@ local ActiveStatusEffects = Combat_Data.ActiveStatusEffects
 
 
 function StatusEffectsModule.ApplyStatusEffect(char, effectName, stacks, Duration)
+    local plr = game.Players:GetPlayerFromCharacter(char)
     local effectInfo = Effect_Dictionary.getEffectInfo(effectName)
     if not effectInfo then
         warn("Status effect '" .. effectName .. "' does not exist in the Effect Dictionary.")
@@ -39,20 +40,22 @@ function StatusEffectsModule.ApplyStatusEffect(char, effectName, stacks, Duratio
     end
     
     table.insert(ActiveStatusEffects[char], newEffect) 
-    UI_Update_Event:FireClient(char, "StatusEffectAdded", effectName,stacks)
-    -- FIRE VFX EVENT
+    if plr then
+        UI_Update_Event:FireClient(plr, "StatusEffectAdded", effectName,stacks)
+    end
+    VFX_Event:FireAllClients("CombatEffects", effectInfo.VFX, char.HumanoidRootPart.Position)
 
 end
 
 
 function StatusEffectsModule.RemoveStatusEffect(char, effectName)
+    local plr = game.Players:GetPlayerFromCharacter(char)
     if not ActiveStatusEffects[char] then return end
     
     for i, effect in ipairs(ActiveStatusEffects[char]) do
         if effect.Name == effectName then
             table.remove(ActiveStatusEffects[char], i)
-            UI_Update_Event:FireClient(char, "StatusEffectRemoved", effectName)
-            -- FIRE VFX EVENT TO REMOVE EFFECT
+            if plr then  UI_Update_Event:FireClient(plr, "StatusEffectRemoved", effectName) end
             break
         end
     end

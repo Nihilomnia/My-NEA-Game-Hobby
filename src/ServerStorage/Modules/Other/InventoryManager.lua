@@ -1,8 +1,10 @@
 local InventoryManager = {}
 local RS = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+local CS = game:GetService("CollectionService")
 
-local CollectionService = game:GetService("CollectionService")
 
+local DataManager = require(ServerScriptService.Data.Modules.DataManager)
 
 
 local Events = RS.Events
@@ -32,9 +34,9 @@ end
 
 
 
-function InventoryManager.RemoveItem(player, itemname, quantity)
+function InventoryManager.RemoveItem(player, itemname, quantity,location)
     local backpack = player:FindFirstChildOfClass("Backpack")
-    if backpack then
+    if backpack and location == "Backpack" then
         local itemsToRemove = {}
         for _, item in ipairs(backpack:GetChildren()) do
             if item.Name == itemname then
@@ -51,14 +53,19 @@ function InventoryManager.RemoveItem(player, itemname, quantity)
         
         if #itemsToRemove < quantity then
             warn("Not enough '" .. itemname .. "' items to remove from player: " .. player.Name)
-        end
-    else
-        warn("Backpack not found for player: " .. player.Name)
+        end  
     end 
+
+
+    if location == "Hotbar" then
+
+
+    end
+
 end
 
 
-function InventoryManager.DropItem(plr,item,count)
+function InventoryManager.DropItem(plr,item,count,location)
     local character = plr.Character
     if character then
         local HRP = character:FindFirstChild("HumanoidRootPart")
@@ -68,15 +75,13 @@ function InventoryManager.DropItem(plr,item,count)
             Model.Name = item .. "_Model"
             droppedItem.Parent = Model
             Model.Parent = ActiveItemFolder
-            CollectionService:AddTag(droppedItem, "Item")
+            CS:AddTag(droppedItem, "Item")
             droppedItem.CustomPhysicalProperties = PhysicalProperties.new(0.3, 1, 0, 1, 0)
             droppedItem.CFrame = HRP.CFrame * CFrame.new(0, -2, 0)
             Model.ScaleTo(Model,0.25) -- This why i put the item in a model, because it easir to scale the item 
             droppedItem.CanCollide = true
             droppedItem:SetAttribute("Count", count)
-
-
-
+            InventoryManager.RemoveItem(plr,item.Name,count,location) -- This handels the removing of the item from the backpack
             InventoryEvent:FireClient(plr, "ItemDropped", item)
             
             
@@ -87,6 +92,7 @@ function InventoryManager.DropItem(plr,item,count)
         warn("Character not found for player: " .. plr.Name)
     end 
 end
+
 
     
 

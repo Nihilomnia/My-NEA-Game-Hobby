@@ -2,14 +2,14 @@
 local module = {}
 local info ={
 	["Bone"]={
-		Mode1 = "TwinSpears",
+		Mode1 = "DrakeFang",
 		Mode2 = "TwinSpears",
 		Mode1Callout= "Succumb to the Madness, Kaosu no keshin",
 		Mode2Callout = "...",
 		Text = {
-			"<h>Chaos_InCarnate<h><sound:rbxassetid://98570702510642>It seems I need to drop the funny guy act huh<sound:rbxassetid://98570702510642>",
-			"<h>Fait<h><sound:rbxassetid://137940291335732> Well no, doofus<sound:rbxassetid://137940291335732>",
-			"<h>Chaos_InCarnate<h><sound:rbxassetid://98570702510642><shake>Ow !</shake> my Bad, So we need to pull out all the stops then<sound:rbxassetid://98570702510642>",
+			"<h>Asmondaios<h><sound:rbxassetid://98570702510642>It seems I need to drop the funny guy act huh<sound:rbxassetid://98570702510642>",
+			"<h>Lunara<h><sound:rbxassetid://137940291335732> Well no, doofus<sound:rbxassetid://137940291335732>",
+			"<h>Asmondaios<h><sound:rbxassetid://98570702510642><shake>Ow !</shake> my Bad, So we need to pull out all the stops then<sound:rbxassetid://98570702510642>",
 			"<h>???<h><shake><colour:#FF0000>Crazy</colour:#FF0000></shake> monkey!",
 
 			

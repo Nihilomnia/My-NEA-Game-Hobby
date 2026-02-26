@@ -2,25 +2,20 @@ local module = {}
 local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local SS = game:GetService("ServerStorage")
-local StarterPlayer = game:GetService("StarterPlayer") 
 local SoundService = game:GetService("SoundService") 
 
 local Events = RS.Events
-local Effects = RS.Effects
 local WeaponEffects = RS.Effects.Weapons
 local WeaponSounds = SoundService.SFX.Weapons
-local RSModules = RS.Modules
 local SSModules = SS.Modules
 local AnimationsFolder = RS.Animations
 local WeaponsAnimations = AnimationsFolder.Weapons
-local Models = RS.Models
 
 
 local SoundsModule = require(RS.Modules.Combat.SoundsModule)
 local ServerCombatModule=require(SSModules.CombatModule)
 local HitServiceModule = require(SSModules.HitService)
 local VFX_Event = Events.VFX
-local RaycastHitbox = require (SSModules.Hitboxes.RaycastHitboxV4)
 local VolumeHitbox = require(SSModules.Hitboxes.VolumeHitboxes)
 local WeaponsStatsModule = require(SSModules.Dictionaries.WeaponStats)
 local HelpfullModule = require(SSModules.Other.Helpful)

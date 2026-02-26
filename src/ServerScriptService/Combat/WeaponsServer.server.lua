@@ -48,7 +48,7 @@ Players.PlayerAdded:Connect(function(plr)
 		
 			local torso = char.Torso
 			char:SetAttribute("CurrentWeapon", "Fists")
-			char:SetAttribute("Element", "Astral")
+			char:SetAttribute("Element", "Bone")
 			char:SetAttribute("Stamina", 100)
 			char:SetAttribute("MaxStamina", 100)
 			char:SetAttribute("InCombat", false)

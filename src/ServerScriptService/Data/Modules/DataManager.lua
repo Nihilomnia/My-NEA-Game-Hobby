@@ -1,3 +1,5 @@
+local ServerStorage = game:GetService("ServerStorage")
+local Function = require(ServerStorage.NodePresets.Command.Function)
 
 local DataManager = {}
 
@@ -58,6 +60,15 @@ function DataManager.UpdateAccessories(plr,accessoryType,accessoryName)
         profile.Data[currentSlot].Accessories[accessoryType] = accessoryName
     end
 end
+
+function DataManager.UpdateInventory(plr,Goal,Item,count) 
+    local profile = DataManager.Profiles[plr]
+    if profile then
+        local char :Model  = plr.Character
+        local currentSlot = char:GetAttribute("CurrentSlot")
+    end
+end
+
    
 
 
