@@ -221,9 +221,9 @@ function module.ManageStamina(char,action)
 	end
 
 	if action == "Swing" then
-		if Stamina >= 10 then 
+		if Stamina >= 2 then 
 			Fail = false
-			char:SetAttribute("Stamina", (Stamina - 10))
+			char:SetAttribute("Stamina", (Stamina - 2))
 			return Fail
 	
 		else

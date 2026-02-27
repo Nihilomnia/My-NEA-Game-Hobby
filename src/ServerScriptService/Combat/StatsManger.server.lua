@@ -26,7 +26,14 @@ local CONFIG = {
 		BASE_HIGH_MANA = 50,
 		BASE_LOW_MANA = 30,
 
+		BASE_MF = 120,
+		BASE_HIGH_MF = 25,
+		BASE_LOW_MF = 15,
+
 	},
+
+
+	
 	
 }
 
@@ -101,41 +108,47 @@ local function setupStamina(char)
 end
 
 
-local function setupMF(char) -- MF stands for Mental Fatigue its shorter here for ease of typing 
-	-- What should Mental Fatigue Scale with? Prob SPT(Spirit)
-	
 
-	
-	
-end
 
-local function setupMana(char)
+local function setupSPT(char)
 	local MaxMana = 0
+	local MaxMF = 0
 
 	local function sync(char)
 		local SPT = char:GetAttribute("SPT") or 0
 
 		if SPT == 0 then
 			MaxMana = CONFIG.SPT.BASE_MANA
+			MaxMF = CONFIG.SPT.BASE_MF
 			char:SetAttribute("MaxMana", MaxMana)
 			char:SetAttribute("Mana", MaxMana)
+			char:SetAttribute("MaxMF", MaxMF)
+			char:SetAttribute("MF", MaxMF)
 		end
 	
 		if SPT >= 1 and SPT <= 15 then
 			MaxMana = math.ceil(80 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 1) / 14))
+			MaxMF = math.ceil(40 + CONFIG.SPT.BASE_HIGH_MF * ((SPT - 1) / 28))
+			char:SetAttribute("MaxMF", MaxMF)
 			char:SetAttribute("MaxMana", MaxMana)
 			char:SetAttribute("Mana", MaxMana)
 			print("MaxSet")
 		elseif SPT >= 16 and SPT <= 35 then
 			MaxMana = math.ceil(105 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 15) / 15))
+			MaxMF = math.ceil(53 + CONFIG.SPT.BASE_HIGH_MF * ((SPT - 15) / 30))
+			char:SetAttribute("MaxMF", MaxMF)
 			char:SetAttribute("MaxMana", MaxMana)
 			char:SetAttribute("Mana", MaxMana)
 		elseif SPT >= 36 and SPT <= 60 then
 			MaxMana = math.ceil(130 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 30) / 20))
+			MaxMF = math.ceil(65 + CONFIG.SPT.BASE_HIGH_MF * ((SPT - 30) / 40))
+			char:SetAttribute("MaxMF", MaxMF)
 			char:SetAttribute("MaxMana", MaxMana)
 			char:SetAttribute("Mana", MaxMana)
 		elseif SPT >= 61 and SPT <= 99 then
 			MaxMana = math.ceil(155 + CONFIG.SPT.BASE_LOW_MANA * ((SPT - 50) / 49))
+			MaxMF = math.ceil(78 + CONFIG.SPT.BASE_LOW_MF * ((SPT - 50) / 80))
+			char:SetAttribute("MaxMF", MaxMF)
 			char:SetAttribute("MaxMana", MaxMana)
 			char:SetAttribute("Mana", MaxMana)
 
@@ -177,6 +190,6 @@ Players.PlayerAdded:Connect(function(plr)
 		end
 		setupHealth(char)
 		setupStamina(char)
-		setupMana(char)
+		setupSPT(char)
 	end)
 end)

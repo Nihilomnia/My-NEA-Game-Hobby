@@ -61,13 +61,64 @@ function DataManager.UpdateAccessories(plr,accessoryType,accessoryName)
     end
 end
 
-function DataManager.UpdateInventory(plr,Goal,Item,count) 
+function DataManager.UpdateInventory(plr, Goal, Item, count)
     local profile = DataManager.Profiles[plr]
-    if profile then
-        local char :Model  = plr.Character
-        local currentSlot = char:GetAttribute("CurrentSlot")
+    if not profile then return end
+
+    local char: Model = plr.Character
+    if not char then return end
+
+    local currentSlot = char:GetAttribute("CurrentSlot")
+    if not currentSlot then return end
+
+    local inventory = profile.Data[currentSlot].Inventory
+
+    -- =====================
+    -- ADD ITEMS
+    -- =====================
+    if Goal == "Add" then
+        
+        -- First try to stack with existing item
+        for i, v in pairs(inventory) do
+            if v.Name == Item then
+                v.Count += count
+                return
+            end
+        end
+
+        -- If not found, insert new item
+        table.insert(inventory, {
+            Name = Item,
+            Count = count
+        })
+
+    -- =====================
+    -- REMOVE ITEMS
+    -- =====================
+    elseif Goal == "Remove" then
+        
+        for i, v in pairs(inventory) do
+            if v.Name == Item then
+                if v.Count >= count then
+                    v.Count -= count
+
+                    -- Optional: remove entry if count hits 0
+                    if v.Count <= 0 then
+                        table.remove(inventory, i)
+                    end
+                else
+                    warn("Not enough items to remove")
+                end
+                return
+            end
+        end
     end
 end
+
+            
+
+
+    
 
    
 

@@ -34,25 +34,30 @@ end
 
 
 
-function InventoryManager.RemoveItem(player, itemname, quantity,location)
-    local backpack = player:FindFirstChildOfClass("Backpack")
+function InventoryManager.RemoveItem(plr, itemname, quantity,location)
+    local backpack = plr:FindFirstChildOfClass("Backpack")
     if backpack and location == "Backpack" then
         local itemsToRemove = {}
         for _, item in ipairs(backpack:GetChildren()) do
+
             if item.Name == itemname then
-                table.insert(itemsToRemove, item)
-                if #itemsToRemove >= quantity then
+                local itemCount = item:GetAttribute("Count") or 1
+                if itemCount >= quantity then
+                    item:SetAttribute("Count", itemCount - quantity)
+                    DataManager.UpdateInventory(plr,"Remove",itemname,quantity)
+                    if item:GetAttribute("Count") <= 0 then
+                        table.insert(itemsToRemove, item)
+                    end
                     break
                 end
             end
         end
-        
         for _, item in ipairs(itemsToRemove) do
             item:Destroy()
         end
         
         if #itemsToRemove < quantity then
-            warn("Not enough '" .. itemname .. "' items to remove from player: " .. player.Name)
+            warn("Not enough '" .. itemname .. "' items to remove from player: " .. plr.Name)
         end  
     end 
 
@@ -83,8 +88,6 @@ function InventoryManager.DropItem(plr,item,count,location)
             droppedItem:SetAttribute("Count", count)
             InventoryManager.RemoveItem(plr,item.Name,count,location) -- This handels the removing of the item from the backpack
             InventoryEvent:FireClient(plr, "ItemDropped", item)
-            
-            
         else
             warn("HumanoidRootPart not found for player: " .. plr.Name)
         end
