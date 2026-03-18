@@ -61,7 +61,7 @@ function DataManager.UpdateAccessories(plr,accessoryType,accessoryName)
     end
 end
 
-function DataManager.UpdateInventory(plr, Goal, Item, count)
+function DataManager.UpdateInventory(plr, Goal :string, Item : Tool, count:number)
     local profile = DataManager.Profiles[plr]
     if not profile then return end
 
@@ -73,9 +73,6 @@ function DataManager.UpdateInventory(plr, Goal, Item, count)
 
     local inventory = profile.Data[currentSlot].Inventory
 
-    -- =====================
-    -- ADD ITEMS
-    -- =====================
     if Goal == "Add" then
         
         -- First try to stack with existing item
@@ -86,6 +83,7 @@ function DataManager.UpdateInventory(plr, Goal, Item, count)
             end
         end
 
+        
         -- If not found, insert new item
         table.insert(inventory, {
             Name = Item,
@@ -112,6 +110,30 @@ function DataManager.UpdateInventory(plr, Goal, Item, count)
                 return
             end
         end
+    end
+end
+
+
+
+function DataManager.UpdateHotbar(plr, Goal :string, Item : Tool, slot:number)
+    local profile = DataManager.Profiles[plr]
+    if not profile then return end
+
+    local char: Model = plr.Character
+    if not char then return end
+
+    local currentSlot = char:GetAttribute("CurrentSlot")
+    if not currentSlot then return end
+
+    local hotbar = profile.Data[currentSlot].Hotbar
+
+    if Goal == "Add" then
+        hotbar[slot] = {
+            Name = Item,
+            Count = 1
+        }
+    elseif Goal == "Remove" then
+        hotbar[slot] = nil
     end
 end
 

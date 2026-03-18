@@ -21,6 +21,11 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 
 		CombatEffectsModule.triggerEffects(effect,char)
 	end
+
+	if action == "DestroyVFX" then
+		local char, effect = ...
+		CombatEffectsModule.DestroyEffects(char, effect)
+	end
 	
 	if	action == "Highlight" then
 		local char, duration, FillColor, OutlineColor = ...

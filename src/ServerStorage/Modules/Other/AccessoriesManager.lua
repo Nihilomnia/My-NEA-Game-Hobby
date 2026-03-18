@@ -7,11 +7,14 @@ local Tool_Folder = RS.Tools
 
 
 
-local AccessoriesFolder = Models.Accessories
+local AccessoriesFolder = Models.Items.Accessories
 local AccessoriesTools = Tool_Folder.Items.Accessories
+local AccessoryAnimations = RS.Animations.Accessories
 local WeldsFolder = Welds.Accessories
 
 local AcessoryWelds = {}
+local AccessoryAnims = {}
+
 
 local AccessoryEvent = Events.AccessoryEvent
 
@@ -74,6 +77,7 @@ end
 
 function AccessoriesManager.EquipAccessory(char, accessoryName) -- This is the equiping function
     local plr = game.Players:GetPlayerFromCharacter(char)
+    local hum = char:WaitForChild("Humanoid")
     local LeftLeg = char:FindFirstChild("Left Leg")
   
 
@@ -127,7 +131,10 @@ function AccessoriesManager.EquipAccessory(char, accessoryName) -- This is the e
     AcessoryWelds[plr][accssoryType].Part1 = accessory -- This sets Part1 of the weld to the correct Accessory
     AcessoryWelds[plr][accssoryType].C0 = Welds.Accessories[accessoryName].C0 -- Enables the weld to attach the accessory to the character
     AccessoryEvent:FireClient(plr,"RefreshAnimations") --- This fires to the client script handling walk cycles to refresh their animations
-
+     if AccessoryAnimations:FindFirstChild(accessoryName) then
+        AccessoryAnims[plr] = hum.Animator:LoadAnimation(AccessoryAnimations[accessoryName])-- This gets the corresponding animation for the accessory if it has one
+        AccessoryAnims[plr]:Play() -- This plays the animation
+    end
     
     
 end
@@ -163,9 +170,10 @@ end
 
     Functions:
     - EquipAccessory(char, accessoryName): Equips the specified accessory to the character.
+    - UnequipAccessory(char, accessoryName): Unequips the specified accessory from the character and returns it to the player's backpack.
     
     Usage:
-    AccessoriesManager.EquipAccessory(character, "CoolHat")
+    AccessoriesManager.EquipAccessory(char, "hat")
 
 
     Welds Structure Idea:

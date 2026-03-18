@@ -53,6 +53,7 @@ Players.PlayerAdded:Connect(function(plr)
 			char:SetAttribute("MaxStamina", 100)
 			char:SetAttribute("InCombat", false)
 			char:SetAttribute("Dodges", 0)
+			char:SetAttribute("MF", 0)
 			char.Parent = workspace.Characters
 			HelpfullModule.ChangeWeapon(plr, char, torso)
 			
@@ -244,8 +245,6 @@ end)
 
 
 updateEvent.OnServerEvent:Connect(function(player, keyName)
-    
-    print(player.Name .. " pressed the " .. keyName .. " key")
     
     local character = player.Character
     if character then

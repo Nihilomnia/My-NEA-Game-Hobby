@@ -68,9 +68,11 @@ uis.InputBegan:Connect(function(input,isTyping)
 	if isTyping  then return end
 	local Tool = getEquippedTool(char)
 
-	if input == Enum.KeyCode.Backspace then
+	if input.KeyCode == Enum.KeyCode.Backspace then
+		print("YO, I want to drop a tool")
 		if Tool then 
-			InventoryEvent:FireServer("Drop",Tool.Name,1, "HotBar")
+			print("Dropping Tool", Tool.Name)
+			InventoryEvent:FireServer("Drop",Tool,1, "HotBar")
 		end 
 		
 	end
@@ -149,7 +151,9 @@ uis.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         if char:GetAttribute("Dodging") then
             DodgeEvent:FireServer("DodgeCancel")
-        else
+        elseif char:GetAttribute("Swing") then
+			combatEvent:FireServer("Feint")
+		else
             blockingEvent:FireServer("Parry")
         end
     end
@@ -221,10 +225,7 @@ uis.InputEnded:Connect(function(input,isTyping)
 
 	end
 	
-	if input.KeyCode == Enum.KeyCode.E and char:GetAttribute("Mode1",true) then
-		WeaponsEvent:FireServer("Revert")
-
-	end
+	
 
 end)
 -----------------------------------------------------------------------------------------
@@ -305,7 +306,7 @@ uis.InputEnded:Connect(function(input,isTyping)
 		if char:GetAttribute("Mode2") then return end
 
 		if char:GetAttribute("Mode1") then 
-			Transform:FireServer("Revert")
+			--Transform:FireServer("Revert")
 		else
            WeaponsEvent:FireServer("Equip/UnEquip")
 		end

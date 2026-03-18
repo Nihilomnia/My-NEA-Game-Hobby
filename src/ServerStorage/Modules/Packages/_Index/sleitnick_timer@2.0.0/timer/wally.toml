@@ -1,8 +1,11 @@
 [package]
-name = "sleitnick/signal"
-description = "Signal class"
-version = "1.5.0"
+name = "sleitnick/timer"
+description = "Timer class"
+version = "2.0.0"
 license = "MIT"
 authors = ["Stephen Leitnick"]
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
+
+[dependencies]
+Signal = "sleitnick/signal@^2"

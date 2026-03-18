@@ -75,7 +75,7 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 
 		
 		local Dodges = char:GetAttribute("Dodges")
-		
+	
 		
 
 		local P_eff = Point_Cap + (WPN_Points - Point_Cap) / (1 + math.exp(k * (WPN_Points - Point_Cap))) -- Soft Cap Formula

@@ -6,6 +6,7 @@ local SSModules = SS.Modules
 local HelpfullModule = require(SSModules.Other.Helpful)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local ServerCombatModule = require(SSModules.CombatModule)
+local StatusEffects = require(SSModules.StatusEffectsModule)
 
 
 local Events = RS.Events
@@ -123,6 +124,8 @@ function DodgeModule.Dodge(char,plr,direction)
     local anim = hum:LoadAnimation(animToPlay)
 	DodgeAnims[Identifier] = anim
 	anim:Play()
+    StatusEffects.RemoveStatusEffect(char, "Burn")
+    print("Removed Burn!")
     if plr then
         DodgeEvent:FireClient(plr, "Dodge")
     else

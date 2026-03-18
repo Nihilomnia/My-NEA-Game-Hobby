@@ -106,6 +106,14 @@ function module.triggerEffects(parentObject, char)
 end
 
 
+module.DestroyEffects = function(char, effect)
+	for i, v in pairs(workspace.VFX:GetChildren()) do
+		if v.Name == effect.Name then
+			v:Destroy()
+		end
+	end
+end
+
 -- Run the function.
 
 return module

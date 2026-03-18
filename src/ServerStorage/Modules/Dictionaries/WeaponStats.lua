@@ -1,12 +1,12 @@
 local module = {}
 local info ={
 	["Fists"]={
-		Damage = 5,
-		Scaling = 5,
+		Damage = 10,
+		Scaling = 10,
 		BlockDmg = 6.6,
 		Knockback =4,
 		RagdollTime =1.2,
-		SwingReset =0.3,
+		SwingReset =0,  -- was .25
 		StunTime = 1,
 		BlockingWalkSpeed = 6,
 		HitBox_Data = {
@@ -35,7 +35,7 @@ local info ={
 	
 	["Fractured_Kunai"]={
 		Damage = 15,
-		Scaling = 7,
+		Scaling = 10,
 		BlockDmg = 6.6,
 		Knockback =5,
 		RagdollTime =1.2,
@@ -69,7 +69,7 @@ local info ={
 	 
 	["Katana"]={
 		Damage = 10,
-		Scaling = 7,
+		Scaling = 10,
 		BlockDmg = 10,
 		Knockback =5,
 		RagdollTime =1.2,
@@ -100,12 +100,12 @@ local info ={
 	},
 	
 	["DrakeFang"]={
-		Damage = 15,
-		Scaling = 9,
+		Damage = 25,
+		Scaling = 10,
 		BlockDmg = 12,
 		Knockback =5,
 		RagdollTime =1.2,
-		SwingReset =.1,
+		SwingReset =0.07,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
 		HitBox_Data = {
@@ -165,8 +165,8 @@ local info ={
 
 	
 	["ShootingStar"]={
-		Damage = 20,
-		Scaling = 8,
+		Damage = 30,
+		Scaling = 10,
 		BlockDmg = 25,
 		Knockback = 8,
 		RagdollTime =1.5,	

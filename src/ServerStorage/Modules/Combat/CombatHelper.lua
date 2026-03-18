@@ -28,6 +28,8 @@ local Connections = {
 
 local MaxCombo = 4
 
+local FeintFlags = {}
+
 local function getUniqueId(char)
 	local uid = char.Humanoid:FindFirstChild("UniqueId")
 	return uid.Value or nil
@@ -95,6 +97,7 @@ function module.Attack(char)
 		Attachment:Destroy()
 		Connections[Identifier].HitStart:Disconnect()
 		Connections[Identifier].HitStart = nil
+		FeintFlags[Identifier] = true
 	end)
 
 
@@ -116,6 +119,7 @@ function module.Attack(char)
 		
 		Connections[Identifier].HitEnd:Disconnect()
 		Connections[Identifier].HitEnd = nil
+		FeintFlags[Identifier] = false
 	end)
 
 
@@ -138,12 +142,18 @@ function module.Attack(char)
 end
 
 function module.CancelAttack(char)
-	if not char then return end
+	local plr = Players:GetPlayerFromCharacter(char)
+	local Identifier = plr or getUniqueId(char)
+	local hum = char.Humanoid
+	local currentWeapon = char:GetAttribute("CurrentWeapon")
+	local SwingEffect = WeaponEffects[currentWeapon].Swing["Swing" .. char:GetAttribute("Combo")]
+	if FeintFlags[Identifier] or char:GetAttribute("Swing") == false then return end 
 	char:SetAttribute("Attacking", false)
 	char:SetAttribute("Swing", false)
-	ServerCombatModule.stopAnims(char.Humanoid)
+	ServerCombatModule.stopAnims(hum)
 	VolumeHitbox.DestroyHitboxes(char)
 	HelpfullModule.ResetMobility(char)
+	VFX_Event:FireAllClients("DestroyVFX", char,SwingEffect)
 end
 
 

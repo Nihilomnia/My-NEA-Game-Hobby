@@ -5,7 +5,6 @@ local SS = game:GetService("ServerStorage")
 local SSModules = SS.Modules
 local Events = RS.Events
 local UI_Update = Events.UI_Update
-local Function = require(ReplicatedStorage.Dialogues.Dialogue_Configs.TestDialogue.TurnHeadInvisible.Function)
 local HelpfulModule = require(SSModules.Other.Helpful)
 
 

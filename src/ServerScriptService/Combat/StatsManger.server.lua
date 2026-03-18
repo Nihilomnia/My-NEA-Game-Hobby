@@ -1,6 +1,12 @@
 local ServerScriptService = game:GetService("ServerScriptService")
+local RS = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
+
+local Events = RS.Events
+local StatsEvent = Events.StatsEvent
+local VFXEvent = Events.VFX
+
 
 local Helpful = require(ServerStorage.Modules.Other.Helpful)
 
@@ -31,6 +37,14 @@ local CONFIG = {
 		BASE_LOW_MF = 15,
 
 	},
+
+
+	EXP = {
+		k = 0.08,
+		MidPoint = 50,
+
+
+	}
 
 
 	
@@ -108,8 +122,6 @@ local function setupStamina(char)
 end
 
 
-
-
 local function setupSPT(char)
 	local MaxMana = 0
 	local MaxMF = 0
@@ -156,14 +168,17 @@ local function setupSPT(char)
 	end
 	sync(char)
 
-	char:GetAttributeChangedSignal("END"):Connect(function()
-		local Orginal = char:GetAttribute("Stamina")
+	char:GetAttributeChangedSignal("SPT"):Connect(function()
+		local Orginal_Mana = char:GetAttribute("Mana")
+		local Orginal_MF = char:GetAttribute("MF")
 		sync(char)
 		if char:GetAttribute("InCombat") then
-			char:SetAttribute("Stamina", Orginal)
+			char:SetAttribute("Mana", Orginal_Mana)
+			char:SetAttribute("MF", Orginal_MF)
 		end
 
 		print("New Target for MANA = {", MaxMana, "}")
+		print("New Target for MF = {", MaxMF, "}")
 		
 	end)
 end
@@ -191,5 +206,46 @@ Players.PlayerAdded:Connect(function(plr)
 		setupHealth(char)
 		setupStamina(char)
 		setupSPT(char)
+
 	end)
+end)
+
+
+
+StatsEvent.OnServerEvent:Connect(function(plr,action,Stat)
+	local profile
+		while true do
+			profile = DataManager.Profiles[plr]
+			if profile then
+				break
+			end
+			task.wait(0.1)
+		end
+	local char = plr.Character
+	local CurrentSlot = char:GetAttribute("CurrentSlot")
+	local EXP = profile.Data[CurrentSlot].GeneralExp
+	local FreePoints = profile.Data[CurrentSlot].FreePoints
+	local Stat_EXP = profile.Data[CurrentSlot].AttributeExp[Stat]
+	local StatPoints = profile.Data[CurrentSlot].STAT_POINTS[Stat]
+	if StatPoints >= 99 then return end
+	if action == "Train_Item" then
+		local EXP_Cost = EXP * 0.15 -- We take 15% of the players general EXP to be converted into Attribute EXP per training item use
+		Stat_EXP = Stat_EXP  + EXP_Cost
+		EXP = EXP - EXP_Cost
+		
+
+		local Required_EXP = 100 + (2300/(1+ math.exp(-CONFIG.EXP.k * ((StatPoints + 1) - CONFIG.EXP.MidPoint)))) 
+
+		if Stat_EXP >= Required_EXP then
+			Stat_EXP = Stat_EXP - Required_EXP
+			DataManager.IncreaseStat(plr, Stat)
+			VFXEvent:FireAllClients("CombatEffects", "LevelUp", char.HumanoidRootPart.CFrame, 2)
+		end
+	end
+
+	if action == "Train_Free" and FreePoints > 0 then
+		DataManager.IncreaseStat(plr, Stat)
+		profile.Data[CurrentSlot].FreePoints = FreePoints - 1
+		VFXEvent:FireAllClients("CombatEffects", "LevelUp", char.HumanoidRootPart.CFrame, 2)
+	end
 end)
