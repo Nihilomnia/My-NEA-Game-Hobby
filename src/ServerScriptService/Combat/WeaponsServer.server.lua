@@ -39,32 +39,33 @@ local EquipDebounce = Combat_Data.EquipDebounce
 Players.PlayerAdded:Connect(function(plr)
 	plr.CharacterAdded:Connect(function(char)
 		local profile
-			while true do
-				profile = DataManager.Profiles[plr]
-				if profile then break end
-				task.wait(0.1)
+		while true do
+			profile = DataManager.Profiles[plr]
+			if profile then
+				break
 			end
-		
-		
-			local torso = char.Torso
-			char:SetAttribute("CurrentWeapon", "Fists")
-			char:SetAttribute("Element", "Bone")
-			char:SetAttribute("Stamina", 100)
-			char:SetAttribute("MaxStamina", 100)
-			char:SetAttribute("InCombat", false)
-			char:SetAttribute("Dodges", 0)
-			char:SetAttribute("MF", 0)
-			char.Parent = workspace.Characters
-			HelpfullModule.ChangeWeapon(plr, char, torso)
-			
-			plr.CharacterAppearanceLoaded:Connect(function(char)
-				for i, v in pairs(char:GetDescendants()) do
-					if v.Parent:IsA("Accessory") and v:IsA("Part") then
-						v.CanTouch = false
-						v.CanQuery = false
-					end
+			task.wait(0.1)
+		end
+
+		local torso = char.Torso
+		char:SetAttribute("CurrentWeapon", "Fists")
+		char:SetAttribute("Element", "Astral")
+		char:SetAttribute("Stamina", 100)
+		char:SetAttribute("MaxStamina", 100)
+		char:SetAttribute("InCombat", false)
+		char:SetAttribute("Dodges", 0)
+		char:SetAttribute("MF", 0)
+		char.Parent = workspace.Characters
+		HelpfullModule.ChangeWeapon(plr, char, torso)
+
+		plr.CharacterAppearanceLoaded:Connect(function(char)
+			for i, v in pairs(char:GetDescendants()) do
+				if v.Parent:IsA("Accessory") and v:IsA("Part") then
+					v.CanTouch = false
+					v.CanQuery = false
 				end
-			end)
+			end
+		end)
 	end)
 end)
 
@@ -82,9 +83,9 @@ WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 
-
-	if HelpfullModule.CheckForAttributes(char,true,true,true,true,nil,true,true,nil) then return end 
-	
+	if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
+		return
+	end
 
 	if action == "Equip/UnEquip" and not char:GetAttribute("Equipped") and not EquipDebounce[plr] then
 		if char:GetAttribute("Mode1", true) then
@@ -167,18 +168,17 @@ DodgeEvent.OnServerEvent:Connect(function(plr, action, direction)
 		return
 	end
 
-
 	if action == "Dodge" then
-		DodgeModule.Dodge(char,plr,direction)
+		DodgeModule.Dodge(char, plr, direction)
 	elseif action == "DodgeCancel" then
-		DodgeModule.DodgeCancel(char,plr)
+		DodgeModule.DodgeCancel(char, plr)
 	end
 end)
 
 BlockingEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
 
-	if HelpfullModule.CheckForAttributes(char, true, true, true, nil, true, false, true,nil) then
+	if HelpfullModule.CheckForAttributes(char, true, true, true, nil, true, false, true, nil) then
 		return
 	end
 
@@ -187,9 +187,12 @@ BlockingEvent.OnServerEvent:Connect(function(plr, action)
 	elseif action == "UnBlocking" and char:GetAttribute("IsBlocking") then
 		BlockModule.DeactivateBlocking(char)
 	elseif
-		action == "Parry" and not char:GetAttribute("IsBlocking") and not char:GetAttribute("Parrying") and not char:GetAttribute("ParryCD")
+		action == "Parry"
+		and not char:GetAttribute("IsBlocking")
+		and not char:GetAttribute("Parrying")
+		and not char:GetAttribute("ParryCD")
 	then
-		ParryModule.ParryAttempt(char,plr)
+		ParryModule.ParryAttempt(char, plr)
 	end
 end)
 
@@ -201,53 +204,17 @@ TransformEvent.OnServerEvent:Connect(function(plr, action)
 	end
 
 	if action == "Mode 1" then
-		Mode_Module.Mode1(
-			char,
-			WeaponsAnimations,
-			Race,
-			EquipDebounce,
-			Welds,
-			TransformAnims,
-			EquipAnims,
-			IdleAnims,
-			WeaponsWeld
-		)
-	elseif action == "Mode 2" and char:GetAttribute("Mode1") and char:GetAttribute("ModeEnergy", 100) then
-		Mode_Module.Mode2(
-			char,
-			WeaponsAnimations,
-			Race,
-			EquipDebounce,
-			Welds,
-			TransformAnims,
-			EquipAnims,
-			IdleAnims,
-			WeaponsWeld
-		)
-
-
-		elseif action == "Revert" then
-			Mode_Module.Revert(
-				char,
-				WeaponsAnimations,
-				Race,
-				EquipDebounce,
-				Welds,
-				TransformAnims,
-				EquipAnims,
-				IdleAnims,
-				WeaponsWeld
-			)
-		end
-	
+		Mode_Module.Mode1(char)
+	elseif action == "Mode 2" and char:GetAttribute("Mode1") then
+		Mode_Module.Mode2(char)
+	elseif action == "Revert" then
+		Mode_Module.Revert(char)
+	end
 end)
 
-
-
 updateEvent.OnServerEvent:Connect(function(player, keyName)
-    
-    local character = player.Character
-    if character then
-        character:SetAttribute("CurrentMoveKey", keyName)
-    end
+	local character = player.Character
+	if character then
+		character:SetAttribute("CurrentMoveKey", keyName)
+	end
 end)

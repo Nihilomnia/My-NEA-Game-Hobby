@@ -7,8 +7,8 @@ local char = player.Character or player.CharacterAdded:Wait()
 local humanoid = char:WaitForChild("Humanoid")
 
 local healthBarGui = script.Parent
-local healthBar = healthBarGui.HealthBar
-local karmaBar = healthBarGui.KarmaBar
+local healthBar = healthBarGui.Background.HealthBar
+local karmaBar = healthBarGui.Background.KarmaBar
 
 -------------------------------------------------
 -- TWEENS

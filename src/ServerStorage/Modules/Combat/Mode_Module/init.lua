@@ -3,19 +3,30 @@ local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local SSModules = SS.Modules
 
+
+
 -- Module references
 local ElementInfo = require(SSModules.Dictionaries.ElementInfo)
 local HelpfulModule = require(SSModules.Other.Helpful)
 local Textmod = require(SSModules.text)
+local Combat_Data= require(SSModules.Combat.Data.CombatData)
 
 
 
+--Tables
+local Welds = Combat_Data.Welds
+local EquipAnims = Combat_Data.EquipAnims
+local UnEquipAnims = Combat_Data.UnEquipAnims
+local IdleAnims = Combat_Data.IdleAnims
+local TransformAnims = Combat_Data.TransformAnims
+local EquipDebounce = Combat_Data.EquipDebounce
 
 
-
+-- Folders
 local Models = RS.Models
 local WeaponsModels = Models.Weapons
-
+local WeaponsWeld = RS.Welds.Weapons
+local WeaponsAnimations = RS.Animations.Weapons
 local TransformConnections = {}
 
 
@@ -51,17 +62,7 @@ end
 ---------------------------------------------------------------------
 -- MODE 1 TRANSFORMATION
 ---------------------------------------------------------------------
-function module.Mode1(
-	char,
-	WeaponsAnimations,
-	Race,
-	EquipDebounce,
-	Welds,
-	TransformAnims,
-	EquipAnims,
-	IdleAnims,
-	WeaponsWeld
-)
+function module.Mode1(char)
 	if not char or not char:FindFirstChild("Humanoid") then return end
 
 	local hum = char.Humanoid
@@ -158,17 +159,7 @@ end
 ---------------------------------------------------------------------
 -- MODE 2 TRANSFORMATION
 ---------------------------------------------------------------------
-function module.Mode2(
-	char,
-	WeaponsAnimations,
-	Race,
-	EquipDebounce,
-	Welds,
-	TransformAnims,
-	EquipAnims,
-	IdleAnims,
-	WeaponsWeld
-)
+function module.Mode2(char)
 	if not char or not char:FindFirstChild("Humanoid") then return end
 
 	local hum = char.Humanoid
@@ -194,14 +185,14 @@ function module.Mode2(
 	local newWeapon = elementStats.Mode2
 	local dialogue = elementStats.Text
 
-	hum.Health = 100
+	hum.Health += 100
 	rootPart.Anchored = true
 
 	-- Load animation (placeholder until Mode2 animation is made)
 	TransformAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations.Transformations[element].Mode1)
 
 	if plr then
-		Textmod.feed(dialogue, plr)
+		-- Textmod.feed(dialogue, plr)  freezing this for now
 	end
 
 	TransformAnims[Identifier]:Play()
@@ -271,17 +262,7 @@ end
 
 
 
-function module.Revert(
-	char : Model,
-	WeaponsAnimations,
-	Race,
-	EquipDebounce,
-	Welds,
-	TransformAnims,
-	EquipAnims,
-	IdleAnims,
-	WeaponsWeld
-)
+function module.Revert(char)
 if not char or not char:FindFirstChild("Humanoid") then return end
 
 local hum = char:FindFirstChild("Humanoid")
@@ -347,7 +328,7 @@ if char:GetAttribute("Mode1") then
 			char:SetAttribute("IsTransforming", false)
 			char:SetAttribute("Equipped", true)
 			char:SetAttribute("iframes", false)
-			char:SetAttribute("Mode1", true)
+			char:SetAttribute("Mode1", false)
 			EquipDebounce[Identifier] = false
 
 

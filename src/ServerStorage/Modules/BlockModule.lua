@@ -90,7 +90,7 @@ function module.Parrying(char,eChar,hitPos)
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 4,8,0,1.2) end
 	
-	StunHandler.Stun(char.Humanoid,1,5,0)
+	StunHandler.Stun(char.Humanoid,0.2,5,0)
 	
 
 end

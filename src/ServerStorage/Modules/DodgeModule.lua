@@ -121,7 +121,7 @@ function DodgeModule.Dodge(char,plr,direction)
     local dodgeFolder = WeaponsAnimations[currentweapon].Dodging
     local animToPlay = dodgeFolder[animName] or dodgeFolder.S
 
-    local anim = hum:LoadAnimation(animToPlay)
+    local anim = hum.Animator:LoadAnimation(animToPlay)
 	DodgeAnims[Identifier] = anim
 	anim:Play()
     StatusEffects.RemoveStatusEffect(char, "Burn")
@@ -178,9 +178,9 @@ function DodgeModule.DodgeCancel(char,plr)
     end
 
     local weapon = char:GetAttribute("CurrentWeapon")
-    local cancelAnim = hum:LoadAnimation(WeaponsAnimations[weapon].Dodging.DodgeCancel)
+    local cancelAnim = hum.Animator:LoadAnimation(WeaponsAnimations[weapon].Dodging.DodgeCancel)
     cancelAnim:Play()
-
+    HelpfullModule.RefundStamina(char, "Dodge")
     -- CONFIRM CANCEL (CLIENT VELOCITY RESET)
     if plr then
         DodgeEvent:FireClient(plr, "DodgeCancelConfirmed")

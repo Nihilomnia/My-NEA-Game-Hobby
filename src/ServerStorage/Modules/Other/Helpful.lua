@@ -249,6 +249,23 @@ function module.ManageStamina(char,action)
 	return Fail
 end
 
+
+function module.RefundStamina(char,action)
+	local Stamina = char:GetAttribute("Stamina")
+	local Fail = false
+	local plr = Players:GetPlayerFromCharacter(char)
+
+	if action == "Dodge" then 
+		char:SetAttribute("Stamina", (Stamina + 20))
+	end
+
+	if action == "Swing" then
+		char:SetAttribute("Stamina", (Stamina + 2))
+	end
+
+	return Fail
+end
+
 function module.ManageMana(char, Skill)
 	-- This is for when I start the spell and skill system fully
 end

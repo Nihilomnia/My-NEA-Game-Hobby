@@ -1,36 +1,80 @@
+--[Services]--
+local Debris = game:GetService("Debris")
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
 local RS = game:GetService("ReplicatedStorage")
+local SFX = game:GetService("SoundService")
 local RunService = game:GetService("RunService")
 local TS = game:GetService("TweenService")
-local uis = game:GetService("UserInputService")
-local cam = game.Workspace.CurrentCamera
+
+local SoundsModule = require(RS.Modules.Combat.SoundsModule)
+
+--[Player Variables]--
+local plr = Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local HRP: Part = char:WaitForChild("HumanoidRootPart")
+local Hum = char:WaitForChild("Humanoid")
+local cam = workspace.CurrentCamera
 
 local Events = RS.Events
+local MovementEvent = Events.Movement
 local AccessoryEvent = Events.AccessoryEvent
 
-local plr = game.Players.LocalPlayer
-local char = plr.Character or plr.CharacterAdded:Wait()
-local HRP = char:WaitForChild("HumanoidRootPart")
-local Hum = char:WaitForChild("Humanoid")
+-- Wait for CurrentWeapon
+local CurrentWeapon = char:GetAttribute("CurrentWeapon")
+while CurrentWeapon == nil do
+	CurrentWeapon = char:GetAttribute("CurrentWeapon")
+	if CurrentWeapon then
+		break
+	end
+	task.wait(0.3)
+end
 
+--[Animation Setup]--
+local WeaponAnimations = RS.Animations.Weapons
 local AnimationsFolder = script.Animations
+local MovementAnimationsFolder = WeaponAnimations[CurrentWeapon].Movement
+
+local WallClimbAnim = Hum.Animator:LoadAnimation(MovementAnimationsFolder.WallClimb)
+local ledgeGrab = Hum.Animator:LoadAnimation(MovementAnimationsFolder.LedgeGrab)
+
 local AnimationsTable = {}
-local AirBorneStates ={
-	[Enum.HumanoidStateType.Jumping] = true,
-	[Enum.HumanoidStateType.Freefall] = true,
-	[Enum.HumanoidStateType.FallingDown] = true
-}
+local SprintAnim = nil
+local SprintTrack = nil
+local conn
+
+--[Raycast]--
+local raycastParams = RaycastParams.new()
+raycastParams.FilterDescendantsInstances = { char }
+raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+--[State]--
+local canClimb = false
+local lastClimbState = nil
+local heldKeys = {}
+local isInAir = false
+local grounded = true
+local IsClimbing = false
+local IsHoldingLedge = false
+local LedgeGrabCoolDown = false
+local isSprinting = false
+local debounce = false
 
 local LastKeyPressTime = 0
 local doubleTapThreshold = 0.3
-local isSprinting = false
-local debounce = false
-local SprintAnim = nil
-local SprintTrack = nil
-local conn 
+local velocityDecay = 0.3
+local MaxClimbheight = 40
 
--- 1. Function to clear old tracks and load new ones
+local AirBorneStates = {
+	[Enum.HumanoidStateType.Jumping] = true,
+	[Enum.HumanoidStateType.Freefall] = true,
+	[Enum.HumanoidStateType.FallingDown] = true,
+}
+
+-------------------------------------------------
+-- WALK ANIMATION SYSTEM
+-------------------------------------------------
 local function UpdateWalkTracks()
-	-- Stop and destroy current playing tracks in the table
 	for _, track in pairs(AnimationsTable) do
 		track:Stop(0.1)
 		track:Destroy()
@@ -40,40 +84,32 @@ local function UpdateWalkTracks()
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	local IsLow = char:GetAttribute("IsLow")
 	local InCombat = char:GetAttribute("InCombat")
-
 	local targetFolder
 
-	-- Determine which folder to pull animations from
 	if isEquipped and currentWeapon and AnimationsFolder.Weapons:FindFirstChild(currentWeapon) then
 		if IsLow and InCombat then
 			targetFolder = AnimationsFolder.Weapons[currentWeapon].IsLow
-			warn(char.Name, "Is Low and has changed walking to hurt")
 		else
 			targetFolder = AnimationsFolder.Weapons[currentWeapon]
-			warn(char.Name, "Has been set back to normal")
 		end
 	else
 		if IsLow and InCombat then
 			targetFolder = AnimationsFolder.IsLow
-			warn(char.Name, "Is Low and has changed walking to hurt no waepon")
 		else
 			targetFolder = AnimationsFolder
-			warn(char.Name, "Has been set back to normal - No weapon")
 		end
 	end
 
-	-- Load the new tracks
 	AnimationsTable.WalkForward = Hum:LoadAnimation(targetFolder.WalkForward)
 	AnimationsTable.WalkRight = Hum:LoadAnimation(targetFolder.WalkRight)
 	AnimationsTable.WalkLeft = Hum:LoadAnimation(targetFolder.WalkLeft)
+	AnimationsTable.WalkBack = Hum:LoadAnimation(targetFolder.WalkBack)
 
-	-- Start them all with 0 weight (RenderStepped handles weights)
 	for _, track in pairs(AnimationsTable) do
 		track:Play(0.1, 0, 0)
 	end
 end
 
--- 2. Listen for both attribute changes
 char:GetAttributeChangedSignal("CurrentWeapon"):Connect(UpdateWalkTracks)
 char:GetAttributeChangedSignal("Equipped"):Connect(UpdateWalkTracks)
 char:GetAttributeChangedSignal("IsLow"):Connect(UpdateWalkTracks)
@@ -83,49 +119,38 @@ AccessoryEvent.OnClientEvent:Connect(function(action)
 		UpdateWalkTracks()
 	end
 end)
--- Initial Load
+
 UpdateWalkTracks()
 
--- 3. The Animation Engine (RenderStepped)
-RunService.RenderStepped:Connect(function()
-	if not AnimationsTable.WalkForward then
-		return
-	end
+-------------------------------------------------
+-- WALL CLIMB
+-------------------------------------------------
+local function triggerWallClimb()
+	grounded = false
+	IsClimbing = true
+	char:SetAttribute("IsClimbing", true)
 
-	local DirectionOfMovement = HRP.CFrame:VectorToObjectSpace(HRP.AssemblyLinearVelocity)
-	local walkSpeed = Hum.WalkSpeed
+	WallClimbAnim:Play()
 
-	-- Calculate Weights
-	local Forward = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, -1, -0.001))
-	local Backwards = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, 0.001, 1))
-	local Right = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, 0.001, 1))
-	local Left = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, -1, -0.001))
+	local bv = Instance.new("BodyVelocity")
+	bv.Velocity = HRP.CFrame.lookVector + Vector3.new(0, MaxClimbheight, 0)
+	bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	bv.Parent = HRP
+	Debris:AddItem(bv, velocityDecay)
 
-	local SpeedUnit = (DirectionOfMovement.Magnitude / walkSpeed)
+	task.delay(0.2, function()
+		SoundsModule.PlaySound(SFX.SFX.Movement.ClimbSound)
+	end)
 
-	-- Apply Weights and Speeds
-	if DirectionOfMovement.Z / walkSpeed < 0.1 then
-		AnimationsTable.WalkForward:AdjustWeight(math.max(Forward, Backwards)) -- Handles forward/backward weight
-		AnimationsTable.WalkRight:AdjustWeight(Right)
-		AnimationsTable.WalkLeft:AdjustWeight(Left)
+	task.delay(1, function()
+		IsClimbing = false
+		char:SetAttribute("IsClimbing", false)
+	end)
+end
 
-		-- Reverse speed if walking backwards
-		local playbackSpeed = (DirectionOfMovement.Z > 0) and -SpeedUnit or SpeedUnit
-		AnimationsTable.WalkForward:AdjustSpeed(playbackSpeed)
-		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit)
-		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit)
-	else
-		-- Strafe logic while moving backwards
-		AnimationsTable.WalkForward:AdjustWeight(Forward)
-		AnimationsTable.WalkRight:AdjustWeight(Left)
-		AnimationsTable.WalkLeft:AdjustWeight(Right)
-
-		AnimationsTable.WalkForward:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit * -1)
-	end
-end)
-
+-------------------------------------------------
+-- SPRINT SYSTEM
+-------------------------------------------------
 local function canSprint()
 	return not (
 		char:GetAttribute("Stunned")
@@ -146,70 +171,66 @@ local function ResetSpeedCheck()
 end
 
 local function selectSprintAnim()
-    if SprintAnim then SprintAnim:Stop()end
+	if SprintAnim then
+		SprintAnim:Stop()
+	end
 
-    if char:GetAttribute("Equipped") == true then 
-        if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-            SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].IsLow.Sprint
-        else 
-            SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].Sprint
-        end
+	if char:GetAttribute("Equipped") == true then
+		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
+			SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].IsLow.Sprint
+		else
+			SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].Sprint
+		end
+	elseif char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
+		SprintTrack = AnimationsFolder.IsLow.Sprint
+	else
+		SprintTrack = AnimationsFolder.Sprint
+	end
 
-    elseif char:GetAttribute("InCombat") and char:GetAttribute("IsLow")then
-        SprintTrack = AnimationsFolder.IsLow.Sprint
-    else
-        SprintTrack = AnimationsFolder.Sprint
-    end
-
-    if  char:GetAttribute("Sprinting") then
-        SprintAnim = Hum.Animator:LoadAnimation(SprintTrack)
-        SprintAnim:Play(0.25)
-
-    end
+	if char:GetAttribute("Sprinting") then
+		SprintAnim = Hum.Animator:LoadAnimation(SprintTrack)
+		SprintAnim:Play(0.25)
+	end
 end
 
 local function toggleSprintState()
 	if isSprinting and not debounce then
 		debounce = true
-		print("SPRINT")
-		
+
 		if ResetSpeedCheck() then
 			Hum.WalkSpeed = 16
 		end
-
-		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 }):Play()
+		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 })
+			:Play()
 		isSprinting = false
 
 		if SprintAnim then
 			SprintAnim:Stop()
 		end
+		if conn then
+			conn:Disconnect()
+		end
 
-		if conn then conn:Disconnect() end
-
-        UpdateWalkTracks()
-
+		UpdateWalkTracks()
 		char:SetAttribute("Sprinting", false)
-        task.wait(0.1)
-
+		task.wait(0.1)
 		debounce = false
 	elseif not isSprinting and not debounce then
-		print("No sprint")
+		char:SetAttribute("Sprinting", true)
 
-        char:SetAttribute("Sprinting", true)
-        if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then 
-            Hum.WalkSpeed = Hum.WalkSpeed * 1.25
-        else
-            Hum.WalkSpeed = Hum.WalkSpeed * 2
-        end
-       
-        TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 80 }):Play()
+		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
+			Hum.WalkSpeed = Hum.WalkSpeed * 1.25
+		else
+			Hum.WalkSpeed = Hum.WalkSpeed * 2
+		end
+
+		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 80 })
+			:Play()
 		isSprinting = true
-       
-        selectSprintAnim()
 
-		conn = RunService.Heartbeat:Connect(function(deltaTime)
-			
+		selectSprintAnim()
 
+		conn = RunService.Heartbeat:Connect(function()
 			if AirBorneStates[Hum:GetState()] then
 				SprintAnim:AdjustSpeed(0.25)
 			else
@@ -221,48 +242,221 @@ local function toggleSprintState()
 			track:Stop(0.1)
 			track:Destroy()
 		end
-
-
 	end
 end
-
-local function onKeyPress(Key, isTyping)
-	if isTyping then
-		return
-	end
-	if Key.KeyCode == Enum.KeyCode.W and canSprint() then
-		local currentTime = tick()
-		if currentTime - LastKeyPressTime <= doubleTapThreshold then
-			toggleSprintState()
-		end
-		LastKeyPressTime = currentTime
-	end
-end
-
-local function onKeyRelease(Key, isTyping)
-	if isTyping then
-		return
-	end
-	if Key.KeyCode == Enum.KeyCode.W and isSprinting then
-		toggleSprintState()
-	end
-end
-
-char:GetAttributeChangedSignal("Equipped"):Connect(function()
- selectSprintAnim()   
-end)
-
 
 local function OnCharStateChanged()
-    if not canSprint() or HRP.Anchored then 
-        if isSprinting then toggleSprintState() end
-    end
+	if not canSprint() or HRP.Anchored then
+		if isSprinting then
+			toggleSprintState()
+		end
+	end
 end
 
-
-uis.InputBegan:Connect(onKeyPress)
-uis.InputEnded:Connect(onKeyRelease)
+char:GetAttributeChangedSignal("Equipped"):Connect(selectSprintAnim)
 char:GetAttributeChangedSignal("Attacking"):Connect(OnCharStateChanged)
 char:GetAttributeChangedSignal("Stunned"):Connect(OnCharStateChanged)
 char:GetAttributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
 
+-------------------------------------------------
+-- RENDER STEPPED — Walk weights
+-------------------------------------------------
+RunService.RenderStepped:Connect(function()
+	if not AnimationsTable.WalkForward then
+		return
+	end
+
+	local DirectionOfMovement = HRP.CFrame:VectorToObjectSpace(HRP.AssemblyLinearVelocity)
+	local walkSpeed = Hum.WalkSpeed
+
+	local Forward = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, -1, -0.001))
+	local Backwards = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, 0.001, 1))
+	local Right = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, 0.001, 1))
+	local Left = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, -1, -0.001))
+	local SpeedUnit = DirectionOfMovement.Magnitude / walkSpeed
+
+	if DirectionOfMovement.Z / walkSpeed < 0.1 then
+		AnimationsTable.WalkForward:AdjustWeight(math.max(Forward, Backwards))
+		AnimationsTable.WalkRight:AdjustWeight(Right)
+		AnimationsTable.WalkLeft:AdjustWeight(Left)
+
+		local playbackSpeed = (DirectionOfMovement.Z > 0) and -SpeedUnit or SpeedUnit
+		AnimationsTable.WalkForward:AdjustSpeed(playbackSpeed)
+		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit)
+		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit)
+	else
+		AnimationsTable.WalkForward:AdjustWeight(Forward)
+		AnimationsTable.WalkRight:AdjustWeight(Left)
+		AnimationsTable.WalkLeft:AdjustWeight(Right)
+
+		AnimationsTable.WalkForward:AdjustSpeed(SpeedUnit * -1)
+		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit * -1)
+		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit * -1)
+	end
+end)
+
+-------------------------------------------------
+-- HEARTBEAT — Wall raycast
+-------------------------------------------------
+RunService.Heartbeat:Connect(function()
+	local rayLength = 3
+	local look = HRP.CFrame.lookVector
+	local offsets = {
+		Vector3.new(0, 0, 0), -- Center
+		Vector3.new(0, 1.5, 0), -- Upper
+		Vector3.new(0, -1.5, 0), -- Lower
+	}
+
+	local hitClimable = false
+	for _, offset in ipairs(offsets) do
+		local origin = HRP.Position + offset
+		local result = workspace:Raycast(origin, look * rayLength, raycastParams)
+		if result and result.Instance:GetAttribute("Climable") == true then
+			hitClimable = true
+			break
+		end
+	end
+
+	canClimb = hitClimable
+	if hitClimable ~= lastClimbState then
+		lastClimbState = hitClimable
+	end
+end)
+
+-------------------------------------------------
+-- INPUT
+-------------------------------------------------
+UIS.InputBegan:Connect(function(input, isTyping)
+	if isTyping then
+		return
+	end
+	local key = input.KeyCode
+
+	if key == Enum.KeyCode.W then
+		heldKeys.W = true
+
+		if canSprint() then
+			local currentTime = tick()
+			if currentTime - LastKeyPressTime <= doubleTapThreshold then
+				toggleSprintState()
+			end
+			LastKeyPressTime = currentTime
+		end
+	elseif key == Enum.KeyCode.S then
+		if IsHoldingLedge then
+			IsHoldingLedge = false
+			char:SetAttribute("LedgeHold", false)
+			MovementEvent:FireServer("ReleaseLedge", false)
+			TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 70 })
+				:Play()
+			return
+		end
+	end
+
+	if key == Enum.KeyCode.Space then
+		if IsHoldingLedge then
+			IsHoldingLedge = false
+			char:SetAttribute("LedgeHold", true)
+			MovementEvent:FireServer("ReleaseLedge", true)
+			-- Jump off ledge — big overshoot then settle
+			TS:Create(cam, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = 95 })
+				:Play()
+			task.delay(0.15, function()
+				TS
+					:Create(
+						cam,
+						TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+						{ FieldOfView = 70 }
+					)
+					:Play()
+			end)
+			return
+		end
+
+		if isInAir and heldKeys.W and canClimb and not IsClimbing then
+			if isSprinting then
+				toggleSprintState()
+				task.wait(0.15)
+			end
+			triggerWallClimb()
+		end
+	end
+end)
+UIS.InputEnded:Connect(function(input, isTyping)
+	if isTyping then
+		return
+	end
+	local key = input.KeyCode
+
+	if key == Enum.KeyCode.W then
+		heldKeys.W = nil
+		if isSprinting then
+			toggleSprintState()
+		end
+	end
+end)
+
+-------------------------------------------------
+-- HUMANOID STATE
+-------------------------------------------------
+Hum.StateChanged:Connect(function(_, newState)
+	if newState == Enum.HumanoidStateType.Freefall or newState == Enum.HumanoidStateType.Jumping then
+		isInAir = true
+		grounded = false
+	elseif newState == Enum.HumanoidStateType.Landed then
+		isInAir = false
+		grounded = true
+	end
+end)
+
+-------------------------------------------------
+-- LEDGES
+-------------------------------------------------
+task.wait(3)
+local ledges = workspace.ParkorTeststuff.Ledges:GetChildren()
+
+local function breatheFOV()
+	if not IsHoldingLedge then
+		TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
+		return
+	end
+
+	local inhale =
+		TS:Create(cam, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 63 })
+	local exhale =
+		TS:Create(cam, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 65 })
+
+	inhale:Play()
+	inhale.Completed:Connect(function()
+		if not IsHoldingLedge then
+			TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 70 })
+				:Play()
+			return
+		end
+		exhale:Play()
+		exhale.Completed:Connect(function()
+			breatheFOV() -- Loop back
+		end)
+	end)
+end
+
+for _, ledge in ledges do
+	ledge.Touched:Connect(function(part)
+		if LedgeGrabCoolDown or IsHoldingLedge or not IsClimbing then
+			return
+		end
+		if not part:IsDescendantOf(char) then
+			return
+		end
+
+		LedgeGrabCoolDown = true
+		IsHoldingLedge = true
+		IsClimbing = false
+		MovementEvent:FireServer("LedgeHold", ledge)
+
+		breatheFOV() -- Start breathing effect
+
+		task.wait(0.4)
+		LedgeGrabCoolDown = false
+	end)
+end

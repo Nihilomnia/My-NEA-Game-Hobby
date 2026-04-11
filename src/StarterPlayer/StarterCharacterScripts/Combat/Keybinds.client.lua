@@ -216,13 +216,8 @@ uis.InputEnded:Connect(function(input,isTyping)
 	end
 	
 	if input.keyCode == Enum.KeyCode.G and char:GetAttribute("Mode1",true)  then
-		if char:GetAttribute("ModeEnergy") >=100 then
-			if char:GetAttribute("Mode2",true) then return end
-			Transform:FireServer("Mode 2")
-		end
-		
-
-
+		if char:GetAttribute("Mode2",true) then return end
+		Transform:FireServer("Mode 2")
 	end
 	
 	
@@ -305,8 +300,8 @@ uis.InputEnded:Connect(function(input,isTyping)
 	if input.keyCode == Enum.KeyCode.E then
 		if char:GetAttribute("Mode2") then return end
 
-		if char:GetAttribute("Mode1") then 
-			--Transform:FireServer("Revert")
+		if char:GetAttribute("Mode1") or char:GetAttribute("Mode2") then 
+			Transform:FireServer("Revert")
 		else
            WeaponsEvent:FireServer("Equip/UnEquip")
 		end

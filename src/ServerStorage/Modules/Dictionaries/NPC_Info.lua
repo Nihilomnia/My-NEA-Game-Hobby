@@ -11,6 +11,19 @@ local info = {
 		Drops = {},
 	},
 
+	["TestNPC2"] = {
+		Type = "Elite",
+		Race = "Anomaly",
+		MobType = "Humanoid",
+		Element = "Astral",
+		Health = 10,000,
+		Skills = {},
+		Talents = {},
+		Drops = {},
+	},
+
+	
+
 	["Bandit"] = {
 		Type = "SmallFry",
 		Race = "Anomaly",
@@ -23,11 +36,11 @@ local info = {
 		Drops = {},
 	},
 
-	["Boss"] = {
+	["Asmondaios"] = {
 		Type = "Boss",
-		Race = "Anomaly",
+		Race = "Celestial",
 		MobType = "Humanoid",
-		Element = "...",
+		Element = "Bone",
 		Chest = true,
 		ChestType = "...",
 		Health = 10,000,
@@ -35,6 +48,8 @@ local info = {
 		Talents = {},
 		Drops = {},
 	}
+
+	
 
 
 
