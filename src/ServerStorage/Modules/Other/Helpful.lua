@@ -12,6 +12,7 @@ local WeaponsModels = RS.Models.Weapons
 local BlockingModule = require(script.Parent.Parent.BlockModule)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 
+
 local Welds = Combat_Data.Welds
 local EquipAnims = Combat_Data.EquipAnims
 local UnEquipAnims = Combat_Data.UnEquipAnims
@@ -23,11 +24,17 @@ local WeaponsWeld = RS.Welds.Weapons
 -- Constants	
 local k = 0.02 -- This is the rate of the drop off for DEX Crit Rate Scaling
 local BaseCritRate = 0.15 -- Base Crit Rate %
-local MaxCritRate = 0.45 -- Max Crit Rate %
+local MaxCritRate = 0.45 -- Max Crit Rate % given by DEX Points
 
 
-
-
+function module.DamageDealer(char,damage)
+	local hum = char.Humanoid
+	if hum.health > damage then
+		hum:TakeDamage(damage) -- Take the damage
+	else
+		-- This is where the knockdown logic would go
+	end
+end
 
 
 
@@ -97,6 +104,22 @@ function module.CheckInFront(char,enemyChar)
 	 end
 end
 
+
+function module.CheckBehind(char,enemyChar)
+	local enemyHRP = enemyChar.HumanoidRootPart
+	local attackDirection = (char.HumanoidRootPart.Position - enemyHRP.Position).Unit
+	local backDirection = -enemyHRP.CFrame.LookVector
+	local direction = math.acos(attackDirection:Dot(backDirection)) < math.rad(90)
+	
+	 if not direction then
+		print("Not behind")
+			return false
+	 else
+			print("behind")
+			return true
+	 end
+end
+
 function module.ResetMobility(char)
 	local hum = char.Humanoid
 	local plr  = Players:GetPlayerFromCharacter(char)
@@ -124,17 +147,22 @@ function module.ResetMobility(char)
 	end
 end
 
-function module.CheckForStatus(eChar,char,blockingDamage,hitPos,CheckForBlocking,CheckForParrying)
+function module.CheckForStatus(eChar,char,npc,blockingDamage,hitPos,CheckForBlocking,CheckForParrying, checkForDodging)
 	local stop = false
 	
 	if CheckForParrying and not stop then
-		if eChar:GetAttribute("Parrying") and module.CheckInFront(char,eChar) then BlockingModule.Parrying(char,eChar,hitPos)  stop = true end
+		if eChar:GetAttribute("Parrying") and module.CheckInFront(char,eChar) then BlockingModule.Parrying(char,eChar,hitPos,npc)  stop = true end
 	end
 	
 	
 	
 	if CheckForBlocking and not stop then
-		if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char,eChar) then BlockingModule.Blocking(eChar,blockingDamage,hitPos) stop = true end
+		if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char,eChar) then BlockingModule.Blocking(char, eChar, blockingDamage, hitPos) stop = true end
+		
+	end
+
+	if checkForDodging and not stop then
+		 --if eChar:GetAttribute("Dodging") then BlockingModule.Dodging(char,eChar,hitPos) stop = true end
 		
 	end
 	
@@ -236,9 +264,10 @@ function module.ManageStamina(char,action)
 	end
 
 	if action == "Climb" then 
-		local StaminaDrain = 5
-		if Stamina >= StaminaDrain then
-			-- This is where the stamina drain logic would - tobe honest its possible i could put it as it own function as its going to be a repeat process
+		if Stamina >= 10 then
+			Fail = false
+			char:SetAttribute("Stamina", (Stamina - 10))
+			return Fail
 		else
 			print(char,"Did not have enough stamina to climb")
 			Fail = true

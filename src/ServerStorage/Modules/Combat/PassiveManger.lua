@@ -1,9 +1,13 @@
 local PassiveManger = {}
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
+
 local SSModules = SS.Modules
 local Events = RS.Events
 local UI_Update = Events.UI_Update
+local VFX_Event = Events.VFX
+local Movement_Event = Events.Movement
+
 local HelpfulModule = require(SSModules.Other.Helpful)
 
 -- Maths Contants
@@ -51,7 +55,6 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 		print("If there was a passive for mode 1 it would be here")
 		if Defender_Second_ModeCheck then
 			local TargetHum = Defender.Humanoid
-			local plr = game.Players:GetPlayerFromCharacter(Defender)
 			local DodgeCounter = Defender:GetAttribute("Dodges")
 
 			if DodgeCounter > 0 then
@@ -137,16 +140,57 @@ end
 function PassiveManger.DefensivePassive(char, damage) -- This refers to when char blocks an attack
 end
 
-function PassiveManger.DodgePassive(char, damage) -- This refers to when char dodges an attack or just dodges in general
-	local Element = char:GetAttribute("Element")
-	local Second_ModeCheck = char:GetAttribute("Mode2")
 
-	if Element == "Astral" then
-		print("If there was a passive for mode 1 it would be here")
-		if Second_ModeCheck then
-			print("This is where the dodge logic would go for the flashstep")
+function PassiveManger.DodgePassive(char)
+    local plr = game.Players:GetPlayerFromCharacter(char)
+    local Hum = char.Humanoid
+    local Element = char:GetAttribute("Element")
+    local Second_ModeCheck = char:GetAttribute("Mode2")
+
+    if Element == "Astral" and Second_ModeCheck then
+        if char:GetAttribute("AstralDodgeActive") then return false end
+        char:SetAttribute("AstralDodgeActive", true)
+
+        -- Cache original speed so restore is accurate
+        local originalSpeed = Hum.WalkSpeed
+
+        -- Ghost out
+        for _, v in ipairs(char:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                v.Transparency = 1
+            end
+        end
+
+		if plr then
+			Movement_Event:FireClient(plr, "AstralDodge")
+		else
+            Hum.WalkSpeed = originalSpeed * 8	
 		end
-	end
+
+        
+        char:SetAttribute("Iframes", true)
+
+		VFX_Event:FireAllClients("AfterImage", char, nil, "AstralDodge")
+
+        task.delay(5, function()
+            if not char or not char:FindFirstChild("Humanoid") then return end
+
+            -- Restore visibility
+            for _, v in ipairs(char:GetDescendants()) do
+                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                    v.Transparency = 0
+                end
+            end
+
+            Hum.WalkSpeed = originalSpeed -- Restore exact value
+            char:SetAttribute("Iframes", false)
+            char:SetAttribute("AstralDodgeActive", false)
+        end)
+
+        return true -- Dodge passive fired
+    end
+
+    return false
 end
 
 function PassiveManger.BackStabPassive(char, damage) -- This refers to when char lands a backstab attack

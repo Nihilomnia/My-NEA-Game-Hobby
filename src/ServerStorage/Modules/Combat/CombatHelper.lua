@@ -30,21 +30,16 @@ local MaxCombo = 4
 
 local FeintFlags = {}
 
-local function getUniqueId(char)
-	local uid = char.Humanoid:FindFirstChild("UniqueId")
-	return uid.Value or nil
-end
 
 
 
-
-function module.Attack(char)
+function module.Attack(char,npc)
 	if not char or not char:FindFirstChild("Humanoid") then return end
 	local hum = char.Humanoid
 	local HRP = char:FindFirstChild("HumanoidRootPart")
 	local torso = char:FindFirstChild("Torso")
 	local plr = Players:GetPlayerFromCharacter(char)
-	local Identifier = plr or getUniqueId(char)
+	local Identifier = plr or npc
 	
 	
 	if not HRP or not torso then return end
@@ -90,8 +85,8 @@ function module.Attack(char)
 		Attachment.Parent = HRP
 		Attachment.Name = "LightAttackHitbox"
 		Attachment.WorldCFrame = HRP.CFrame * HitBoxOffset
-		VolumeHitbox.NormalHitBox(HitBoxSize, Attachment, char, function(Ehum, Hit)
-			HitServiceModule.Normal_Hitbox(char, currentWeapon, Ehum, Hit, HitAnim)
+		VolumeHitbox.NormalHitBox(HitBoxSize, Attachment, char, npc ,function(Ehum, Hit)
+			HitServiceModule.Normal_Hitbox(char, currentWeapon, Ehum, npc, Hit, HitAnim)
 		end)
 		
 		Attachment:Destroy()
@@ -124,7 +119,7 @@ function module.Attack(char)
 
 
 	playSwingAnimation.Stopped:Connect(function()
-		VolumeHitbox.DestroyHitboxes(char)
+		VolumeHitbox.DestroyHitboxes(char,npc)
 
 		if not char:GetAttribute("Swing") and not char:GetAttribute("IsBlocking") then 
 			HelpfullModule.ResetMobility(char)
@@ -141,9 +136,9 @@ function module.Attack(char)
 	if plr then VFX_Event:FireClient(plr,"CustomShake",1,2,0,.7) end
 end
 
-function module.CancelAttack(char)
+function module.CancelAttack(char,npc)
 	local plr = Players:GetPlayerFromCharacter(char)
-	local Identifier = plr or getUniqueId(char)
+	local Identifier = plr or npc
 	local hum = char.Humanoid
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	local SwingEffect = WeaponEffects[currentWeapon].Swing["Swing" .. char:GetAttribute("Combo")]

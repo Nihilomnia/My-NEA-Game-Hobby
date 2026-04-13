@@ -73,10 +73,7 @@ local function WaitForAttributes(char, attributeList, timeout)
 	return false
 end
 
-local function getUniqueId(char)
-	local uid = char.Humanoid:FindFirstChild("UniqueId")
-	return uid.Value or nil
-end
+
 
 local function onBlockingChanged(char)
 	if char:GetAttribute("Blocking") > 0 and connectionRunning_Blocking[char] == nil then
@@ -190,14 +187,13 @@ local function SetupManaRegen(char)
 	--- Mana regen- Lowkey function actually like STAM but i think the rate is going to be slower in combat and the wait time wil be like 1 secs or so
 end
 
-StatusEffectsModule.Signal:Connect(function(char, action, effectName)
+StatusEffectsModule.Signal:Connect(function(char,npc ,action, effectName)
 	print("Signal Gotten!")
 	if action == "StatusEffectAdded" then
 		local plr = game.Players:GetPlayerFromCharacter(char)
-		local identifier = plr or getUniqueId(char)
+		local identifier = plr or npc
 		local hum: Humanoid = char:FindFirstChildOfClass("Humanoid")
 		local effectData = CombatData.ActiveStatusEffects[identifier][effectName]
-		local EffectInfoTable = StatusDictionary.getEffectInfo(effectName)
 		local Duration = effectData.Duration
 		local Stacks = effectData.Stacks
 		if effectName == "Burn" then

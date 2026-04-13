@@ -15,6 +15,11 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 		
 		CombatEffectsModule.EmitEffect(effect, cframe,destroytime)
 	end
+
+	if action == "AfterImage" then
+		local char,anim,type = ...
+		CombatEffectsModule.AfterImage(char, anim, type)
+	end
 	
 	if action == "SwingEffect" then
 		local effect, char =...

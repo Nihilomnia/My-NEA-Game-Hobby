@@ -166,9 +166,6 @@ uis.InputBegan:Connect(function(input, gp)
 
     if input.KeyCode == Enum.KeyCode.Q then
         DodgeEvent:FireServer("Dodge",lastSentKey)
-		if lastSentKey == "None" then 
-			lastSentKey = "S"
-		end
     end
 end)
 

@@ -21,6 +21,8 @@ local Combat_Data = require(SSModule.Combat.Data.CombatData)
 
 -- Tables
 local BlockingAnims = Combat_Data.BlockingAnims
+local ParryAnims = Combat_Data.ParryAnims
+local SucessfulParry = Combat_Data.SuccessfulParry
 
 
 local VFX_Event = Events.VFX
@@ -31,12 +33,7 @@ local ServerCombatModule = require(SSModule.CombatModule)
 local WeaponStatsModule =require(SSModule.Dictionaries.WeaponStats)
 local StunHandler = require(SSModule.Other.StunHandlerV2)
 
-local function getUniqueId(char)
-	local uid = char.Humanoid:FindFirstChild("UniqueId")
-	print("UID:", uid.Value) 
-	return uid.Value or nil
-	--- IGNORE ---
-end
+
 
 local function ResetMobility(char)
 	local hum = char.Humanoid
@@ -66,7 +63,12 @@ end
 
 
 
-function module.Parrying(char,eChar,hitPos)
+function module.Parrying(char,eChar,hitPos,npc)
+	local identifier = players:GetPlayerFromCharacter(eChar) or npc
+	SucessfulParry[identifier] = true
+	ParryAnims[identifier]:Stop()
+	-- Kill the parry anims to prevent the rest of the parry process from being ran so cooldowns are not triggered
+
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	local BlockDmg = WeaponStatsModule.getStats(currentWeapon).BlockDmg
 	char:SetAttribute("Blocking",char:GetAttribute("Blocking")+ BlockDmg)
@@ -86,11 +88,10 @@ function module.Parrying(char,eChar,hitPos)
 	ServerCombatModule.stopAnims(char.Humanoid)
 	
 	char.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[char:GetAttribute("CurrentWeapon")].Blocking.GotParried):Play()
-	eChar:SetAttribute("ParryCD",false)
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 4,8,0,1.2) end
 	
-	StunHandler.Stun(char.Humanoid,0.2,5,0)
+	StunHandler.Stun(char.Humanoid,0.45,5,0)
 	
 
 end
@@ -117,14 +118,14 @@ function module.GuardBreak(char)
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 6,12,0,2) end
 	
-	StunHandler.Stun(char.Humanoid,2)
+	StunHandler.Stun(char.Humanoid,2.5)
 end
 
 
-function module.ActivateBlocking(char)
+function module.ActivateBlocking(char,npc)
 	local hum = char.Humanoid
 	local plr = players:GetPlayerFromCharacter(char) 
-	local Identifier = plr or getUniqueId(char)
+	local Identifier = plr or npc
 
 	
 
@@ -143,9 +144,9 @@ function module.ActivateBlocking(char)
 end
 
 
-function module.DeactivateBlocking(char)
-	local plr = players:GetPlayerFromCharacter(char) or getUniqueId(char)
-	local Identifier = plr or getUniqueId(char)
+function module.DeactivateBlocking(char,npc)
+	local plr = players:GetPlayerFromCharacter(char)
+	local Identifier = plr or npc
 
 	SoundsModule.PlaySound(WeaponSounds[char:GetAttribute("CurrentWeapon")].Blocking.BlockingStop, char.Torso)
 	BlockingAnims[Identifier]:Stop()
@@ -158,16 +159,24 @@ function module.DeactivateBlocking(char)
 end
 
 
-function module.Blocking(enemyChar,damage,hitPos)
+function module.Blocking(char, enemyChar,damage,hitPos)
 	if enemyChar:GetAttribute("Blocking") <= 100 then
-		local currentWeapon = enemyChar:GetAttribute("CurrentWeapon")
+		local currentWeapon = char:GetAttribute("CurrentWeapon")
 		local BlockDmg = WeaponStatsModule.getStats(currentWeapon).BlockDmg
-		local ChipDmgPercent = WeaponStatsModule.getStats(currentWeapon).ChipDamage or 0
-		local ChipDmg = damage * ChipDmgPercent / 100
+		local data = WeaponStatsModule.getStats(currentWeapon)
+		local ChipDmgPercent = data.ChipDamage
+		print(data)
+		print(ChipDmgPercent)
+
+		
+
+		local ChipDmg = damage * (ChipDmgPercent / 100)
 
 		enemyChar:SetAttribute("Blocking", enemyChar:GetAttribute("Blocking") + BlockDmg)
 		enemyChar:SetAttribute("InCombat",true)
-		enemyChar.Humanoid:TakeDamage(math.min(ChipDmg,damage))
+		enemyChar.Humanoid:TakeDamage(ChipDmg)
+
+		print(ChipDmg)
 		
 		if enemyChar:GetAttribute("Blocking") >= 100 then
 			module.GuardBreak(enemyChar)

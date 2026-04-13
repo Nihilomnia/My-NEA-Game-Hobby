@@ -1,12 +1,14 @@
 local StatusEffectsModule = {}
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
 local SSModules = SS.Modules
 local Dictionaries = SSModules.Dictionaries
 local Effect_Dictionary = require(Dictionaries.Effect_Info)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local Signal = require(SSModules.Packages.Signal)
+
 
 
 local Events = RS.Events
@@ -19,10 +21,7 @@ local VFX_Event = Events.VFX
 local ActiveStatusEffects = Combat_Data.ActiveStatusEffects
 
 
-local function getUniqueId(char)
-	local uid = char.Humanoid:FindFirstChild("UniqueId")
-	return uid.Value or nil
-end
+
 
 StatusEffectsModule.Signal = Signal.new()
 
@@ -30,9 +29,9 @@ StatusEffectsModule.Signal = Signal.new()
 
 
 
-function StatusEffectsModule.ApplyStatusEffect(char, effectName, stacks, Duration)
+function StatusEffectsModule.ApplyStatusEffect(char,npc,effectName, stacks, Duration)
     local plr = game.Players:GetPlayerFromCharacter(char)
-    local identifier = plr or getUniqueId(char)
+    local identifier = plr or npc
 
     local effectInfo = Effect_Dictionary.getEffectInfo(effectName)
 
@@ -95,7 +94,7 @@ function StatusEffectsModule.ApplyStatusEffect(char, effectName, stacks, Duratio
 
     if plr then UI_Update_Event:FireClient(plr, "StatusEffectAdded", effectName, stacks)  end
     --VFX_Event:FireAllClients("CombatEffects", effectInfo.VFX, char.HumanoidRootPart.Position)
-    StatusEffectsModule.Signal:Fire(char,"StatusEffectAdded", effectName)
+    StatusEffectsModule.Signal:Fire(char,npc,"StatusEffectAdded", effectName)
     print("Signal sent for",char)
 end
 
@@ -103,9 +102,9 @@ end
 
 
 
-function StatusEffectsModule.RemoveStatusEffect(char, effectName)
+function StatusEffectsModule.RemoveStatusEffect(char,npc, effectName)
     local plr = game.Players:GetPlayerFromCharacter(char)
-    local identifier = plr or getUniqueId(char)
+    local identifier = plr or npc
 
     
     if not ActiveStatusEffects[identifier] then return end

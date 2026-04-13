@@ -1,4 +1,5 @@
 local DodgeModule = {}
+local Players = game:GetService("Players")
 local SS = game:GetService("ServerStorage")
 local RS = game:GetService("ReplicatedStorage")
 
@@ -7,11 +8,13 @@ local HelpfullModule = require(SSModules.Other.Helpful)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local ServerCombatModule = require(SSModules.CombatModule)
 local StatusEffects = require(SSModules.StatusEffectsModule)
+local PassiveManger = require(SSModules.Combat.PassiveManger)
 
 
 local Events = RS.Events
 
 local DodgeEvent = Events.Dodge
+local VFX_Event = Events.VFX
 
 local WeaponsAnimations = RS.Animations.Weapons
 
@@ -46,20 +49,22 @@ local function dodge(char,Identifier,TargetDirection)
         currentDodgeForce[Identifier]:Destroy()
     end
 
+    if TargetDirection == "None" then return end  -- No velcoity for spot dodges
+
     local lv = Instance.new("LinearVelocity")
     lv.Attachment0 = hrp:FindFirstChild("DodgeAttachment") or Instance.new("Attachment", hrp)
     lv.MaxForce = 1e6
     
-    -- Default direction and multipliers
+
     local direction = Vector3.new()
     local multiplier = 1
 
-    -- Logic for Direction and Force (3/4 = 0.75, 2/4 = 0.5)
+  
     if TargetDirection == "W" then
         -- Forward
         direction = hrp.CFrame.LookVector
         multiplier = 1
-    elseif TargetDirection == "S" or TargetDirection == "None" then
+    elseif TargetDirection == "S"  then
         -- Back (or Q on its own)
         direction = -hrp.CFrame.LookVector
         multiplier = 0.75
@@ -84,26 +89,30 @@ end
 
 
 
-local function getUniqueId(char)
-    local uid = char.Humanoid:FindFirstChild("UniqueId")
-    return uid.Value or nil
-end
 
 
 
-function DodgeModule.Dodge(char,plr,direction)
-    local Identifier = plr or getUniqueId(char)
+
+function DodgeModule.Dodge(char,direction,npc)
+    local Identifier = Players:GetPlayerFromCharacter(char) or npc
+    local plr = Players:GetPlayerFromCharacter(char)
     if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true,nil) then return end
     if HelpfullModule.ManageStamina(char, "Dodge") then return end
-   	if DodgeIsCancelling[plr] then return end
-	if DodgeDebounce[plr] and DodgeCancelCooldown[plr] then return end
+   	if DodgeIsCancelling[Identifier] then return end
+	if DodgeDebounce[Identifier] and DodgeCancelCooldown[Identifier] then return end
 
     local hum = char.Humanoid
     local currentweapon = char:GetAttribute("CurrentWeapon")
+
+    local dodgeDoneFlag = PassiveManger.DodgePassive(char)
+
+    if dodgeDoneFlag then return end
  
     DodgeDebounce[Identifier] = true
     DodgeCanCancel[Identifier] = false
     char:SetAttribute("Dodging", true)
+
+   
     
    
     ServerCombatModule.stopAnims(hum)
@@ -111,23 +120,25 @@ function DodgeModule.Dodge(char,plr,direction)
     local animName = direction
     
 	if direction == nil then
-		animName = "W" -- For npcs that can't buffer directions  fall back to foward dodge
+		animName = "None" -- For npcs that can't buffer directions  fall back to Spot Dodge
 	end
 
-	if direction == "None" or direction == "S" then
-		animName = "S" -- Default back dodge
-	end
-
+	
     local dodgeFolder = WeaponsAnimations[currentweapon].Dodging
-    local animToPlay = dodgeFolder[animName] or dodgeFolder.S
+    local animToPlay = dodgeFolder[animName] or dodgeFolder["None"] -- fallback to spot dodge anim if the specific direction anim doesn't exist
 
     local anim = hum.Animator:LoadAnimation(animToPlay)
 	DodgeAnims[Identifier] = anim
 	anim:Play()
-    StatusEffects.RemoveStatusEffect(char, "Burn")
-    print("Removed Burn!")
+    StatusEffects.RemoveStatusEffect(char,npc, "Burn")
+  
+
+
     if plr then
         DodgeEvent:FireClient(plr, "Dodge")
+        if direction == "None" then
+            VFX_Event:FireAllClients("AfterImage",char,animToPlay,nil)
+        end
     else
         dodge(char,Identifier, direction)
     end
@@ -154,8 +165,9 @@ function DodgeModule.Dodge(char,plr,direction)
 end
 
 
-function DodgeModule.DodgeCancel(char,plr)
-    local Identifier = plr or getUniqueId(char)
+function DodgeModule.DodgeCancel(char,npc)
+    local plr = Players:GetPlayerFromCharacter(char)
+    local Identifier = plr or npc
     local hum = char.Humanoid
     if not char:GetAttribute("Dodging") then return  end
     if DodgeCancelCooldown[Identifier] then
@@ -167,6 +179,8 @@ function DodgeModule.DodgeCancel(char,plr)
     if DodgeIsCancelling[Identifier] then
         return
     end
+
+    if DodgeAnims[Identifier] == "None" then return end -- This means that they were perfoming a spot dodge so they can't cancel it 
 
     DodgeCancelCooldown[Identifier] = true
     DodgeCanCancel[Identifier] = false
@@ -181,7 +195,8 @@ function DodgeModule.DodgeCancel(char,plr)
     local cancelAnim = hum.Animator:LoadAnimation(WeaponsAnimations[weapon].Dodging.DodgeCancel)
     cancelAnim:Play()
     HelpfullModule.RefundStamina(char, "Dodge")
-    -- CONFIRM CANCEL (CLIENT VELOCITY RESET)
+  
+
     if plr then
         DodgeEvent:FireClient(plr, "DodgeCancelConfirmed")
     else

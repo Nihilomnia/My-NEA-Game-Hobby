@@ -27,13 +27,13 @@ local DataManager = require(ServerScripts.Data.Modules.DataManager)
 local BlockModule = require(ServerStorage.Modules.BlockModule)
 local ParryModule = require(ServerStorage.Modules.Parrying)
 local DodgeModule = require(ServerStorage.Modules.DodgeModule)
+local EquipModule = require(ServerStorage.Modules.Combat.EquipModule)
 
 -- Local Tables
 local Welds = Combat_Data.Welds
 local EquipAnims = Combat_Data.EquipAnims
 local UnEquipAnims = Combat_Data.UnEquipAnims
 local IdleAnims = Combat_Data.IdleAnims
-local TransformAnims = Combat_Data.TransformAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 
 Players.PlayerAdded:Connect(function(plr)
@@ -79,7 +79,6 @@ WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
 	local hum = char:WaitForChild("Humanoid")
 	local torso = char.Torso
-	local rightArm = char["Right Arm"]
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 
@@ -88,71 +87,9 @@ WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 	end
 
 	if action == "Equip/UnEquip" and not char:GetAttribute("Equipped") and not EquipDebounce[plr] then
-		if char:GetAttribute("Mode1", true) then
-			return
-		end
-		EquipDebounce[plr] = true
-
-		SoundsModule.PlaySound(WeaponsSounds[currentWeapon].Main.Equip, torso)
-
-		IdleAnims[plr] = hum.Animator:LoadAnimation(WeaponsAnimations[currentWeapon].Main.Idle)
-		EquipAnims[plr] = hum.Animator:LoadAnimation(WeaponsAnimations[currentWeapon].Main.Equip)
-		EquipAnims[plr]:Play()
-
-		EquipAnims[plr]:GetMarkerReachedSignal("weld"):Connect(function()
-			Welds[plr].Part0 = rightArm
-			Welds[plr].C1 = WeaponsWeld[currentWeapon].HoldingWeaponWeld.C1
-		end)
-
-		EquipAnims[plr]:GetMarkerReachedSignal("Equipped"):Connect(function()
-			IdleAnims[plr]:Play()
-			char:SetAttribute("Equipped", true)
-			EquipDebounce[plr] = false
-		end)
-		EquipAnims[plr].Stopped:Connect(function()
-			if char:GetAttribute("Stunned") then
-				Welds[plr].Part0 = rightArm
-				Welds[plr].C1 = WeaponsWeld[currentWeapon].HoldingWeaponWeld.C1
-				IdleAnims[plr]:Play()
-				char:SetAttribute("Equipped", true)
-				EquipDebounce[plr] = false
-			end
-		end)
+		EquipModule.EquipWeapon(char)
 	elseif action == "Equip/UnEquip" and char:GetAttribute("Equipped") and not EquipDebounce[plr] then
-		if char:GetAttribute("Mode1", true) then
-			return
-		end
-		if char:GetAttribute("Mode2", true) then
-			return
-		end
-		EquipDebounce[plr] = true
-
-		char:SetAttribute("Equipped", false)
-
-		SoundsModule.PlaySound(WeaponsSounds[currentWeapon].Main.UnEquip, torso)
-
-		IdleAnims[plr]:Stop()
-
-		UnEquipAnims[plr] = hum:LoadAnimation(WeaponsAnimations[currentWeapon].Main.UnEquip)
-		UnEquipAnims[plr]:Play()
-
-		UnEquipAnims[plr]:GetMarkerReachedSignal("Weld"):Connect(function()
-			Welds[plr].Part0 = torso
-			Welds[plr].C1 = WeaponsWeld[currentWeapon].IdleWeaponWeld.C1
-		end)
-
-		UnEquipAnims[plr]:GetMarkerReachedSignal("UnEquipped"):Connect(function()
-			EquipDebounce[plr] = false
-		end)
-
-		UnEquipAnims[plr].Stopped:Connect(function()
-			if char:GetAttribute("Stunned") then
-				Welds[plr].Part0 = torso
-				Welds[plr].C1 = WeaponsWeld[currentWeapon].IdleWeaponWeld.C1
-				char:SetAttribute("Equipped", false)
-				EquipDebounce[plr] = false
-			end
-		end)
+		EquipModule.UnequipWeapon(char)
 	end
 end)
 
@@ -169,9 +106,9 @@ DodgeEvent.OnServerEvent:Connect(function(plr, action, direction)
 	end
 
 	if action == "Dodge" then
-		DodgeModule.Dodge(char, plr, direction)
+		DodgeModule.Dodge(char, direction)
 	elseif action == "DodgeCancel" then
-		DodgeModule.DodgeCancel(char, plr)
+		DodgeModule.DodgeCancel(char)
 	end
 end)
 
@@ -192,14 +129,13 @@ BlockingEvent.OnServerEvent:Connect(function(plr, action)
 		and not char:GetAttribute("Parrying")
 		and not char:GetAttribute("ParryCD")
 	then
-		ParryModule.ParryAttempt(char, plr)
+		ParryModule.ParryAttempt(char)
 	end
 end)
 
 TransformEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
-	local Race = char:GetAttribute("Race")
-	if HelpfullModule.CheckForAttributes(char, true, true, true, nil, true, true, true) then
+	if HelpfullModule.CheckForAttributes(char, true, true, true, nil, true, true, true, nil) then
 		return
 	end
 

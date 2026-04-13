@@ -24,20 +24,22 @@ function DodgeVelocity.dodge(char,Identifier,TargetDirection)
         currentDodgeForce[Identifier]:Destroy()
     end
 
+    if TargetDirection == "None" then return end  -- No velcoity for spot dodges
+
     local lv = Instance.new("LinearVelocity")
     lv.Attachment0 = hrp:FindFirstChild("DodgeAttachment") or Instance.new("Attachment", hrp)
     lv.MaxForce = 1e6
     
-    -- Default direction and multipliers
+
     local direction = Vector3.new()
     local multiplier = 1
 
-    -- Logic for Direction and Force (3/4 = 0.75, 2/4 = 0.5)
+
     if TargetDirection == "W" then
         -- Forward
         direction = hrp.CFrame.LookVector
         multiplier = 1
-    elseif TargetDirection == "S" or TargetDirection == "None" then
+    elseif TargetDirection == "S"  then
         -- Back (or Q on its own)
         direction = -hrp.CFrame.LookVector
         multiplier = 0.75

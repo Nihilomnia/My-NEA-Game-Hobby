@@ -9,7 +9,58 @@ local info = {
 		Skills = {},
 		Talents = {},
 		Drops = {},
+		STAT_POINTS = {
+			VIT = 10,
+			END = 10,
+			STR = 10,
+			SPT = 10,
+			DEX = 10,
+			AGL = 10,
+			WPN = 10,
+		},
 	},
+
+	["ShootingStar"] = {
+		Type = "SmallFry",
+		Race = "Anomaly",
+		MobType = "Humanoid",
+		Element = "Astral",
+		Health = 10,000,
+		Skills = {},
+		Talents = {},
+		Drops = {},
+		STAT_POINTS = {
+			VIT = 10,
+			END = 10,
+			STR = 10,
+			SPT = 10,
+			DEX = 10,
+			AGL = 10,
+			WPN = 10,
+		},
+	},
+
+	["FracturedKunai"] = {
+		Type = "SmallFry",
+		Race = "Anomaly",
+		MobType = "Humanoid",
+		Element = "Astral",
+		Health = 10,000,
+		Skills = {},
+		Talents = {},
+		Drops = {},
+		STAT_POINTS = {
+			VIT = 10,
+			END = 10,
+			STR = 10,
+			SPT = 10,
+			DEX = 10,
+			AGL = 10,
+			WPN = 10,
+		},
+	},
+
+
 
 	["TestNPC2"] = {
 		Type = "Elite",
@@ -20,6 +71,15 @@ local info = {
 		Skills = {},
 		Talents = {},
 		Drops = {},
+		STAT_POINTS = {
+			VIT = 10,
+			END = 10,
+			STR = 10,
+			SPT = 10,
+			DEX = 10,
+			AGL = 10,
+			WPN = 10,
+		},
 	},
 
 	
@@ -34,6 +94,15 @@ local info = {
 		Skills = {},
 		Talents = {},
 		Drops = {},
+		STAT_POINTS = {
+			VIT = 10,
+			END = 10,
+			STR = 10,
+			SPT = 10,
+			DEX = 10,
+			AGL = 10,
+			WPN = 10,
+		},
 	},
 
 	["Asmondaios"] = {
@@ -47,6 +116,15 @@ local info = {
 		Skills = {},
 		Talents = {},
 		Drops = {},
+		STAT_POINTS = {
+			VIT = 10,
+			END = 10,
+			STR = 10,
+			SPT = 10,
+			DEX = 10,
+			AGL = 10,
+			WPN = 10,
+		},
 	}
 
 	

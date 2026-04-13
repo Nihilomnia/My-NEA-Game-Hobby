@@ -13,6 +13,7 @@ local Combat_Data= require(SSModules.Combat.Data.CombatData)
 
 
 
+
 --Tables
 local Welds = Combat_Data.Welds
 local EquipAnims = Combat_Data.EquipAnims
@@ -36,8 +37,13 @@ local function getUniqueId(char)
 end
 
 
+
 local function MakeWeaponInvisible(char,Weapon)
 	if not Weapon and char then return end
+
+    Weapon.transparency = 0.011
+	Weapon.Reflectance = -0.4 -- this is a bit of a bug to make the when invisble to certain parts 
+
 	local HRP = char:FindFirstChild("HumanoidRootPart")
 	local InviblePart = RS.Effects.InvisiblePart:Clone()
 	local Weld = Instance.new("WeldConstraint")
@@ -159,7 +165,7 @@ end
 ---------------------------------------------------------------------
 -- MODE 2 TRANSFORMATION
 ---------------------------------------------------------------------
-function module.Mode2(char)
+function module.Mode2(char,npc)
 	if not char or not char:FindFirstChild("Humanoid") then return end
 
 	local hum = char.Humanoid
@@ -257,6 +263,33 @@ function module.Mode2(char)
 			if IdleAnims[Identifier] then
 				IdleAnims[Identifier]:Play()
 			end
+
+			if npc == nil then -- This means that its a player transformation, so we start the MF gain coroutine, if its an npc transformation we dont want to do this
+				coroutine.wrap(function()
+				local mf = char:GetAttribute("MF")
+				local maxMF = char:GetAttribute("MaxMF")
+				print("hello starting MF gain")
+				while char:GetAttribute("Mode2") do
+					task.wait(1)
+					mf = char:GetAttribute("MF")
+					maxMF = char:GetAttribute("MaxMF")
+					if mf and mf < maxMF then
+						while char:GetAttribute("AstralDodgeActive") do
+							task.wait(0.1)
+						end
+						
+						char:SetAttribute("MF", mf + 2.5)
+
+					else
+						module.Revert(char)
+						return
+					end
+				end
+
+			end)()
+			end
+
+			
 		end)
 end
 
@@ -340,10 +373,7 @@ if char:GetAttribute("Mode1") then
 		
 
 elseif char:GetAttribute("Mode2") then
-	-- It will most likely just be a stanadard Mode 1 call
-	-- But i need to remeber to take into consideration that Mode 2 changes the players/dummies items 
-	--- Also in all this i need to make sure that dummies cant revert
-
+	module.Mode1(char)
 else
 warn(char,"Is perfoming a false revert")
 end

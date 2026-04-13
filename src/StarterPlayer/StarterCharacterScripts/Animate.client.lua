@@ -7,6 +7,8 @@ local SFX = game:GetService("SoundService")
 local RunService = game:GetService("RunService")
 local TS = game:GetService("TweenService")
 
+
+
 local SoundsModule = require(RS.Modules.Combat.SoundsModule)
 
 --[Player Variables]--
@@ -15,6 +17,16 @@ local char = plr.Character or plr.CharacterAdded:Wait()
 local HRP: Part = char:WaitForChild("HumanoidRootPart")
 local Hum = char:WaitForChild("Humanoid")
 local cam = workspace.CurrentCamera
+
+
+--[UI Variables]--
+local playerGui = plr:WaitForChild("PlayerGui")
+local MovementUI = playerGui:WaitForChild("MovementUI")
+local top = MovementUI:WaitForChild("Top")
+local bottom = MovementUI:WaitForChild("Bottom")
+
+
+
 
 local Events = RS.Events
 local MovementEvent = Events.Movement
@@ -151,107 +163,124 @@ end
 -------------------------------------------------
 -- SPRINT SYSTEM
 -------------------------------------------------
+local baseSpeed = 16 -- Single source of truth for default speed
+
 local function canSprint()
-	return not (
-		char:GetAttribute("Stunned")
-		or char:GetAttribute("IsRagdoll")
-		or char:GetAttribute("IsBlocking")
-		or char:GetAttribute("Attacking")
-		or char:GetAttribute("IsCrouching")
-	)
+    return not (
+        char:GetAttribute("Stunned")
+        or char:GetAttribute("IsRagdoll")
+        or char:GetAttribute("IsBlocking")
+        or char:GetAttribute("Attacking")
+        or char:GetAttribute("IsCrouching")
+    )
 end
 
 local function ResetSpeedCheck()
-	return not (
-		char:GetAttribute("Stunned")
-		and not char:GetAttribute("IsBlocking")
-		and not char:GetAttribute("Attacking")
-		and not char:GetAttribute("IsCrouching")
-	)
+    return not (
+        char:GetAttribute("Stunned")
+        and not char:GetAttribute("IsBlocking")
+        and not char:GetAttribute("Attacking")
+        and not char:GetAttribute("IsCrouching")
+    )
 end
 
 local function selectSprintAnim()
-	if SprintAnim then
-		SprintAnim:Stop()
-	end
+    if SprintAnim then SprintAnim:Stop() end
 
-	if char:GetAttribute("Equipped") == true then
-		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-			SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].IsLow.Sprint
-		else
-			SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].Sprint
-		end
-	elseif char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-		SprintTrack = AnimationsFolder.IsLow.Sprint
-	else
-		SprintTrack = AnimationsFolder.Sprint
-	end
+    if char:GetAttribute("Equipped") == true then
+        if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
+            SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].IsLow.Sprint
+        else
+            SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].Sprint
+        end
+    elseif char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
+        SprintTrack = AnimationsFolder.IsLow.Sprint
+    else
+        SprintTrack = AnimationsFolder.Sprint
+    end
 
-	if char:GetAttribute("Sprinting") then
-		SprintAnim = Hum.Animator:LoadAnimation(SprintTrack)
-		SprintAnim:Play(0.25)
-	end
+    if char:GetAttribute("Sprinting") then
+        SprintAnim = Hum.Animator:LoadAnimation(SprintTrack)
+        SprintAnim:Play(0.25)
+    end
 end
 
 local function toggleSprintState()
-	if isSprinting and not debounce then
-		debounce = true
+    if isSprinting and not debounce then
+        debounce = true
 
-		if ResetSpeedCheck() then
-			Hum.WalkSpeed = 16
-		end
-		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 })
-			:Play()
-		isSprinting = false
+        if ResetSpeedCheck() then
+            Hum.WalkSpeed = baseSpeed -- Always restore to base, not a divided value
+        end
 
-		if SprintAnim then
-			SprintAnim:Stop()
-		end
-		if conn then
-			conn:Disconnect()
-		end
+        TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 }):Play()
+        isSprinting = false
 
-		UpdateWalkTracks()
-		char:SetAttribute("Sprinting", false)
-		task.wait(0.1)
-		debounce = false
-	elseif not isSprinting and not debounce then
-		char:SetAttribute("Sprinting", true)
+        if SprintAnim then SprintAnim:Stop() end
+        if conn then conn:Disconnect() end
 
-		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-			Hum.WalkSpeed = Hum.WalkSpeed * 1.25
-		else
-			Hum.WalkSpeed = Hum.WalkSpeed * 2
-		end
+        UpdateWalkTracks()
+        char:SetAttribute("Sprinting", false)
+        task.wait(0.1)
+        debounce = false
 
-		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 80 })
-			:Play()
-		isSprinting = true
+    elseif not isSprinting and not debounce then
+        char:SetAttribute("Sprinting", true)
 
-		selectSprintAnim()
+        -- Always multiply from baseSpeed, never from current WalkSpeed
+        if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
+            Hum.WalkSpeed = baseSpeed * 1.25
+        else
+            Hum.WalkSpeed = baseSpeed * 2
+        end
 
-		conn = RunService.Heartbeat:Connect(function()
-			if AirBorneStates[Hum:GetState()] then
-				SprintAnim:AdjustSpeed(0.25)
-			else
-				SprintAnim:AdjustSpeed(1)
-			end
-		end)
+        TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 80 }):Play()
+        isSprinting = true
 
-		for _, track in pairs(AnimationsTable) do
-			track:Stop(0.1)
-			track:Destroy()
-		end
-	end
+        selectSprintAnim()
+
+        conn = RunService.Heartbeat:Connect(function()
+            if AirBorneStates[Hum:GetState()] then
+                SprintAnim:AdjustSpeed(0.25)
+            else
+                SprintAnim:AdjustSpeed(1)
+            end
+        end)
+
+        for _, track in pairs(AnimationsTable) do
+            track:Stop(0.1)
+            track:Destroy()
+        end
+    end
 end
 
 local function OnCharStateChanged()
-	if not canSprint() or HRP.Anchored then
-		if isSprinting then
-			toggleSprintState()
-		end
-	end
+    if not canSprint() or HRP.Anchored then
+        if isSprinting then toggleSprintState() end
+    end
 end
+
+-- AstralDodge: stop sprint, apply speed boost on top of baseSpeed, then restore
+MovementEvent.OnClientEvent:Connect(function(action)
+    if action == "AstralDodge" then
+		print("Speed START")
+        -- Stop sprint cleanly first
+        if isSprinting then toggleSprintState() end
+
+        -- Apply dodge speed boost from baseSpeed, not current WalkSpeed
+        local dodgeSpeed = baseSpeed * 5
+        Hum.WalkSpeed = dodgeSpeed
+		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 160 }):Play()
+
+        task.delay(5, function()
+            -- Only restore if nothing else took over speed
+            if not isSprinting then
+                Hum.WalkSpeed = baseSpeed
+				TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 }):Play()
+            end
+        end)
+    end
+end)
 
 char:GetAttributeChangedSignal("Equipped"):Connect(selectSprintAnim)
 char:GetAttributeChangedSignal("Attacking"):Connect(OnCharStateChanged)
@@ -415,29 +444,78 @@ end)
 task.wait(3)
 local ledges = workspace.ParkorTeststuff.Ledges:GetChildren()
 
+-- Offscreen positions (top slides up, bottom slides down)
+local TOP_HIDDEN = UDim2.new(-0.001, 0, -0.4, 0)
+local BOTTOM_HIDDEN = UDim2.new(-0.034, 0, 1.1, 0)
+
+-- Normal (resting) positions
+local TOP_NORMAL = UDim2.new(-0.001, 0, -0.187, 0)
+local BOTTOM_NORMAL = UDim2.new(-0.034, 0, 0.75, 0)
+
+-- Breathe positions (top creeps down, bottom creeps up)
+local TOP_INHALE = UDim2.new(-0.001, 0, -0.15, 0)
+local BOTTOM_INHALE = UDim2.new(-0.034, 0, 0.72, 0)
+
+local tweenSlide = TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+local tweenBreathe = TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+-- Set bars offscreen initially
+top.Position = TOP_HIDDEN
+bottom.Position = BOTTOM_HIDDEN
+
+local function slideOutBars()
+    TS:Create(top, tweenSlide, { Position = TOP_HIDDEN }):Play()
+    TS:Create(bottom, tweenSlide, { Position = BOTTOM_HIDDEN }):Play()
+end
+
 local function breatheFOV()
-	if not IsHoldingLedge then
-		TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
-		return
-	end
+    if not IsHoldingLedge then
+        TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
+        slideOutBars()
+        return
+    end
 
-	local inhale =
-		TS:Create(cam, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 63 })
-	local exhale =
-		TS:Create(cam, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 65 })
+    -- FOV tweens
+    local inhale = TS:Create(cam, tweenBreathe, { FieldOfView = 63 })
+    local exhale = TS:Create(cam, tweenBreathe, { FieldOfView = 65 })
 
-	inhale:Play()
-	inhale.Completed:Connect(function()
-		if not IsHoldingLedge then
-			TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 70 })
-				:Play()
-			return
-		end
-		exhale:Play()
-		exhale.Completed:Connect(function()
-			breatheFOV() -- Loop back
-		end)
-	end)
+    -- Bar tweens (inhale = bars close in, exhale = bars open back)
+    local barsInhale_Top    = TS:Create(top,    tweenBreathe, { Position = TOP_INHALE })
+    local barsInhale_Bottom = TS:Create(bottom, tweenBreathe, { Position = BOTTOM_INHALE })
+    local barsExhale_Top    = TS:Create(top,    tweenBreathe, { Position = TOP_NORMAL })
+    local barsExhale_Bottom = TS:Create(bottom, tweenBreathe, { Position = BOTTOM_NORMAL })
+
+    inhale:Play()
+    barsInhale_Top:Play()
+    barsInhale_Bottom:Play()
+
+    inhale.Completed:Connect(function()
+        if not IsHoldingLedge then
+            TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
+            slideOutBars()
+            return
+        end
+
+        exhale:Play()
+        barsExhale_Top:Play()
+        barsExhale_Bottom:Play()
+
+        exhale.Completed:Connect(function()
+            breatheFOV()
+        end)
+    end)
+end
+
+local function startBreath()
+    -- Slide bars in first, then start breathing once they arrive
+    TS:Create(top,    tweenSlide, { Position = TOP_NORMAL }):Play()
+    local slideIn = TS:Create(bottom, tweenSlide, { Position = BOTTOM_NORMAL })
+    slideIn:Play()
+    slideIn.Completed:Connect(function()
+        if IsHoldingLedge then
+            breatheFOV()
+        end
+    end)
 end
 
 for _, ledge in ledges do
@@ -454,9 +532,12 @@ for _, ledge in ledges do
 		IsClimbing = false
 		MovementEvent:FireServer("LedgeHold", ledge)
 
-		breatheFOV() -- Start breathing effect
+		startBreath() -- Start breathing effect
 
 		task.wait(0.4)
 		LedgeGrabCoolDown = false
 	end)
 end
+
+
+

@@ -19,6 +19,7 @@ MovementEvent.OnServerEvent:Connect(function(plr, action, ...)
 		local LedgeHoldAnimation = Humanoid.Animator:loadAnimation(WeaponAnims[CurrentWeapon].Movement.LedgeGrab)
 
 		HRP.Anchored = true
+		Humanoid.AutoRotate = false
 		local yOffset = -1.5
 		local LedgeDistance = 0.4
 
@@ -50,6 +51,7 @@ MovementEvent.OnServerEvent:Connect(function(plr, action, ...)
 			local jumpAnim = Humanoid.Animator:LoadAnimation(WeaponAnims[CurrentWeapon].Movement.Vault)
 			jumpAnim:Play()
 			HRP.Anchored = false
+			Humanoid.AutoRotate = true
 
 			local bv = Instance.new("BodyVelocity")
 			bv.Velocity = HRP.CFrame.LookVector * 35 + Vector3.new(0,25,0)
@@ -66,6 +68,7 @@ MovementEvent.OnServerEvent:Connect(function(plr, action, ...)
 			VFX_Event:FireAllClients("Highlight",char,.9,Color3.fromRGB(173, 173, 173),Color3.fromRGB(176, 175, 175))
 		else
 			HRP.Anchored = false
+			Humanoid.AutoRotate = true
 		end
 	   
 	end

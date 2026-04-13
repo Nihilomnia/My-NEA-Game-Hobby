@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local TS = game:GetService("TweenService")
 
 
+
 local Hitboxes = {}
 Hitboxes.ActiveHitboxes = {}
 local CONFIG ={
@@ -11,25 +12,20 @@ local CONFIG ={
 }
 
 
-local function getUniqueId(char)
-	local uid = char.Humanoid:FindFirstChild("UniqueId")
-	local UID_Value = uid.Value
-	return UID_Value
-end
 
 
 
 
 
 -- Create a normal hitbox
-function Hitboxes.NormalHitBox(Size: Vector3, Attachment: Attachment, Character: Model, OnHit)
+function Hitboxes.NormalHitBox(Size: Vector3, Attachment: Attachment, Character: Model, npc ,OnHit)
 	if not Character or not Attachment then
 		warn("[Hitboxes] Invalid Character or Attachment passed.")
 		return
 	end
 
 	local Player = Players:GetPlayerFromCharacter(Character)
-	local Identifier = Player or getUniqueId(Character)
+	local Identifier = Player or npc
 
 	-- Create the hitbox part
 	local Hitbox = Instance.new("Part")
@@ -70,13 +66,13 @@ function Hitboxes.NormalHitBox(Size: Vector3, Attachment: Attachment, Character:
 end
 
 -- Destroy all hitboxes for a character (player or NPC)
-function Hitboxes.DestroyHitboxes(Character)
+function Hitboxes.DestroyHitboxes(Character,npc)
 	if not Character then
 		warn("[Hitboxes] DestroyHitboxes called with nil Character.")
 		return
 	end
 	local Player = Players:GetPlayerFromCharacter(Character)
-	local Identifier = Player or getUniqueId(Character)
+	local Identifier = Player or npc
 	local hitboxes = Hitboxes.ActiveHitboxes[Identifier]
 
     if not hitboxes then

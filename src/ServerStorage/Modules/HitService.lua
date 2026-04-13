@@ -24,6 +24,7 @@ local PassiveManger = require(SSModules.Combat.PassiveManger)
 
 
 
+
 --- Math Constants  DO NOT TOUCH THIS WILL EFFECT ALL WEAPON SCALING
 local Point_Cap = 80 -- This where the Plateau  for dmg drop off starts
 local k = 0.2 -- This is the rate of the drop off for Wepaon Scaling
@@ -44,7 +45,10 @@ function module.BodyVelocity(parent,hrp,Knockback,stayTime)
 end
 
 
-function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
+
+
+
+function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 	
 	
 	local hitAnim = ...
@@ -54,7 +58,10 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 		
 		local eChar = eHum.Parent
 		local Eplr = game.Players:GetPlayerFromCharacter(eChar)
-		local plr = game.Players:GetPlayerFromCharacter(char)
+	
+		
+
+
 		local eHRP = eChar.HumanoidRootPart
 
 
@@ -62,9 +69,9 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 		-- Dmg Varibles
 		local BaseDmg = WeaponStats.Damage
 		local Scaling = WeaponStats.Scaling
-		local WPN_Points  = char:GetAttribute("WPN")
-		local DEX_Points  = char:GetAttribute("DEX")
-		local SPT_Points  = char:GetAttribute("SPT")
+		local WPN_Points  = char:GetAttribute("WPN") or npc.WPN
+		local DEX_Points  = char:GetAttribute("DEX") or npc.DEX
+		local SPT_Points  = char:GetAttribute("SPT") or npc.SPT
 
 		local STAT_POINTS = {
 			DEX = DEX_Points,
@@ -89,7 +96,7 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 		local RagdollTime= WeaponStats.RagdollTime
 		local stunTime =WeaponStats.StunTime
 		
-		if HelpfulModule.CheckForStatus(eChar,char,BaseDmg,Hit.CFrame,true,true) then  return end
+		if HelpfulModule.CheckForStatus(eChar,char,npc,BaseDmg,Hit.CFrame,true,true) then  return end
         
 
 		local PassiveCheckDmg, isCrit, damageAlreadydealt = PassiveManger.M1LandedPassive(char,eChar,Truedamage,STAT_POINTS)
@@ -123,24 +130,30 @@ function module.Normal_Hitbox(char,weapon,eHum,Hit,...)
 
 
         if isCrit then 
-			VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 0, 0),Color3.fromRGB(255, 0, 0))
+			
 			if char:GetAttribute("Element") == "Astral" then 
 				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 0, 0),Color3.fromRGB(138, 0, 229))
+			else
+			  VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 0, 0),Color3.fromRGB(255, 0, 0))
 			end
           
 		else	
 			if char:GetAttribute("Element") == "Astral" then 
 				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(138, 0, 229),Color3.fromRGB(138, 0, 229))
+			else
+				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(255, 255, 255))
 			end
-			VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(255, 255, 255))
+
+			
         end
 		
 
 		SoundsModule.PlaySound(WeaponSounds[weapon].Combat.Hit, eChar.Torso)
 
 		if eChar:GetAttribute("Dodges") > 1 then
-			local hitAnim = WeaponsAnimations.TwinSpears.Dodge["Dodge"..char:GetAttribute("Combo")] -- Replace with actual dodge animations from the twinspears
+			local hitAnim = WeaponsAnimations.TwinSpears.Dodge["Dodge"..char:GetAttribute("Combo")]
 			eHum.Animator:LoadAnimation(hitAnim):Play()
+			VFX_Event:FireAllClients("AfterImage",eChar,hitAnim,nil)
 		else
 			eHum.Animator:LoadAnimation(Truehit):Play()
 		end
