@@ -1,20 +1,17 @@
 --[[ Services and Modules ]]
 --
-local PerformanceControlService = game:GetService("PerformanceControlService")
 local SS = game:GetService("ServerStorage")
 local RS = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
 local Timer = require(SS.Modules.Packages.Timer)
-local Signal
 local StatusEffectsModule = require(SS.Modules.StatusEffectsModule)
 local CombatData = require(SS.Modules.Combat.Data.CombatData)
-local StatusDictionary = require(SS.Modules.Dictionaries.Effect_Info)
+
 
 
 --[[Events]]
 --
-local Events = RS.Events
-local VFX_Event = Events.VFX
+
+
 
 ---[[ Configuration ]]--
 

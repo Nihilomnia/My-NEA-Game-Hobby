@@ -1,206 +1,87 @@
 local module = {}
-local info ={
-	["Fists"]={
+local info = {
+	["Fists"] = {
 		Damage = 10,
 		Scaling = 10,
 		BlockDmg = 6.6,
-		Knockback =4,
-		RagdollTime =1.2,
-		SwingReset =0,  -- was .25
+		Knockback = 4,
+		RagdollTime = 1.2,
+		SwingReset = 0, -- was .25
 		StunTime = 1,
 		BlockingWalkSpeed = 6,
 		ChipDamage = 0,
-		HitBox_Data = {
-			Combo1 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo2 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo3 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-
-			Combo4 = {
-			 HitboxSize = Vector3.new(4, 5, 6),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-		}
-
+		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxOffset = CFrame.new(0, 0, -2.3),
 	},
-	
-	["Fractured_Kunai"]={
+
+	["Fractured_Kunai"] = {
 		Damage = 15,
 		Scaling = 10,
 		BlockDmg = 6.6,
-		Knockback =5,
-		RagdollTime =1.2,
-		SwingReset =0.25,
+		Knockback = 5,
+		RagdollTime = 1.2,
+		SwingReset = 0.25,
 		StunTime = 1.5,
 		BlockingWalkSpeed = 6,
 		ChipDamage = 5,
-		HitBox_Data = {
-			Combo1 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo2 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo3 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-
-			Combo4 = {
-			 HitboxSize = Vector3.new(4, 5, 6),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-		}
-		
+		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxOffset = CFrame.new(0, 0, -2.3),
 	},
-	 
-	["Katana"]={
+
+	["Katana"] = {
 		Damage = 10,
 		Scaling = 10,
 		BlockDmg = 10,
-		Knockback =5,
-		RagdollTime =1.2,
-		SwingReset =.2,
+		Knockback = 5,
+		RagdollTime = 1.2,
+		SwingReset = 0.2,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
 		ChipDamage = 0,
-		HitBox_Data = {
-			Combo1 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo2 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo3 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-
-			Combo4 = {
-			 HitboxSize = Vector3.new(4, 5, 6),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-		}
+		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxOffset = CFrame.new(0, 0, -2.3),
 	},
-	
-	["DrakeFang"]={
+
+	["DrakeFang"] = {
 		Damage = 25,
 		Scaling = 10,
 		BlockDmg = 12,
-		Knockback =5,
-		RagdollTime =1.2,
-		SwingReset =0.07,
+		Knockback = 5,
+		RagdollTime = 1.2,
+		SwingReset = 0.07,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
 		ChipDamage = 0,
-		HitBox_Data = {
-			Combo1 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo2 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo3 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-
-			Combo4 = {
-			 HitboxSize = Vector3.new(4, 5, 6),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-		}
+		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxOffset = CFrame.new(0, 0, -2.3),
 	},
 
-	["TwinSpears"]={
+	["TwinSpears"] = {
 		Damage = 18,
 		Scaling = 9,
 		BlockDmg = 12,
-		Knockback =5,
-		RagdollTime =1.2,
-		SwingReset =.1,
+		Knockback = 5,
+		RagdollTime = 1.2,
+		SwingReset = 0.1,
 		StunTime = 1.1,
 		BlockingWalkSpeed = 6,
 		ChipDamage = 0,
-		HitBox_Data = {
-			Combo1 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo2 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo3 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-
-			Combo4 = {
-			 HitboxSize = Vector3.new(4, 5, 6),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-		}
+		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxOffset = CFrame.new(0, 0, -2.3),
 	},
 
-	
-	["ShootingStar"]={
+	["ShootingStar"] = {
 		Damage = 30,
 		Scaling = 10,
 		BlockDmg = 25,
 		Knockback = 8,
-		RagdollTime =1.5,	
-		SwingReset = .1,
-		StunTime = 1.2,
+		RagdollTime = 1.5,
+		SwingReset = 0.1,
 		BlockingWalkSpeed = 6,
 		ChipDamage = 10,
-		HitBox_Data = {
-			Combo1 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo2 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-6.3),
-			},
-
-			Combo3 = {
-			 HitboxSize = Vector3.new(4, 5, 8),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-
-			Combo4 = {
-			 HitboxSize = Vector3.new(4, 5, 6),
-		     HitboxOffset = CFrame.new(0,0,-7.3),
-			},
-		}
-	},	
-	
+		HitboxSize = Vector3.new(4, 5, 6),
+		HitboxOffset = CFrame.new(0, 0, -2.3),
+	},
 }
 function module.getStats(weapon)
 	return info[weapon]

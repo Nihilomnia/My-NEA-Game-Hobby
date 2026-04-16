@@ -21,6 +21,8 @@ local HelpfulModule = require(SSModules.Other.Helpful)
 local StunHandler = require(SSModules.Other.StunHandlerV2)
 local BoneModule = require(SSModules.Element.Bone)
 local PassiveManger = require(SSModules.Combat.PassiveManger)
+local CombatData = require(SSModules.Combat.Data.CombatData)
+
 
 
 
@@ -58,6 +60,7 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 		
 		local eChar = eHum.Parent
 		local Eplr = game.Players:GetPlayerFromCharacter(eChar)
+		local Enpc = CombatData.LastResortNPC(eChar) -- We have to use the last resort because of cyclic errors
 	
 		
 
@@ -72,6 +75,8 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 		local WPN_Points  = char:GetAttribute("WPN") or npc.WPN
 		local DEX_Points  = char:GetAttribute("DEX") or npc.DEX
 		local SPT_Points  = char:GetAttribute("SPT") or npc.SPT
+
+	
 
 		local STAT_POINTS = {
 			DEX = DEX_Points,
@@ -96,7 +101,7 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 		local RagdollTime= WeaponStats.RagdollTime
 		local stunTime =WeaponStats.StunTime
 		
-		if HelpfulModule.CheckForStatus(eChar,char,npc,BaseDmg,Hit.CFrame,true,true) then  return end
+		if HelpfulModule.CheckForStatus(eChar,char,Enpc,BaseDmg,Hit.CFrame,true,true) then  return end
         
 
 		local PassiveCheckDmg, isCrit, damageAlreadydealt = PassiveManger.M1LandedPassive(char,eChar,Truedamage,STAT_POINTS)
@@ -166,7 +171,7 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 
 		elseif char:GetAttribute("Combo")>=4 then
 			Knockback= Knockback*5
-			HelpfulModule.Ragdoll(eChar,RagdollTime)
+			--HelpfulModule.Ragdoll(eChar,RagdollTime)
 		end
 
 

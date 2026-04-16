@@ -14,4 +14,16 @@ CombatData.ActiveStatusEffects = {}
 
 
 CombatData.SuccessfulParry = {}
+
+
+CombatData.ActiveNPCs = {} -- Last resort for getting npcs
+
+
+function CombatData.LastResortNPC(char)
+    if CombatData.ActiveNPCs[char] then
+        return CombatData.ActiveNPCs[char]
+    end
+    return nil
+   
+end
 return CombatData

@@ -1,11 +1,22 @@
-local ServerStorage = game:GetService("ServerStorage")
-local Function = require(ServerStorage.NodePresets.Command.Function)
+local ServerScriptService = game:GetService("ServerScriptService")
+local Template = require(ServerScriptService.Data.Template)
+
 
 local DataManager = {}
 
 
+type ProfileData = Template.ProfileData
+
 -- Store profiles from  ProfileStore
-DataManager.Profiles = {}
+export type Profile = {
+    Data: ProfileData,
+    AddUserId: (self: Profile, userId: number) -> (),
+    Reconcile: (self: Profile) -> (),
+    EndSession: (self: Profile) -> (),
+    OnSessionEnd: RBXScriptSignal,
+}
+
+DataManager.Profiles = {} :: { [Player]: Profile }
 
 function DataManager.IncreaseStat(plr,statName) -- This function handles the increase of stats,
     local profile = DataManager.Profiles[plr]

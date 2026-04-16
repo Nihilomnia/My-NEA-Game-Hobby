@@ -114,6 +114,7 @@ function module.AfterImage(char, anim, type)
 		local clone = RS.Effects.AfterImage:Clone()
 		clone.Parent = workspace.VFX
 		clone.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame
+	
 
 		task.delay(0.09, function()
 			local humanoid = clone:FindFirstChildOfClass("Humanoid")
@@ -177,9 +178,14 @@ function module.AfterImage(char, anim, type)
 					Highlight.Parent = clone
 					Highlight.DepthMode = Enum.HighlightDepthMode.Occluded
 					Highlight.FillTransparency = 0.4
-					Highlight.FillColor = Color3.fromRGB(170, 170, 255)
+					Highlight.FillColor = Color3.fromRGB(119, 0, 255)
 					Highlight.OutlineTransparency = 0.5
 					Highlight.OutlineColor = Color3.fromRGB(113, 5, 255)
+					local PointLight = Instance.new("PointLight",clone.HumanoidRootPart)
+					PointLight.Brightness = 2.5
+					PointLight.Color = Color3.fromRGB(119, 0, 255)
+					PointLight.Range = 6
+					PointLight.Shadows = false
 					for i, part in pairs(clone:GetDescendants()) do
 						if part.Name == "ShootingStar" then -- We dont need to pose weapons
 							part:Destroy()
@@ -233,6 +239,7 @@ function module.AfterImage(char, anim, type)
 									tweensLeft -= 1
 									if tweensLeft <= 0 then
 										clone:Destroy()
+										PointLight:Destroy()
 									end
 								end)
 								t:Play()

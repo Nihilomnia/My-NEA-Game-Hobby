@@ -4,13 +4,9 @@ local SS = game:GetService("ServerStorage")
 local ServerScripts = game:GetService("ServerScriptService")
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
-local SoundService = game:GetService("SoundService")
 
-local WeaponsWeld = RS.Welds.Weapons
+
 local Events = RS.Events
-local AnimationsFolder = RS.Animations
-local WeaponsAnimations = AnimationsFolder.Weapons
-local WeaponsSounds = SoundService.SFX.Weapons
 local SSModules = SS.Modules
 
 local WeaponsEvent = Events.WeaponsEvent
@@ -19,7 +15,6 @@ local TransformEvent = Events.Tranform
 local DodgeEvent = Events.Dodge
 local updateEvent = Events.UpdateMovement
 
-local SoundsModule = require(RS.Modules.Combat.SoundsModule)
 local HelpfullModule = require(SSModules.Other.Helpful)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local Mode_Module = require(SSModules.Combat.Mode_Module)
@@ -31,9 +26,6 @@ local EquipModule = require(ServerStorage.Modules.Combat.EquipModule)
 
 -- Local Tables
 local Welds = Combat_Data.Welds
-local EquipAnims = Combat_Data.EquipAnims
-local UnEquipAnims = Combat_Data.UnEquipAnims
-local IdleAnims = Combat_Data.IdleAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 
 Players.PlayerAdded:Connect(function(plr)
@@ -77,10 +69,7 @@ end)
 
 WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character
-	local hum = char:WaitForChild("Humanoid")
-	local torso = char.Torso
 
-	local currentWeapon = char:GetAttribute("CurrentWeapon")
 
 	if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
 		return

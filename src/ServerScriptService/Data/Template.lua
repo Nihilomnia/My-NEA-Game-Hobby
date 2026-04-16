@@ -1,4 +1,5 @@
-return {
+
+local Template = {
 	GENARAL_PLAYER_INFO={
 		IsAdmin = false,
 		Number_of_Slots = 1,
@@ -163,3 +164,11 @@ return {
 
 		
 }
+
+export type SlotData = typeof(Template.SLOT_1)
+export type ProfileData = typeof(Template)
+
+return Template
+
+
+

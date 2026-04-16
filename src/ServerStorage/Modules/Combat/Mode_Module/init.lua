@@ -31,10 +31,6 @@ local WeaponsAnimations = RS.Animations.Weapons
 local TransformConnections = {}
 
 
-local function getUniqueId(char)
-	local uid = char.Humanoid:FindFirstChild("UniqueId")
-	return uid.Value or nil
-end
 
 
 
@@ -68,14 +64,14 @@ end
 ---------------------------------------------------------------------
 -- MODE 1 TRANSFORMATION
 ---------------------------------------------------------------------
-function module.Mode1(char)
+function module.Mode1(char,npc)
 	if not char or not char:FindFirstChild("Humanoid") then return end
 
 	local hum = char.Humanoid
 	local rootPart = char:WaitForChild("HumanoidRootPart")
 
 	local plr = game.Players:GetPlayerFromCharacter(char)
-	local Identifier = plr or getUniqueId(char)
+	local Identifier = plr or npc
 	if not Identifier then return end
 	if EquipDebounce[Identifier] then return end -- Prevent duplicate calls
 
@@ -172,7 +168,7 @@ function module.Mode2(char,npc)
 	local rootPart = char:WaitForChild("HumanoidRootPart")
 
 	local plr = game.Players:GetPlayerFromCharacter(char)
-	local Identifier = plr or getUniqueId(char)
+	local Identifier = plr or npc
 	if not Identifier then return end
 	if EquipDebounce[Identifier] then return end
 
@@ -295,14 +291,14 @@ end
 
 
 
-function module.Revert(char)
+function module.Revert(char,npc)
 if not char or not char:FindFirstChild("Humanoid") then return end
 
 local hum = char:FindFirstChild("Humanoid")
 local torso = char:FindFirstChild("Torso")
 local rightArm = char:FindFirstChild("Right Arm")
 local plr = game.Players:GetPlayerFromCharacter(char)
-local Identifier = plr or getUniqueId(char)
+local Identifier = plr or npc
 if not Identifier then return end
 if EquipDebounce[Identifier] then return end -- Prevent duplicate calls
 

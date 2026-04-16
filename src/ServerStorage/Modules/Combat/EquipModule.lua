@@ -21,6 +21,9 @@ local IdleAnims = Combat_Data.IdleAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 
 function EquipModule.EquipWeapon(char, npc)
+	if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
+		return
+	end
 	local Identifier = Players:GetPlayerFromCharacter(char) or npc
 	local hum = char:WaitForChild("Humanoid")
 	local torso = char.Torso
@@ -61,6 +64,9 @@ function EquipModule.EquipWeapon(char, npc)
 end
 
 function EquipModule.UnequipWeapon(char, npc)
+	if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
+		return
+	end
 	local Identifier = Players:GetPlayerFromCharacter(char) or npc
 	local torso = char.Torso
 	local hum = char:WaitForChild("Humanoid")
@@ -68,6 +74,8 @@ function EquipModule.UnequipWeapon(char, npc)
 	if char:GetAttribute("Mode1", true) or char:GetAttribute("Mode2", true) then
 		return
 	end
+
+	
 
 	EquipDebounce[Identifier] = true
 

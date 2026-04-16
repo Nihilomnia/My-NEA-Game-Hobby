@@ -35,6 +35,7 @@ local StunHandler = require(SSModule.Other.StunHandlerV2)
 
 
 
+
 local function ResetMobility(char)
 	local hum = char.Humanoid
 	if char:GetAttribute("IsLow") and char:GetAttribute("InCombat") then
@@ -65,6 +66,8 @@ end
 
 function module.Parrying(char,eChar,hitPos,npc)
 	local identifier = players:GetPlayerFromCharacter(eChar) or npc
+	print(identifier)
+	print(npc)
 	SucessfulParry[identifier] = true
 	ParryAnims[identifier]:Stop()
 	-- Kill the parry anims to prevent the rest of the parry process from being ran so cooldowns are not triggered
@@ -91,7 +94,7 @@ function module.Parrying(char,eChar,hitPos,npc)
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 4,8,0,1.2) end
 	
-	StunHandler.Stun(char.Humanoid,0.45,5,0)
+	StunHandler.Stun(char.Humanoid,0.9,5,0)
 	
 
 end
@@ -118,11 +121,12 @@ function module.GuardBreak(char)
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 6,12,0,2) end
 	
-	StunHandler.Stun(char.Humanoid,2.5)
+	StunHandler.Stun(char.Humanoid,5)
 end
 
 
 function module.ActivateBlocking(char,npc)
+	
 	local hum = char.Humanoid
 	local plr = players:GetPlayerFromCharacter(char) 
 	local Identifier = plr or npc

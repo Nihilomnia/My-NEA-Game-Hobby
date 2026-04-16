@@ -79,8 +79,8 @@ function module.Attack(char,npc)
 	Connections[Identifier].HitStart = playSwingAnimation
 		:GetMarkerReachedSignal("HitStart")
 		:Connect(function()
-		local HitBoxSize = WeaponStats.HitBox_Data["Combo" .. char:GetAttribute("Combo")].HitboxSize
-		local HitBoxOffset = WeaponStats.HitBox_Data["Combo" .. char:GetAttribute("Combo")].HitboxOffset
+		local HitBoxSize = WeaponStats.HitboxSize
+		local HitBoxOffset = WeaponStats.HitboxOffset
 		local Attachment = Instance.new("Attachment")
 		Attachment.Parent = HRP
 		Attachment.Name = "LightAttackHitbox"

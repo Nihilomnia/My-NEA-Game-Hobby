@@ -73,7 +73,7 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 
 	if AttackerElement == "Bone" then
 		print("If there was a passive for mode 1 it would be here")
-		if Attacker_Second_ModeCheck and not Attack_Dodged[Defender] then
+		if Attacker_Second_ModeCheck and not Attack_Dodged then
 			local TargetHum = Defender.Humanoid
 			local Karma = Defender:GetAttribute("Karma")
 			Defender:SetAttribute("Karma", math.min(Karma + 5, 50))
@@ -91,10 +91,13 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 
 			task.spawn(function()
 				while totalDamage < MultipliedDamage and Karma > 0 and TargetHum and TargetHum.Health > 0 do
+					Karma = Defender:GetAttribute("Karma")
+                    if Karma <= 0 then break end 
 					TargetHum:TakeDamage(dotDamage)
 					totalDamage += dotDamage
 
 					Karma = math.max(0, Karma - (karmaDecayRate * tickRate))
+					Defender:SetAttribute("Karma", Karma)
 
 					task.wait(tickRate)
 
@@ -103,7 +106,10 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 					end
 				end
 				damageAlreadydealt = true
-				UI_Update:FireClient(Defender_plr, totalDamage, TargetHum.Health, TargetHum.MaxHealth, MultipliedDamage)
+				if Defender_plr then
+					UI_Update:FireClient(Defender_plr, totalDamage, TargetHum.Health, TargetHum.MaxHealth, MultipliedDamage)
+				end
+				
 			end)
 		end
 	end
