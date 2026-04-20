@@ -6,6 +6,8 @@ local DataManager = {}
 
 
 type ProfileData = Template.ProfileData
+export type SlotData = Template.SlotData
+
 
 -- Store profiles from  ProfileStore
 export type Profile = {
@@ -41,6 +43,16 @@ function DataManager.IncreaseSkillPoints(plr,amount)
         local char = plr.Character
         local currentSlot = char:GetAttribute("CurrentSlot")
         profile.Data[currentSlot].SkillPoints = profile.Data[currentSlot].SkillPoints + amount
+    end
+end
+
+function DataManager.ChangeHairColor(plr,newColor: Color3)
+    local profile = DataManager.Profiles[plr]
+    if profile then
+        local char = plr.Character
+        local currentSlot = char:GetAttribute("CurrentSlot")
+        local SlotData:SlotData = profile.Data[currentSlot]
+        SlotData.Appearance.Hair_Colour = newColor
     end
 end
 

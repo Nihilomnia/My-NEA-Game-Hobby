@@ -66,14 +66,15 @@ end
 
 function module.Parrying(char,eChar,hitPos,npc)
 	local identifier = players:GetPlayerFromCharacter(eChar) or npc
-	print(identifier)
-	print(npc)
+	local Result = "HitLanded"
 	SucessfulParry[identifier] = true
 	ParryAnims[identifier]:Stop()
 	-- Kill the parry anims to prevent the rest of the parry process from being ran so cooldowns are not triggered
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	local BlockDmg = WeaponStatsModule.getStats(currentWeapon).BlockDmg
+	
+
 	char:SetAttribute("Blocking",char:GetAttribute("Blocking")+ BlockDmg)
 	eChar:SetAttribute("Blocking",eChar:GetAttribute("Blocking")- BlockDmg)
 	eChar:SetAttribute("InCombat",true)
@@ -94,7 +95,12 @@ function module.Parrying(char,eChar,hitPos,npc)
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 4,8,0,1.2) end
 	
-	StunHandler.Stun(char.Humanoid,0.9,5,0)
+	StunHandler.Stun(char.Humanoid,0.3,5,0)
+
+	Result = "Parried"
+
+
+	return Result
 	
 
 end
@@ -169,9 +175,7 @@ function module.Blocking(char, enemyChar,damage,hitPos)
 		local BlockDmg = WeaponStatsModule.getStats(currentWeapon).BlockDmg
 		local data = WeaponStatsModule.getStats(currentWeapon)
 		local ChipDmgPercent = data.ChipDamage
-		print(data)
-		print(ChipDmgPercent)
-
+	    local Result = "HitLanded"
 		
 
 		local ChipDmg = damage * (ChipDmgPercent / 100)
@@ -184,7 +188,8 @@ function module.Blocking(char, enemyChar,damage,hitPos)
 		
 		if enemyChar:GetAttribute("Blocking") >= 100 then
 			module.GuardBreak(enemyChar)
-			return
+			Result = "GuardBroken"
+			return Result
 		end
 		
 		VFX_Event:FireAllClients("Highlight",enemyChar,.5,Color3.fromRGB(255, 255, 0),Color3.fromRGB(255, 255, 0))
@@ -195,7 +200,11 @@ function module.Blocking(char, enemyChar,damage,hitPos)
 		
 		enemyChar.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[enemyChar:GetAttribute("CurrentWeapon")].Blocking.Blocked):Play()
 		
+		Result = "Blocked"
+		return Result
 	end
+
+	return "WasHit"
 end
 
 

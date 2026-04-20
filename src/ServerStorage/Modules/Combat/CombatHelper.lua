@@ -86,7 +86,9 @@ function module.Attack(char,npc)
 		Attachment.Name = "LightAttackHitbox"
 		Attachment.WorldCFrame = HRP.CFrame * HitBoxOffset
 		VolumeHitbox.NormalHitBox(HitBoxSize, Attachment, char, npc ,function(Ehum, Hit)
-			HitServiceModule.Normal_Hitbox(char, currentWeapon, Ehum, npc, Hit, HitAnim)
+			local Result = HitServiceModule.Normal_Hitbox(char, currentWeapon, Ehum, npc, Hit, HitAnim)
+			print(Result)
+			return Result
 		end)
 		
 		Attachment:Destroy()

@@ -100,8 +100,12 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 		local Knockback = WeaponStats.Knockback
 		local RagdollTime= WeaponStats.RagdollTime
 		local stunTime =WeaponStats.StunTime
+
+		local stop, result = HelpfulModule.CheckForStatus(eChar,char,Enpc,BaseDmg,Hit.CFrame,true,true)
+		print(result,"helpful result")
+		if stop then return result end
 		
-		if HelpfulModule.CheckForStatus(eChar,char,Enpc,BaseDmg,Hit.CFrame,true,true) then  return end
+	
         
 
 		local PassiveCheckDmg, isCrit, damageAlreadydealt = PassiveManger.M1LandedPassive(char,eChar,Truedamage,STAT_POINTS)
@@ -146,7 +150,7 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 			if char:GetAttribute("Element") == "Astral" then 
 				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(138, 0, 229),Color3.fromRGB(138, 0, 229))
 			else
-				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(255, 255, 255))
+				VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(246, 211, 211))
 			end
 
 			
@@ -177,13 +181,18 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 
 		module.BodyVelocity(eHRP,char.HumanoidRootPart,Knockback,.2)
 
-
-		StunHandler.Stun(eHum,stunTime)
+      
 		
 
+		StunHandler.Stun(eHum,stunTime)
+		print(result)
+        return result
+		 
 	end
 
+	
 
+   return "Missed"
 end
 		
 		

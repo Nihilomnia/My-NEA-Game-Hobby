@@ -25,6 +25,7 @@ Players.PlayerAdded:Connect(function(plr)
 			currentSlot = char:GetAttribute("CurrentSlot")
 		end
 
+		
         local AccessoriesFolder = Instance.new("Folder")
 		local WeldsFolder = Instance.new("Folder")
 
@@ -58,3 +59,4 @@ end)
 Players.PlayerRemoving:Connect(function(plr)
 	AccessoriesModule.cleanup(plr)
 end)
+

@@ -1,5 +1,6 @@
 local AccessoriesManager = {}
 local RS = game:GetService("ReplicatedStorage")
+local InsertService = game:GetService("InsertService")
 local Models = RS.Models
 local Welds = RS.Welds
 local Events = RS.Events
@@ -28,6 +29,31 @@ local function GetAccessory(accessoryName)
         return nil
     end
 end
+
+local function RequestHair(ID:number)
+    local model:Accessory = InsertService:LoadAsset(ID)
+    local MeshID = nil
+
+    if model then
+        if model.AccessoryType ~= Enum.AccessoryType.Hair and model.AccessoryType ~= Enum.AccessoryType.Hat and model.AccessoryType ~= Enum.AccessoryType.Face then
+            warn("Requested asset is not a hair accessory:", ID)
+            model:Destroy()
+            return nil
+        end
+
+        for i,v in pairs(model:GetChildren()) do
+            if v:IsA("SpecialMesh") then
+                MeshID = v.MeshId
+                model:Destroy()
+                return MeshID
+            end
+        end
+    end
+
+  return
+    
+end
+
 
 
 local function ReturnAccessory(char, plr : Player, OldAccessory)
@@ -74,6 +100,13 @@ end
 
 
 --[Actual Module functions]--
+
+function AccessoriesManager.LoadHairMesh(ID:number,colour:Color3)
+    local MeshID = RequestHair(ID)
+    local Mesh = Instance.new("SpecialMesh")
+    Mesh.MeshId = MeshID
+    Mesh.BrickColor = colour
+end
 
 function AccessoriesManager.EquipAccessory(char, accessoryName) -- This is the equiping function
     local plr = game.Players:GetPlayerFromCharacter(char)

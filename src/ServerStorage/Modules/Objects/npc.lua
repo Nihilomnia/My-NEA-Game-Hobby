@@ -5,13 +5,16 @@
     
     The npc object looks like this:
     npc = {
-        Type = "...", -- This is the type of npc it is (Passive, SmallFry, Elite, Boss)
-        Character = Model, -- This is the npc model that is in the workspace
-        Element = "...",-- This is the npc's moveset if present
-        Brain = Script, -- This is the script thats starts the npc's behavior tree
-        talents = {},
-        skills = {},
-        drops = {},
+        FirstName: string, -- The NPC's First name 
+		LastName: string,
+		Difficulty: string,
+		MobType: string,
+		Character: Model,
+		Element: string,
+		Brain: Script,
+	    talents: {},
+		skills: {},
+		drops: {},
 
     }
 
@@ -55,6 +58,7 @@ local HelpfullModule = require(ServerStorage.Modules.Other.Helpful)
 local Brain_Folder = SS.Brains
 local NPCFolder = game.workspace.NPC
 local NPCModels = RS.Models.NPC
+local WeaponAnimations = RS.Animations.Weapons
 
 npc.__index = npc
 local CharToNPC = {}
@@ -98,6 +102,8 @@ local function PickDrops(npcName)
 	return ChosenDrops
 end
 
+
+
 function npc.new(NpcName: string, char: Model?): NPC
 	local self = setmetatable({
 		FirstName = "",
@@ -117,10 +123,10 @@ function npc.new(NpcName: string, char: Model?): NPC
 	self.Difficulty = NPCinfo.Difficulty
 	self.Character = char or CreateModel(NpcName, self.Difficulty, self.MobType)
 
-	if self.FirstName ~= "" and  self.LastName ~= "" then
-		self.Character.Name = self.FirstName..self.LastName
+	if self.FirstName ~= "" and self.LastName ~= "" then
+		self.Character.Name = self.FirstName .. self.LastName
 	end
-	
+
 	self.Character.Humanoid.MaxHealth = NPCinfo.Health
 	self.Character.Humanoid.Health = NPCinfo.Health
 
@@ -169,6 +175,10 @@ function npc.new(NpcName: string, char: Model?): NPC
 
 	Combat_Data.ActiveNPCs[self.Character] = self
 
+	-- The NPC should be ready by now
+	self:Idle()
+	
+    
 	return self
 end
 
@@ -178,6 +188,7 @@ function npc.GetNpcFromCharacter(char): NPC?
 	end
 	return nil
 end
+
 
 function npc:Destroy()
 	CharToNPC[self.Character] = nil
@@ -190,6 +201,7 @@ function npc:Destroy()
 		end
 	end
 end
+
 function npc:EquipWeapon()
 	EquipModule.EquipWeapon(self.Character, self)
 end
@@ -211,6 +223,14 @@ function npc:Attack()
 	CombatHelper.Attack(self.Character, self)
 end
 
+function npc:Idle()
+	local hum = self.Character.Humanoid
+	local CurrentWeapon = self.Character:GetAttribute("CurrentWeapon")
+    Combat_Data.IdleAnims[self] = hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Main.Idle)
+	if Combat_Data.IdleAnims[self].IsPlaying then return end
+    Combat_Data.IdleAnims[self]:Play()
+end
+
 function npc:Block()
 	if self.Character:GetAttribute("IsTransforming") then
 		return
@@ -222,7 +242,9 @@ function npc:Block()
 end
 
 function npc:Unblock()
-    if self.Character:GetAttribute("IsTransforming") then return end
+	if self.Character:GetAttribute("IsTransforming") then
+		return
+	end
 	if HelpfullModule.CheckForAttributes(self.Character, true, true, true, nil, true, false, true, nil) then
 		return
 	end
@@ -230,20 +252,26 @@ function npc:Unblock()
 end
 
 function npc:Dodge(Direction)
-	if self.Character:GetAttribute("IsTransforming") then return end
+	if self.Character:GetAttribute("IsTransforming") then
+		return
+	end
 	DodgeModule.Dodge(self.Character, Direction, self)
 end
 
 function npc:Parry()
-	if self.Character:GetAttribute("IsTransforming") then return end
-	if HelpfullModule.CheckForAttributes(self.Character, true, true, true, true, true, false, true,true) then
+	if self.Character:GetAttribute("IsTransforming") then
+		return
+	end
+	if HelpfullModule.CheckForAttributes(self.Character, true, true, true, true, true, false, true, true) then
 		return
 	end
 	ParryModule.ParryAttempt(self.Character, self)
 end
 
 function npc:Phase2()
-	if self.Character:GetAttribute("IsTransforming") then return end
+	if self.Character:GetAttribute("IsTransforming") then
+		return
+	end
 	ModeModule.Mode2(self.Character, self)
 end
 

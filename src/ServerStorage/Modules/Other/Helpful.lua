@@ -12,7 +12,7 @@ local WeaponsModels = RS.Models.Weapons
 local BlockingModule = require(script.Parent.Parent.BlockModule)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 
-
+-- Tables
 local Welds = Combat_Data.Welds
 local EquipAnims = Combat_Data.EquipAnims
 local UnEquipAnims = Combat_Data.UnEquipAnims
@@ -20,14 +20,14 @@ local IdleAnims = Combat_Data.IdleAnims
 local BlockingAnims = Combat_Data.BlockingAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 local WeaponsWeld = RS.Welds.Weapons
+local npc_table = {}
 
--- Constants	
+-- Constants
 local k = 0.02 -- This is the rate of the drop off for DEX Crit Rate Scaling
 local BaseCritRate = 0.15 -- Base Crit Rate %
 local MaxCritRate = 0.45 -- Max Crit Rate % given by DEX Points
 
-
-function module.DamageDealer(char,damage)
+function module.DamageDealer(char, damage)
 	local hum = char.Humanoid
 	if hum.health > damage then
 		hum:TakeDamage(damage) -- Take the damage
@@ -36,22 +36,20 @@ function module.DamageDealer(char,damage)
 	end
 end
 
-
-
-function module.ChangeWeapon(plr,char,torso)
+function module.ChangeWeapon(plr, char, torso)
 	char:SetAttribute("Equipped", false)
 	char:SetAttribute("Combo", 1)
 	char:SetAttribute("Stunned", false)
 	char:SetAttribute("Swing", false)
 	char:SetAttribute("Attacking", false)
-	char:SetAttribute("iframes",false)
-	char:SetAttribute("IsBlocking",false)
-	char:SetAttribute("Blocking",0)
-	char:SetAttribute("Karma",0)
+	char:SetAttribute("iframes", false)
+	char:SetAttribute("IsBlocking", false)
+	char:SetAttribute("Blocking", 0)
+	char:SetAttribute("Karma", 0)
 	char:SetAttribute("Mode1", false)
 	char:SetAttribute("Mode2", false)
-	char:SetAttribute("Parrying",false)
-	char:SetAttribute("Sprinting",false)
+	char:SetAttribute("Parrying", false)
+	char:SetAttribute("Sprinting", false)
 
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 
@@ -59,150 +57,175 @@ function module.ChangeWeapon(plr,char,torso)
 
 	Weapon.Parent = char
 
-	if Weapon:FindFirstChild("SecondWeapon")then
+	if Weapon:FindFirstChild("SecondWeapon") then
 		Weapon.SecondWeld.Part0 = char["Left Arm"]
 		Weapon.SecondWeld.Part1 = Weapon.SecondWeapon
 	end
 
-
-	if Weapon:FindFirstChild("Hilt")then
+	if Weapon:FindFirstChild("Hilt") then
 		Weapon.HiltWeld.Part0 = char["Left Arm"]
 		Weapon.HiltWeld.Part1 = Weapon.Hilt
 	end
-    Welds[plr] = WeaponsWeld[currentWeapon].IdleWeaponWeld:Clone()
+	Welds[plr] = WeaponsWeld[currentWeapon].IdleWeaponWeld:Clone()
 
 	Welds[plr].Parent = torso
 	Welds[plr].Part0 = torso
 	Welds[plr].Part1 = Weapon
 
-	if module.CheckForAttributes(char,true,true,true,true,nil,true,true,true) then return end 
+	if module.CheckForAttributes(char, true, true, true, true, nil, true, true, true) then
+		return
+	end
 
-
-    if EquipAnims[plr] then EquipAnims[plr]:Stop() end
-	if IdleAnims[plr] then IdleAnims[plr]:Stop() end
-	if UnEquipAnims[plr] then 	UnEquipAnims[plr]:Stop() end
-	if BlockingAnims[plr] then 	BlockingAnims[plr]:Stop() end
+	if EquipAnims[plr] then
+		EquipAnims[plr]:Stop()
+	end
+	if IdleAnims[plr] then
+		IdleAnims[plr]:Stop()
+	end
+	if UnEquipAnims[plr] then
+		UnEquipAnims[plr]:Stop()
+	end
+	if BlockingAnims[plr] then
+		BlockingAnims[plr]:Stop()
+	end
 
 	EquipDebounce[plr] = false
-	
 end
 
-
-
-function module.CheckInFront(char,enemyChar)
+function module.CheckInFront(char, enemyChar)
 	local enemyHRP = enemyChar.HumanoidRootPart
 	local attackDirection = (char.HumanoidRootPart.Position - enemyHRP.Position).Unit
 	local frontDirection = enemyHRP.CFrame.LookVector
 	local direction = math.acos(attackDirection:Dot(frontDirection)) < math.rad(90)
-	
-	 if not direction then
+
+	if not direction then
 		print("Not infront")
-			return false
-	 else
-			print("infront")
-			return true
-	 end
+		return false
+	else
+		print("infront")
+		return true
+	end
 end
 
-
-function module.CheckBehind(char,enemyChar)
+function module.CheckBehind(char, enemyChar)
 	local enemyHRP = enemyChar.HumanoidRootPart
 	local attackDirection = (char.HumanoidRootPart.Position - enemyHRP.Position).Unit
 	local backDirection = -enemyHRP.CFrame.LookVector
 	local direction = math.acos(attackDirection:Dot(backDirection)) < math.rad(90)
-	
-	 if not direction then
+
+	if not direction then
 		print("Not behind")
-			return false
-	 else
-			print("behind")
-			return true
-	 end
+		return false
+	else
+		print("behind")
+		return true
+	end
 end
 
 function module.ResetMobility(char)
 	local hum = char.Humanoid
-	local plr  = Players:GetPlayerFromCharacter(char)
+	local plr = Players:GetPlayerFromCharacter(char)
 	if char:GetAttribute("IsLow") and char:GetAttribute("InCombat") then
 		if char:GetAttribute("Sprinting") then
-			hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) * 1.25
-			
+			hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed * 1.25
 		else
-            hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) / 2
-		    hum.JumpHeight = (StarterPlayer.CharacterJumpHeight) / 2
-			
+			hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed / 2
+			hum.JumpHeight = StarterPlayer.CharacterJumpHeight / 2
 		end
-		
-	else 
+	else
 		if char:GetAttribute("Sprinting") then
-			hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed) * 2
+			hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed * 2
 			hum.JumpHeight = StarterPlayer.CharacterJumpHeight
-			
 		else
-            hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed
-		    hum.JumpHeight = StarterPlayer.CharacterJumpHeight
-			
-			
+			hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed
+			hum.JumpHeight = StarterPlayer.CharacterJumpHeight
 		end
 	end
 end
 
-function module.CheckForStatus(eChar,char,npc,blockingDamage,hitPos,CheckForBlocking,CheckForParrying, checkForDodging)
+function module.CheckForStatus(
+	eChar,
+	char,
+	npc,
+	blockingDamage,
+	hitPos,
+	CheckForBlocking,
+	CheckForParrying,
+	checkForDodging
+)
 	local stop = false
-	
+	local Result = "HitLanded"
+
 	if CheckForParrying and not stop then
-		if eChar:GetAttribute("Parrying") and module.CheckInFront(char,eChar) then BlockingModule.Parrying(char,eChar,hitPos,npc)  stop = true end
+		if eChar:GetAttribute("Parrying") or eChar:GetAttribute("HyprParrying") and module.CheckInFront(char, eChar) then
+			Result = BlockingModule.Parrying(char, eChar, hitPos, npc)
+			stop = true
+		end
 	end
-	
-	
-	
+
 	if CheckForBlocking and not stop then
-		if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char,eChar) then BlockingModule.Blocking(char, eChar, blockingDamage, hitPos) stop = true end
-		
+		if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char, eChar) then
+			Result = BlockingModule.Blocking(char, eChar, blockingDamage, hitPos)
+			stop = true
+		end
 	end
 
 	if checkForDodging and not stop then
-		 --if eChar:GetAttribute("Dodging") then BlockingModule.Dodging(char,eChar,hitPos) stop = true end
-		
+		--if eChar:GetAttribute("Dodging") then BlockingModule.Dodging(char,eChar,hitPos) stop = true end
 	end
-	
-	if eChar.Humanoid.Health <= 0 or  eChar:GetAttribute("Iframes") or eChar:GetAttribute("Dodging") then stop  = true end
-	
-	return stop
-		
+
+	if eChar.Humanoid.Health <= 0 or eChar:GetAttribute("Iframes") or eChar:GetAttribute("Dodging") then
+		stop = true
+	end
+
+	return stop, Result
 end
 
-function module.CheckForAttributes(char,attack,swing,stun,ragdoll,equipped,blocking,Dodging,Sprinting)
+function module.CheckForAttributes(char, attack, swing, stun, ragdoll, equipped, blocking, Dodging, Sprinting)
 	local attacking = char:GetAttribute("Attacking")
-	local swinging   = char:GetAttribute("Swing")
-	local stunned  = char:GetAttribute("Stunned")
+	local swinging = char:GetAttribute("Swing")
+	local stunned = char:GetAttribute("Stunned")
 	local isEquipped = char:GetAttribute("Equipped")
 	local isRagdoll = char:GetAttribute("IsRagdoll")
 	local isBlocking = char:GetAttribute("isBlocking")
 	local isDodging = char:GetAttribute("Dodging")
 	local isSprinting = char:GetAttribute("Sprinting")
-	
+
 	local stop = false
-	
-	
-	if attacking and attack then stop = true end
-	if swinging and swing then stop = true end
-	if stunned and stun then stop = true end
-	if isRagdoll and ragdoll then stop = true end
-	if equipped and not isEquipped then stop = true end
-	if blocking  and isBlocking then stop = true end
-	if Dodging  and isDodging then stop = true end
-	if Sprinting  and isSprinting then stop = true end
+
+	if attacking and attack then
+		stop = true
+	end
+	if swinging and swing then
+		stop = true
+	end
+	if stunned and stun then
+		stop = true
+	end
+	if isRagdoll and ragdoll then
+		stop = true
+	end
+	if equipped and not isEquipped then
+		stop = true
+	end
+	if blocking and isBlocking then
+		stop = true
+	end
+	if Dodging and isDodging then
+		stop = true
+	end
+	if Sprinting and isSprinting then
+		stop = true
+	end
 	return stop
 end
 
 function module.CalculateCrit(DEX_Points)
-	
-	local roll = math.random(1,100)
+	local roll = math.random(1, 100)
 
 	local CritChance = BaseCritRate + (MaxCritRate - BaseCritRate) * (1 - math.exp(-k * DEX_Points))
 	CritChance = CritChance * 100
-	
+
 	if roll <= CritChance then
 		return true
 	else
@@ -210,34 +233,30 @@ function module.CalculateCrit(DEX_Points)
 	end
 end
 
-
-
-
-
-
-function module.Ragdoll(char,ragdollTime)
+function module.Ragdoll(char, ragdollTime)
 	task.spawn(function()
-		if char:GetAttribute("IsRagdoll") then return end
-		
+		if char:GetAttribute("IsRagdoll") then
+			return
+		end
+
 		char:SetAttribute("IsRagdoll", true)
 		task.wait(ragdollTime)
-		char:SetAttribute("IsRagdoll",false)
-		char:SetAttribute("iframes",true)
-		Instance.new("Highlight",char)
-		task.wait(.6)
+		char:SetAttribute("IsRagdoll", false)
+		char:SetAttribute("iframes", true)
+		Instance.new("Highlight", char)
+		task.wait(0.6)
 		char.Highlight:Destroy()
-		char:SetAttribute("iframes",false)
+		char:SetAttribute("iframes", false)
 	end)
 end
 
-
-function module.ManageStamina(char,action)
+function module.ManageStamina(char, action)
 	local Stamina = char:GetAttribute("Stamina")
 	local Fail = false
 	local plr = Players:GetPlayerFromCharacter(char)
 
-	if action == "Dodge" then 
-		if Stamina >= 20 then 
+	if action == "Dodge" then
+		if Stamina >= 20 then
 			Fail = false
 			char:SetAttribute("Stamina", (Stamina - 20))
 			return Fail
@@ -249,42 +268,40 @@ function module.ManageStamina(char,action)
 	end
 
 	if action == "Swing" then
-		if Stamina >= 2 then 
+		if Stamina >= 2 then
 			Fail = false
 			char:SetAttribute("Stamina", (Stamina - 2))
 			return Fail
-	
 		else
 			Fail = true
-			if plr  then 
+			if plr then
 				StaminaEvent:FireClient(plr, 10)
 			end
 			return Fail
 		end
 	end
 
-	if action == "Climb" then 
+	if action == "Climb" then
 		if Stamina >= 10 then
 			Fail = false
 			char:SetAttribute("Stamina", (Stamina - 10))
 			return Fail
 		else
-			print(char,"Did not have enough stamina to climb")
+			print(char, "Did not have enough stamina to climb")
 			Fail = true
-		    return Fail
+			return Fail
 		end
 	end
 
 	return Fail
 end
 
-
-function module.RefundStamina(char,action)
+function module.RefundStamina(char, action)
 	local Stamina = char:GetAttribute("Stamina")
 	local Fail = false
 	local plr = Players:GetPlayerFromCharacter(char)
 
-	if action == "Dodge" then 
+	if action == "Dodge" then
 		char:SetAttribute("Stamina", (Stamina + 20))
 	end
 
@@ -298,8 +315,5 @@ end
 function module.ManageMana(char, Skill)
 	-- This is for when I start the spell and skill system fully
 end
-
-
-
 
 return module

@@ -47,7 +47,11 @@ local Template = {
 			Mouth = "",
 			Skin_Tone = "",
 			HairIDs = {},
-			Hair_Colour = "",
+			Hair_Colour = {
+				Red = 0,
+				Green = 0,
+				Blue = 0,
+			},
             Clothing = "...",
 
 		},
@@ -167,6 +171,7 @@ local Template = {
 
 export type SlotData = typeof(Template.SLOT_1)
 export type ProfileData = typeof(Template)
+
 
 return Template
 

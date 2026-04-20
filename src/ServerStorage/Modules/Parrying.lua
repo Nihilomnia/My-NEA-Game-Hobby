@@ -21,6 +21,7 @@ function ParryModule.ParryAttempt(char, npc)
 	local Identifer = Players:GetPlayerFromCharacter(char) or npc
 	local hum = char.Humanoid
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
+	if char:GetAttribute("ParryCD") then return end
 
 	if HelpfullModule.CheckForAttributes(char, true, true, true, true, true, true, true) then
 		return
@@ -38,6 +39,7 @@ function ParryModule.ParryAttempt(char, npc)
 	ParryAnims[Identifer]:GetMarkerReachedSignal("ParryOver"):Connect(function()
 		char:SetAttribute("Parrying", false)
 	end)
+
 
 	ParryAnims[Identifer].Ended:Connect(function()
 		if Success[Identifer] then

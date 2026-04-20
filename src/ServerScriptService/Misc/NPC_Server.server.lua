@@ -9,7 +9,7 @@ local npc = require(SSModules.Objects.npc)
 local NPC_Folder = workspace.NPC
 
 for i, NPC in NPC_Folder:GetDescendants() do
-    if NPC:IsA("Model") then
+    if NPC:IsA("Model") and  not npc.GetNpcFromCharacter(NPC) then
         npc.new(NPC.Name, NPC)
         print(npc.GetNpcFromCharacter(NPC))
     end

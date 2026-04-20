@@ -1,6 +1,8 @@
 local PassiveManger = {}
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+
 
 local SSModules = SS.Modules
 local Events = RS.Events
@@ -9,6 +11,8 @@ local VFX_Event = Events.VFX
 local Movement_Event = Events.Movement
 
 local HelpfulModule = require(SSModules.Other.Helpful)
+local DataManager = require(ServerScriptService.Data.Modules.DataManager)
+
 
 -- Maths Contants
 local p = 2.0 -- Soft Cap Exponent for Crit Dmg
@@ -36,6 +40,7 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 	local CritDmgMult = BaseCritDmg + (MaxBonus - BaseCritDmg) * (DEX_Points / 99) ^ p
 	local Attack_Dodged = false
 	local damageAlreadydealt = false
+	local Profile 
 
 	local MultipliedDamage = damage * (1 + DamageModifiers / 100)
 	MultipliedDamage = MultipliedDamage * (1 - TotalRes)

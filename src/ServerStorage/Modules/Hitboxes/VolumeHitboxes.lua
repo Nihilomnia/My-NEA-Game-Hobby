@@ -60,11 +60,12 @@ function Hitboxes.NormalHitBox(Size: Vector3, Attachment: Attachment, Character:
 		local Ehum = char and char:FindFirstChildOfClass("Humanoid")
 		if Ehum and OnHit and not alreadyHit[Ehum] then
 			alreadyHit[Ehum] = true
-			OnHit(Ehum, part)
+			local Result = OnHit(Ehum, part)
+			print(Result)
+			return Result
 		end
+		return nil
 	end)
-
-	return Hitbox
 end
 
 -- Destroy all hitboxes for a character (player or NPC)

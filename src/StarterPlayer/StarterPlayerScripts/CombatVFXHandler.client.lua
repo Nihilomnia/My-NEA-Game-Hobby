@@ -40,7 +40,7 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 		Highlight.DepthMode = Enum.HighlightDepthMode.Occluded
 		Highlight.FillTransparency = .2
 		Highlight.FillColor = FillColor
-		Highlight.OutlineTransparency = 0
+		Highlight.OutlineTransparency = 0.2
 		Highlight.OutlineColor = OutlineColor
 		local TweenGoal = {FillTransparency= 1, OutlineTransparency = 1}
 		TS:Create(Highlight,TweenInfo.new(duration,Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), TweenGoal):Play()
