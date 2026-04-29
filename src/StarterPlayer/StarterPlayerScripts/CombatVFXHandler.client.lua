@@ -38,7 +38,7 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 		local Highlight = Instance.new("Highlight")
 		Highlight.Parent = char
 		Highlight.DepthMode = Enum.HighlightDepthMode.Occluded
-		Highlight.FillTransparency = .2
+		Highlight.FillTransparency = 0 -- was .2
 		Highlight.FillColor = FillColor
 		Highlight.OutlineTransparency = 0.2
 		Highlight.OutlineColor = OutlineColor

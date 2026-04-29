@@ -21,6 +21,7 @@ local cam = workspace.CurrentCamera
 --[UI Variables]--
 local playerGui = plr:WaitForChild("PlayerGui")
 local MovementUI = playerGui:WaitForChild("MovementUI")
+local HealthBar = playerGui:WaitForChild("HealthBar")
 local top = MovementUI:WaitForChild("Top")
 local bottom = MovementUI:WaitForChild("Bottom")
 local Top_tilt = MovementUI:WaitForChild("Top_Tilt")
@@ -48,6 +49,11 @@ local MovementAnimationsFolder = WeaponAnimations[CurrentWeapon].Movement
 local WallClimbAnim = Hum.Animator:LoadAnimation(MovementAnimationsFolder.WallClimb)
 local ledgeGrab = Hum.Animator:LoadAnimation(MovementAnimationsFolder.LedgeGrab)
 
+local R_anim = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallrunR)
+local L_anim = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallrunL)
+
+local Lanim_Jump = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallhopL)
+
 local AnimationsTable = {}
 local SprintAnim = nil
 local SprintTrack = nil
@@ -64,7 +70,6 @@ local IsHoldingLedge = false
 local LedgeGrabCoolDown = false
 local isSprinting = false
 local IsWallRunning = false
-local WallRunSide = nil
 local WallrunCooldowns = nil
 local debounce = false
 
@@ -103,11 +108,11 @@ local Right_TILT_ANGLE = -35
 local TOP_NORMAL = UDim2.new(-0.001, 0, -0.187, 0)
 local BOTTOM_NORMAL = UDim2.new(-0.034, 0, 0.75, 0)
 
--- Breathe positions (top creeps down, bottom creeps up)
+-- Breathe positions
 local TOP_INHALE = UDim2.new(-0.001, 0, -0.15, 0)
 local BOTTOM_INHALE = UDim2.new(-0.034, 0, 0.72, 0)
 
-local tweenSlide = TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+local tweenSlide = TweenInfo.new(0.35, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
 local tweenBreathe = TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
 -- Set bars offscreen initially
@@ -175,6 +180,7 @@ UpdateWalkTracks()
 -- WALL CLIMB
 -------------------------------------------------
 local function triggerWallClimb()
+	if  IsWallRunning then return end
 	grounded = false
 	IsClimbing = true
 	char:SetAttribute("IsClimbing", true)
@@ -200,7 +206,7 @@ end
 -------------------------------------------------
 -- SPRINT SYSTEM
 -------------------------------------------------
-local baseSpeed = StarterPlayer.CharacterWalkSpeed -- Single source of truth for default speed
+local baseSpeed = StarterPlayer.CharacterWalkSpeed 
 
 local function canSprint()
 	return not (
@@ -209,6 +215,8 @@ local function canSprint()
 		or char:GetAttribute("IsBlocking")
 		or char:GetAttribute("Attacking")
 		or char:GetAttribute("IsCrouching")
+		or IsClimbing
+		or IsWallRunning
 	)
 end
 
@@ -219,6 +227,8 @@ local function ResetSpeedCheck()
 		and not char:GetAttribute("Attacking")
 		and not char:GetAttribute("IsCrouching")
 		and not IsClimbing
+		and not IsWallRunning
+		
 	)
 end
 
@@ -250,7 +260,7 @@ local function toggleSprintState()
 		debounce = true
 
 		if ResetSpeedCheck() then
-			Hum.WalkSpeed = baseSpeed -- Always restore to base, not a divided value
+			Hum.WalkSpeed = baseSpeed 
 		end
 
 		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 })
@@ -271,7 +281,6 @@ local function toggleSprintState()
 	elseif not isSprinting and not debounce then
 		char:SetAttribute("Sprinting", true)
 
-		-- Always multiply from baseSpeed, never from current WalkSpeed
 		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
 			Hum.WalkSpeed = baseSpeed * 1.25
 		else
@@ -310,20 +319,17 @@ end
 MovementEvent.OnClientEvent:Connect(function(action)
 	if action == "AstralDodge" then
 		local PastState = false
-		-- Stop sprint cleanly first
 		if isSprinting then
 			PastState = true
 			toggleSprintState()
 		end
 
-		-- Apply dodge speed boost from baseSpeed, not current WalkSpeed
 		local dodgeSpeed = baseSpeed * 5
 		Hum.WalkSpeed = dodgeSpeed
 		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 160 })
 			:Play()
 
 		task.delay(5, function()
-			-- Only restore if nothing else took over speed
 			if not isSprinting then
 				Hum.WalkSpeed = baseSpeed
 				TS:Create(
@@ -363,26 +369,30 @@ RunService.RenderStepped:Connect(function()
 	local SpeedUnit = DirectionOfMovement.Magnitude / walkSpeed
 
 	if DirectionOfMovement.Z / walkSpeed < 0.1 then
-		AnimationsTable.WalkForward:AdjustWeight(math.max(Forward, Backwards))
+		AnimationsTable.WalkForward:AdjustWeight(Forward)
+		AnimationsTable.WalkBack:AdjustWeight(Backwards)
 		AnimationsTable.WalkRight:AdjustWeight(Right)
 		AnimationsTable.WalkLeft:AdjustWeight(Left)
 
-		local playbackSpeed = (DirectionOfMovement.Z > 0) and -SpeedUnit or SpeedUnit
+		local playbackSpeed = (DirectionOfMovement.Z > 0) and  SpeedUnit or -SpeedUnit
 		AnimationsTable.WalkForward:AdjustSpeed(playbackSpeed)
+		AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit)
 		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit)
 		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit)
 	else
 		AnimationsTable.WalkForward:AdjustWeight(Forward)
+		AnimationsTable.WalkBack:AdjustWeight(Backwards)
 		AnimationsTable.WalkRight:AdjustWeight(Left)
 		AnimationsTable.WalkLeft:AdjustWeight(Right)
-
+          
 		AnimationsTable.WalkForward:AdjustSpeed(SpeedUnit * -1)
+		AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit * -1)
 		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit * -1)
 		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit * -1)
 	end
 end)
 
-local function StartWallRunBars(side)
+local function StartWallRunBars(side, hum)
 	TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 100 }):Play()
 	if side == 1 then
 		TS:Create(Top_tilt, tweenSlide, { Position = TOP_TILT_NORMAL_RIGHT, Rotation = Right_TILT_ANGLE }):Play()
@@ -393,14 +403,67 @@ local function StartWallRunBars(side)
 	end
 end
 
-local function StopWallRunBars(side)
-	TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
-	if side == 1 then
-	  TS:Create(Top_tilt, tweenSlide, { Position = Tilt_TOP_HIDDEN_RIGHT, Rotation = 15 }):Play()
-	  TS:Create(Bottom_tilt, tweenSlide, { Position = Tilt_BOTTOM_HIDDEN_RIGHT, Rotation = 15 }):Play()
-	elseif side == -1 then
-	  TS:Create(Top_tilt, tweenSlide, { Position = Tilt_TOP_HIDDEN_LEFT, Rotation = -15 }):Play()
-	  TS:Create(Bottom_tilt, tweenSlide, { Position = Tilt_BOTTOM_HIDDEN_LEFT, Rotation = -15 }):Play()
+local function JumpBars(side, hum)
+	local TOP = UDim2.new(-0.001, 0, -0.387, 0)
+    local BOTTOM = UDim2.new(-0.034, 0, 0.95, 0)
+
+	local FOVChange: Tween = TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 110 })
+	FOVChange:Play()
+	local camreturn = Vector3.new(0, 0, 0)
+	TS:Create(hum, TweenInfo.new(0.40, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CameraOffset = camreturn })
+		:Play()
+	local top: Tween = TS:Create(Top_tilt, tweenSlide, { Position = TOP, Rotation = 0 })
+	print(FOVChange)
+	local bottom: Tween = TS:Create(Bottom_tilt, tweenSlide, { Position = BOTTOM, Rotation = 0 })
+	top:Play()
+	bottom:Play()
+	FOVChange.Completed:Connect(function()
+		TS:Create(
+			cam,
+			TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			{ FieldOfView = 70 }
+		):Play()
+	end)
+
+	top.Completed:Connect(function()
+		local finalbarTween: Tween = TS:Create(Top_tilt, tweenSlide, { Position = TOP_HIDDEN, Rotation = 0 })
+		finalbarTween:Play()
+		TS:Create(Bottom_tilt, tweenSlide, { Position = BOTTOM_HIDDEN, Rotation = 0 }):Play()
+		finalbarTween.Completed:Connect(function()
+			Top_tilt.Position = Tilt_TOP_HIDDEN_LEFT
+			Bottom_tilt.Position = Tilt_BOTTOM_HIDDEN_LEFT
+		end)
+	end)
+
+	
+
+end
+
+local function StopWallRunBars(side, hum, action)
+	if not action then
+		action = "Stop"
+	end
+
+	if action == "Stop" then
+		local camreturn = Vector3.new(0, 0, 0)
+
+		TS
+			:Create(
+				hum,
+				TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ CameraOffset = camreturn }
+			)
+			:Play()
+		TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
+		if side == 1 then
+			TS:Create(Top_tilt, tweenSlide, { Position = Tilt_TOP_HIDDEN_RIGHT, Rotation = 15 }):Play()
+			TS:Create(Bottom_tilt, tweenSlide, { Position = Tilt_BOTTOM_HIDDEN_RIGHT, Rotation = 15 }):Play()
+		elseif side == -1 then
+			TS:Create(Top_tilt, tweenSlide, { Position = Tilt_TOP_HIDDEN_LEFT, Rotation = -15 }):Play()
+			TS:Create(Bottom_tilt, tweenSlide, { Position = Tilt_BOTTOM_HIDDEN_LEFT, Rotation = -15 }):Play()
+		end
+	elseif action == "Jump" then
+		JumpBars(side,hum)
 	end
 end
 
@@ -483,6 +546,9 @@ local function StartWallRun(char, hit: RaycastResult, side)
 		return
 	end
 
+	Lanim_Jump:Stop()
+	
+
 	local WallRunSpeed = 50
 
 	local IsSprinting = char:GetAttribute("Sprinting")
@@ -547,8 +613,6 @@ local function StartWallRun(char, hit: RaycastResult, side)
 	hum.AutoRotate = false
 
 	IsWallRunning = true
-	local R_anim = hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallrunR)
-	local L_anim = hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallrunL)
 
 	if side == 1 then
 		R_anim:Play()
@@ -560,9 +624,8 @@ local function StartWallRun(char, hit: RaycastResult, side)
 	local Speed = 50
 
 	local elapsed = 0
-	local camreturn = Vector3.new(0, 0, 0)
 
-	function stopWallRun()
+	function stopWallRun(action)
 		conn:Disconnect()
 		if not IsWallRunning then
 			return
@@ -580,17 +643,11 @@ local function StartWallRun(char, hit: RaycastResult, side)
 		L_anim:Stop()
 
 		UpdateWalkTracks()
-		StopWallRunBars(side)
-		TS:Create(
-			hum,
-			TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ CameraOffset = camreturn }
-		):Play()
+		StopWallRunBars(side, hum, action)
 	end
 
 	conn = RunService.Heartbeat:Connect(function(dt)
 		elapsed += dt
-		
 
 		if elapsed >= duration then
 			stopWallRun()
@@ -652,7 +709,7 @@ local function WallRunStart(char)
 	if hum.FloorMaterial ~= Enum.Material.Air then
 		return
 	end
-	if IsWallRunning then
+	if IsWallRunning or IsClimbing  or IsHoldingLedge then
 		return
 	end
 
@@ -674,29 +731,30 @@ local function WallRunStart(char)
 end
 
 local function WallRunJump(action)
-	if not IsWallRunning then return end
-	local HRP : BasePart= char.HumanoidRootPart
+	if not IsWallRunning then
+		return
+	end
+	local HRP: BasePart = char.HumanoidRootPart
 	local hum = char.Humanoid
-	if not HRP then return end
+	if not HRP then
+		return
+	end
 
-	stopWallRun()
+	stopWallRun("Jump")
 	local Jumppower = 50
-	local uppower = Jumppower *2
+	local uppower = Jumppower * 2
 	local Lateral = (Side == -1 and HRP.CFrame.RightVector or -HRP.CFrame.RightVector)
 	local Foward = HRP.CFrame.LookVector
 	local FowrardBoost = Foward * 80
 
-	local jumpVect =
-	  (Normal * Jumppower) + (Lateral * 0.5)+ (FowrardBoost) + Vector3.new(0, uppower, 0)
-	  if Side == -1 then
-      -- Animation
-	  else if Side == 1 then
-		  -- Animation
-	  end
+	local jumpVect = (Normal * Jumppower) + (Lateral * 0.5) + FowrardBoost + Vector3.new(0, uppower, 0)
+	if Side == 1 then
+		--Animation for Right when done
+	elseif Side == -1 then
+		Lanim_Jump:Play()
 	end
 
 	HRP.AssemblyLinearVelocity = jumpVect + HRP.AssemblyLinearVelocity * 0.2
-
 end
 
 RunService.Heartbeat:Connect(function(dt)
@@ -763,7 +821,7 @@ UIS.InputBegan:Connect(function(input, isTyping)
 
 		FindFowardwall(char)
 
-		if isInAir and heldKeys.W and canClimb and not IsClimbing then
+		if isInAir and heldKeys.W and canClimb and not IsClimbing  then
 			if isSprinting then
 				toggleSprintState()
 				task.wait(0.15)
