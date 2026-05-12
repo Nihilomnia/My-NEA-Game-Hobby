@@ -735,7 +735,6 @@ local function WallRunJump(action)
 		return
 	end
 	local HRP: BasePart = char.HumanoidRootPart
-	local hum = char.Humanoid
 	if not HRP then
 		return
 	end
@@ -744,10 +743,8 @@ local function WallRunJump(action)
 	local Jumppower = 50
 	local uppower = Jumppower * 2
 	local Lateral = (Side == -1 and HRP.CFrame.RightVector or -HRP.CFrame.RightVector)
-	local Foward = HRP.CFrame.LookVector
-	local FowrardBoost = Foward * 80
 
-	local jumpVect = (Normal * Jumppower) + (Lateral * 0.5) + FowrardBoost + Vector3.new(0, uppower, 0)
+	local jumpVect = (Normal * Jumppower) + (Lateral * 0.5)  + Vector3.new(0, uppower, 0) -- The wall jump should go the side then up a little  
 	if Side == 1 then
 		--Animation for Right when done
 	elseif Side == -1 then
@@ -756,7 +753,6 @@ local function WallRunJump(action)
 
 	HRP.AssemblyLinearVelocity = jumpVect + HRP.AssemblyLinearVelocity * 0.2
 end
-
 RunService.Heartbeat:Connect(function(dt)
 	WallRunStart(char)
 end)

@@ -52,7 +52,11 @@ function DataManager.ChangeHairColor(plr,newColor: Color3)
         local char = plr.Character
         local currentSlot = char:GetAttribute("CurrentSlot")
         local SlotData:SlotData = profile.Data[currentSlot]
-        SlotData.Appearance.Hair_Colour = newColor
+        SlotData.Appearance.Hair_Colour = {
+            Red = newColor.R,
+            Green = newColor.G,
+            Blue = newColor.B
+        }
     end
 end
 

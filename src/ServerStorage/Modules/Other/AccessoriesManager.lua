@@ -36,7 +36,7 @@ local function RequestHair(ID:number)
 
     if model then
         if model.AccessoryType ~= Enum.AccessoryType.Hair and model.AccessoryType ~= Enum.AccessoryType.Hat and model.AccessoryType ~= Enum.AccessoryType.Face then
-            warn("Requested asset is not a hair accessory:", ID)
+            -- Then i would add a remote event to the client to nottify them that the asset they want is not a vaild hair
             model:Destroy()
             return nil
         end

@@ -1,12 +1,16 @@
 local plr = {}
 plr.__index = plr
 local SS = game:GetService("ServerStorage")
+local RS = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local Workspace = game:GetService("Workspace")
 local SSModules = SS.Modules
+local RSModules = RS.Modules
+
 
 
 local DataManger = require(ServerScriptService.Data.Modules.DataManager)
+local MovementObj = require(RSModules.Movement.Objects.Movement)
 local AcessoryManager = require(SSModules.Other.AccessoriesManager)
 
 
@@ -21,6 +25,7 @@ export type PLR = typeof(setmetatable(
         LastName: string,
         HairColor: Color3,
         Element: string,
+        Movement: MovementObj.MovementObj,
         Stats: {
             VIT: number,
             END: number,
@@ -97,6 +102,7 @@ function plr.new(Player: Player, Slot: string):PLR?
 		Element = "",
 		Talents = {},
 		Skills = {},
+		Movement = MovementObj.new(Player),
 	}, plr) :: PLR
 
     if self.Character.Parent ~= Workspace.Characters then
@@ -105,6 +111,7 @@ function plr.new(Player: Player, Slot: string):PLR?
 
     self.CurrentSlot = Slot
     self.HairColor = Color3.new(self.Data.Appearance.Hair_Colour.Red, self.Data.Appearance.Hair_Colour.Green, self.Data.Appearance.Hair_Colour.Blue)
+    self.Element = self.Data.Element
 
     LoadCharacterAppearance(self)
     SetupStats(self)
@@ -118,9 +125,18 @@ function plr.new(Player: Player, Slot: string):PLR?
 end
 
 
+function plr:GetPLRFromPlayer(Player: Player): PLR?
+    if playertoPLR[Player] then
+        return playertoPLR[Player]
+    else
+        warn("[PlayerObject]: This player doesn't have a valid plr object")
+        return nil
+    end
+end
+
 
 function plr:IncreaseStat(statName: string, amount: number)
-    
+  self.Data.STAT_POINTS[statName] = self.Data.STAT_POINTS[statName] + (amount or 1)
 end
 
 function plr:EquipAccessory(accessoryType: string, accessoryName: string)
