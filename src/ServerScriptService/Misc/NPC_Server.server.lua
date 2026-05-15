@@ -5,7 +5,7 @@ local SSModules = SS.Modules
 local npc = require(SSModules.Objects.npc)
 
 
-
+task.wait(5)
 local NPC_Folder = workspace.NPC
 
 for i, NPC in NPC_Folder:GetDescendants() do

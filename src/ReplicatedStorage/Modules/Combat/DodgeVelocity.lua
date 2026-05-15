@@ -25,10 +25,13 @@ function DodgeVelocity.dodge(char,Identifier,TargetDirection)
     end
 
     if TargetDirection == "None" then return end  -- No velcoity for spot dodges
-
+    
+    local dodgeAttachment = hrp:FindFirstChild("DodgeAttachment") or Instance.new("Attachment", hrp)
     local lv = Instance.new("LinearVelocity")
-    lv.Attachment0 = hrp:FindFirstChild("DodgeAttachment") or Instance.new("Attachment", hrp)
+    lv.Attachment0 = dodgeAttachment
     lv.MaxForce = 1e6
+    local mass = hrp.AssemblyMass * 1500
+    lv.MaxAxesForce = Vector3.new(mass,mass,mass)
     
 
     local direction = Vector3.new()
@@ -58,8 +61,26 @@ function DodgeVelocity.dodge(char,Identifier,TargetDirection)
     lv.RelativeTo = Enum.ActuatorRelativeTo.World
     lv.Parent = hrp
 
+    local algin = Instance.new("AlignOrientation")
+    algin.Attachment0 = dodgeAttachment
+    algin.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    algin.Responsiveness = 50
+    algin.Parent = hrp
+
+    local Hum:Humanoid = char.Humanoid
+    Hum.AutoRotate = false
+    
+
     currentDodgeForce[Identifier] = lv
-    game.Debris:AddItem(lv, DODGE_TIME)
+
+    task.delay(DODGE_TIME, function()
+        game.Debris:AddItem(lv)
+        game.Debris:AddItem(algin)
+        Hum.AutoRotate = false
+
+    end)
+  
+    
 end
 
 

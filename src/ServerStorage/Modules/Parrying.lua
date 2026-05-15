@@ -22,10 +22,23 @@ function ParryModule.ParryAttempt(char, npc)
 	local hum = char.Humanoid
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	if char:GetAttribute("ParryCD") then return end
+	local isStunned = char:GetAttribute("Stunned")
 
-	if HelpfullModule.CheckForAttributes(char, true, true, true, true, true, true, true) then
-		return
-	end
+	if isStunned and char:GetAttribute("Parrying") then return end
+
+	  if not isStunned then
+        -- normal check — can't parry while attacking, swinging, ragdolled, etc.
+        if HelpfullModule.CheckForAttributes(char, true, true, false, true, true, true, true) then
+            return
+        end
+    else
+        -- bypassing hitstun — but still block on ragdoll, unequipped, dodging
+        if HelpfullModule.CheckForAttributes(char, false, false, false, true, true, false, true) then
+            return
+        end
+        -- clear leftover attack flags from the swing that got parried
+    end
+
 	char:SetAttribute("Parrying", true)
 	char:SetAttribute("Stunned", true)
 	hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed / 3)

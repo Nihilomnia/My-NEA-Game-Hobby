@@ -94,8 +94,8 @@ function module.Parrying(char,eChar,hitPos,npc)
 	char.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[char:GetAttribute("CurrentWeapon")].Blocking.GotParried):Play()
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 4,8,0,1.2) end
-	
-	StunHandler.Stun(char.Humanoid,0.3,5,0)
+
+	StunHandler.Stun(char.Humanoid,1.25,5,0)
 
 	Result = "Parried"
 

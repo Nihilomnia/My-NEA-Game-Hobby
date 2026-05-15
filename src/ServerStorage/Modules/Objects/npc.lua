@@ -119,6 +119,8 @@ function npc.new(NpcName: string, char: Model?): NPC
 	}, npc) :: NPC
 
 	local NPCinfo = NPC_Dictionary.getStats(NpcName)
+	print(NpcName)
+	print(NPCinfo)
 	self.MobType = NPCinfo.Mobtype
 	self.Difficulty = NPCinfo.Difficulty
 	self.Character = char or CreateModel(NpcName, self.Difficulty, self.MobType)

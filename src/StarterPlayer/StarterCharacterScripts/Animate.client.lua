@@ -21,7 +21,6 @@ local cam = workspace.CurrentCamera
 --[UI Variables]--
 local playerGui = plr:WaitForChild("PlayerGui")
 local MovementUI = playerGui:WaitForChild("MovementUI")
-local HealthBar = playerGui:WaitForChild("HealthBar")
 local top = MovementUI:WaitForChild("Top")
 local bottom = MovementUI:WaitForChild("Bottom")
 local Top_tilt = MovementUI:WaitForChild("Top_Tilt")
@@ -393,7 +392,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 local function StartWallRunBars(side, hum)
-	TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 100 }):Play()
+	TS:Create(cam, TweenInfo.new(5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 250 }):Play()
 	if side == 1 then
 		TS:Create(Top_tilt, tweenSlide, { Position = TOP_TILT_NORMAL_RIGHT, Rotation = Right_TILT_ANGLE }):Play()
 		TS:Create(Bottom_tilt, tweenSlide, { Position = BOTTOM_TILT_NORMAL_RIGHT, Rotation = Right_TILT_ANGLE }):Play()
@@ -404,10 +403,10 @@ local function StartWallRunBars(side, hum)
 end
 
 local function JumpBars(side, hum)
-	local TOP = UDim2.new(-0.001, 0, -0.387, 0)
+	local TOP = UDim2.new(-0.001, 0, -0.987, 0)
     local BOTTOM = UDim2.new(-0.034, 0, 0.95, 0)
 
-	local FOVChange: Tween = TS:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 110 })
+	local FOVChange: Tween = TS:Create(cam, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 280 })
 	FOVChange:Play()
 	local camreturn = Vector3.new(0, 0, 0)
 	TS:Create(hum, TweenInfo.new(0.40, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CameraOffset = camreturn })
@@ -420,7 +419,7 @@ local function JumpBars(side, hum)
 	FOVChange.Completed:Connect(function()
 		TS:Create(
 			cam,
-			TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			TweenInfo.new(1, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
 			{ FieldOfView = 70 }
 		):Play()
 	end)
@@ -559,9 +558,9 @@ local function StartWallRun(char, hit: RaycastResult, side)
 	local CamOffset
 
 	if side == 1 then
-		CamOffset = Vector3.new(-5, -2, 0)
+		CamOffset = Vector3.new(-5, -4, 0)
 	else
-		CamOffset = Vector3.new(5, -2, 0)
+		CamOffset = Vector3.new(5, -4, 0)
 	end
 
 	local conn
@@ -585,7 +584,7 @@ local function StartWallRun(char, hit: RaycastResult, side)
 	StartWallRunBars(side)
 	TS:Create(hum, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CameraOffset = CamOffset })
 		:Play()
-	hum.CameraOffset = CamOffset
+	
 
 	local Attacment = HRP:FindFirstChild("WallRunAttachment")
 	if not Attacment then
