@@ -1,7 +1,7 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 local RS = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
-local Players = game:GetService("Players")
+local PLRModule = require(ServerStorage.Modules.Objects.plr)
 
 local Events = RS.Events
 local StatsEvent = Events.StatsEvent
@@ -186,47 +186,17 @@ end
 
 
 
-
-Players.PlayerAdded:Connect(function(plr)
-	plr.CharacterAdded:Connect(function(char)
-		local profile
-		while true do
-			profile = DataManager.Profiles[plr]
-			if profile then
-				break
-			end
-			task.wait(0.1)
-		end
-
-		char:SetAttribute("CurrentSlot", "SLOT_1") -- This is more of a placeholder in case we want to add multiple save slots later on
-		local CurrentSlot = char:GetAttribute("CurrentSlot")
-		for statName, value in pairs(profile.Data[CurrentSlot].STAT_POINTS) do
-			char:SetAttribute(statName, value)
-		end
-		setupHealth(char)
-		setupStamina(char)
-		setupSPT(char)
-
-	end)
-end)
+--- Player stats initialization  has been moved to the my custom PLR object  .new function
 
 
 
 StatsEvent.OnServerEvent:Connect(function(plr,action,Stat)
-	local profile
-		while true do
-			profile = DataManager.Profiles[plr]
-			if profile then
-				break
-			end
-			task.wait(0.1)
-		end
 	local char = plr.Character
-	local CurrentSlot = char:GetAttribute("CurrentSlot")
-	local EXP = profile.Data[CurrentSlot].GeneralExp
-	local FreePoints = profile.Data[CurrentSlot].FreePoints
-	local Stat_EXP = profile.Data[CurrentSlot].AttributeExp[Stat]
-	local StatPoints = profile.Data[CurrentSlot].STAT_POINTS[Stat]
+	local PLR = PLRModule.GetPLRFromPlayer(plr)
+	local EXP = PLR.Data.GeneralExp
+	local FreePoints = PLR.Data.FreePoints
+	local Stat_EXP = PLR.Data.AttributeExp[Stat]
+	local StatPoints = PLR.Data.STAT_POINTS[Stat]
 	if StatPoints >= 99 then return end
 	if action == "Train_Item" then
 		local EXP_Cost = EXP * 0.15 -- We take 15% of the players general EXP to be converted into Attribute EXP per training item use
@@ -238,14 +208,14 @@ StatsEvent.OnServerEvent:Connect(function(plr,action,Stat)
 
 		if Stat_EXP >= Required_EXP then
 			Stat_EXP = Stat_EXP - Required_EXP
-			DataManager.IncreaseStat(plr, Stat)
+			PLR:IncreaseStat(Stat, 1)
 			VFXEvent:FireAllClients("CombatEffects", "LevelUp", char.HumanoidRootPart.CFrame, 2)
 		end
 	end
 
 	if action == "Train_Free" and FreePoints > 0 then
-		DataManager.IncreaseStat(plr, Stat)
-		profile.Data[CurrentSlot].FreePoints = FreePoints - 1
+		PLR:IncreaseStat(Stat, 1)
+		PLR.Data.FreePoints = FreePoints - 1
 		VFXEvent:FireAllClients("CombatEffects", "LevelUp", char.HumanoidRootPart.CFrame, 2)
 	end
 end)

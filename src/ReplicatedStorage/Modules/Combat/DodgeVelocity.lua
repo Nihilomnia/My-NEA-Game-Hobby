@@ -2,8 +2,8 @@ local DodgeVelocity = {}
 local currentDodgeForce = {}
 
 
-local DODGE_SPEED = 35
-local DODGE_TIME = 0.73
+local DODGE_SPEED = 30
+local DODGE_TIME = 0.5
 
 
 function DodgeVelocity.resetVelocity(char,Identifier)
@@ -73,12 +73,12 @@ function DodgeVelocity.dodge(char,Identifier,TargetDirection)
 
     currentDodgeForce[Identifier] = lv
 
-    task.delay(DODGE_TIME, function()
-        game.Debris:AddItem(lv)
-        game.Debris:AddItem(algin)
-        Hum.AutoRotate = false
+    game.Debris:AddItem(lv, DODGE_TIME)
+    game.Debris:AddItem(algin, DODGE_TIME)
+    task.wait(DODGE_TIME)
+    Hum.AutoRotate = false
 
-    end)
+  
   
     
 end

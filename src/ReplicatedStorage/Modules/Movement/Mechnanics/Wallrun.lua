@@ -140,6 +140,9 @@ function Wallrun.StartWallRun(MovementObj:MovementObjects.MovementObj, hit:Rayca
        R_anim:Stop()
        L_anim:Stop()
 
+       MovementObj:UpdateWalkTracks()
+       
+
     end
 
 

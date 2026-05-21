@@ -7,42 +7,10 @@ local AccessoriesModule = require(SS.Modules.Other.AccessoriesManager)
 local Events = RS.Events
 local AccessoryEvent = Events.AccessoryEvent
 
-Players.PlayerAdded:Connect(function(plr)
-	plr.CharacterAdded:Connect(function(char)
-		local currentSlot = char:GetAttribute("CurrentSlot")
 
-		local profile
-		while true do
-			profile = DataManager.Profiles[plr]
-			if profile then
-				break
-			end
-			task.wait(0.1)
-		end
+-- Player Acessory Initialization has been moved to the my custom PLR object  .new function
 
-		while profile.Data[currentSlot] == nil do
-			task.wait()
-			currentSlot = char:GetAttribute("CurrentSlot")
-		end
 
-		
-        local AccessoriesFolder = Instance.new("Folder")
-		local WeldsFolder = Instance.new("Folder")
-
-		WeldsFolder.Name = "Welds"
-		WeldsFolder.Parent = AccessoriesFolder
-		AccessoriesFolder.Name = "Accessories"
-		AccessoriesFolder.Parent = char
-
-		for accessoryType, accessoryName in pairs(profile.Data[currentSlot].Accessories) do
-			if accessoryName ~= "" then
-				AccessoriesModule.EquipAccessory(char, accessoryName)
-			end
-		end
-
-		
-	end)
-end)
 
 AccessoryEvent.OnServerEvent:Connect(function(plr, action, accessoryName, accessoryType)
 	if action == "EquipAccessory" then
@@ -56,7 +24,4 @@ AccessoryEvent.OnServerEvent:Connect(function(plr, action, accessoryName, access
 	end
 end)
 
-Players.PlayerRemoving:Connect(function(plr)
-	AccessoriesModule.cleanup(plr)
-end)
-
+-- Player accessory cleanup  on remove has been moved to the my custom PLR object :Destroy function	

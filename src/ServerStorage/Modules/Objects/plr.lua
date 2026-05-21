@@ -12,11 +12,52 @@ local RSModules = RS.Modules
 local DataManger = require(ServerScriptService.Data.Modules.DataManager)
 local MovementObj = require(RSModules.Movement.Objects.Movement)
 local AcessoryManager = require(SSModules.Other.AccessoriesManager)
+local CombatData = require(SSModules.Combat.Data.CombatData)
+local helpfullModule = require(SSModules.Other.Helpful)
+
+
+local CONFIG = {
+	VIT = {
+		BASE_HEALTH = 250,
+		VIT_HEALTH_MULTIPLIER = 1,
+		LOW_HEALTH_THRESHOLD = 0.25,
+	},
+
+	END = {
+		BASE_HIGH_STAMINA = 25,
+		BASE_LOW_STAMINA = 15,
+	},
+
+	SPT = {
+
+		BASE_MANA = 250,
+		BASE_HIGH_MANA = 50,
+		BASE_LOW_MANA = 30,
+
+		BASE_MF = 120,
+		BASE_HIGH_MF = 25,
+		BASE_LOW_MF = 15,
+
+	},
+
+
+	EXP = {
+		k = 0.08,
+		MidPoint = 50,
+
+
+	}
+
+
+	
+	
+}
 
 
 
 export type PLR = typeof(setmetatable(
     {} :: {
+        IsReady: boolean,
         Player: Player,
         Data: DataManger.SlotData,
         Character: Model,
@@ -79,11 +120,160 @@ local function LoadCharacterAppearance(plr: PLR)
 end
 
 local function SetupStats(plr: PLR)
+    local char = plr.Character
+
+    
+local function setupSPT(char)
+	local MaxMana = 0
+	local MaxMF = 0
+
+	local function sync(char)
+		local SPT = char:GetAttribute("SPT") or 0
+
+		if SPT == 0 then
+			MaxMana = CONFIG.SPT.BASE_MANA
+			MaxMF = CONFIG.SPT.BASE_MF
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+			char:SetAttribute("MaxMF", MaxMF)
+			char:SetAttribute("MF", MaxMF)
+		end
+	
+		if SPT >= 1 and SPT <= 15 then
+			MaxMana = math.ceil(80 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 1) / 14))
+			MaxMF = math.ceil(40 + CONFIG.SPT.BASE_HIGH_MF * ((SPT - 1) / 28))
+			char:SetAttribute("MaxMF", MaxMF)
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+			print("MaxSet")
+		elseif SPT >= 16 and SPT <= 35 then
+			MaxMana = math.ceil(105 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 15) / 15))
+			MaxMF = math.ceil(53 + CONFIG.SPT.BASE_HIGH_MF * ((SPT - 15) / 30))
+			char:SetAttribute("MaxMF", MaxMF)
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+		elseif SPT >= 36 and SPT <= 60 then
+			MaxMana = math.ceil(130 + CONFIG.SPT.BASE_HIGH_MANA * ((SPT - 30) / 20))
+			MaxMF = math.ceil(65 + CONFIG.SPT.BASE_HIGH_MF * ((SPT - 30) / 40))
+			char:SetAttribute("MaxMF", MaxMF)
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+		elseif SPT >= 61 and SPT <= 99 then
+			MaxMana = math.ceil(155 + CONFIG.SPT.BASE_LOW_MANA * ((SPT - 50) / 49))
+			MaxMF = math.ceil(78 + CONFIG.SPT.BASE_LOW_MF * ((SPT - 50) / 80))
+			char:SetAttribute("MaxMF", MaxMF)
+			char:SetAttribute("MaxMana", MaxMana)
+			char:SetAttribute("Mana", MaxMana)
+
+		end
+	end
+	sync(char)
+
+	char:GetAttributeChangedSignal("SPT"):Connect(function()
+		local Orginal_Mana = char:GetAttribute("Mana")
+		local Orginal_MF = char:GetAttribute("MF")
+		sync(char)
+		if char:GetAttribute("InCombat") then
+			char:SetAttribute("Mana", Orginal_Mana)
+			char:SetAttribute("MF", Orginal_MF)
+		end
+
+		print("New Target for MANA = {", MaxMana, "}")
+		print("New Target for MF = {", MaxMF, "}")
+		
+	end)
+end
+
+local function setupHealth(char)
+	local hum = char:WaitForChild("Humanoid")
+
+	local VIT = char:GetAttribute("VIT") or 0
+	hum.MaxHealth = CONFIG.VIT.BASE_HEALTH + (VIT * CONFIG.VIT.VIT_HEALTH_MULTIPLIER)
+	hum.Health = hum.MaxHealth
+
+	-- Update max health when VIT changes
+	char:GetAttributeChangedSignal("VIT"):Connect(function()
+		local VIT = char:GetAttribute("VIT") or 0
+		hum.MaxHealth = CONFIG.VIT.BASE_HEALTH + (VIT * CONFIG.VIT.VIT_HEALTH_MULTIPLIER)
+	end)
+
+	-- Monitor low health state
+	hum.HealthChanged:Connect(function()
+		if hum.Health <= hum.MaxHealth * CONFIG.VIT.LOW_HEALTH_THRESHOLD then
+			char:SetAttribute("IsLow", true)
+			helpfullModule.ResetMobility(char)
+		else
+			char:SetAttribute("IsLow", false)
+			helpfullModule.ResetMobility(char)
+		end
+	end)
+end
+
+local function setupStamina(char)
+	local MaxStamina = 0
+
+	local function sync(char)
+		local END = char:GetAttribute("END") or 0
+	
+		if END >= 1 and END <= 15 then
+			MaxStamina = math.ceil(80 + CONFIG.END.BASE_HIGH_STAMINA * ((END - 1) / 14))
+			char:SetAttribute("MaxStamina", MaxStamina)
+			char:SetAttribute("Stamina", MaxStamina)
+			print("MaxSet")
+		elseif END >= 16 and END <= 35 then
+			MaxStamina = math.ceil(105 + CONFIG.END.BASE_HIGH_STAMINA * ((END - 15) / 15))
+			char:SetAttribute("MaxStamina", MaxStamina)
+			char:SetAttribute("Stamina", MaxStamina)
+		elseif END >= 36 and END <= 60 then
+			MaxStamina = math.ceil(130 + CONFIG.END.BASE_HIGH_STAMINA * ((END - 30) / 20))
+			char:SetAttribute("MaxStamina", MaxStamina)
+			char:SetAttribute("Stamina", MaxStamina)
+		elseif END >= 61 and END <= 99 then
+			MaxStamina = math.ceil(155 + CONFIG.END.BASE_LOW_STAMINA * ((END - 50) / 49))
+			char:SetAttribute("MaxStamina", MaxStamina)
+			char:SetAttribute("Stamina", MaxStamina)
+
+		end
+	end
+	sync(char)
+
+	char:GetAttributeChangedSignal("END"):Connect(function()
+		local Orginal = char:GetAttribute("Stamina")
+		sync(char)
+		if char:GetAttribute("InCombat") then
+			char:SetAttribute("Stamina", Orginal)
+		end
+
+		print("New Target for STM = {", MaxStamina, "}")
+		
+	end)
+end
+
+  
+
     for statName, statValue in pairs(plr.Data.STAT_POINTS) do
         plr.Stats[statName] = statValue
+        char:SetAttribute(statName, statValue)
     end
 
+    setupHealth(char)
+    setupSPT(char)
+    setupStamina(char)
+
 end
+
+
+local function SetupStates(plr:PLR)
+    local char = plr.Character
+    char:SetAttribute("CurrentWeapon", "Fists") -- I would replace this with the players's weapon in .Data when i add not movesert restricted weapons
+    char:SetAttribute("Element","Astral")
+    char:SetAttribute("InCombat",false)
+    char:SetAttribute("Dodges",0)
+	char:SetAttribute("MF", 0)
+end
+
+
+
 
 
 
@@ -93,8 +283,9 @@ local playertoPLR = {}
 
 function plr.new(Player: Player, Slot: string):PLR?
     local self = setmetatable({
+        IsReady = false,
         Player = Player,
-        Data = DataManger.Profiles[Player].Data[Slot],
+        Data = nil,
 		FirstName = "",
 		LastName = "",
 		Character = Player.Character :: any,
@@ -102,12 +293,54 @@ function plr.new(Player: Player, Slot: string):PLR?
 		Element = "",
 		Talents = {},
 		Skills = {},
+		Stats = {
+			VIT = 0,
+			END = 0,
+			STR = 0,
+			SPT = 0,
+			DEX = 0,
+			AGL = 0,
+			WPN = 0,
+		},
 		Movement = MovementObj.new(Player),
 	}, plr) :: PLR
+
+	local profile
+		while true do
+			print(DataManger.Profiles)
+			profile =DataManger.Profiles[Player]
+			print("Player data not found")
+			if profile then
+				break
+			end
+			task.wait(0.1)
+		end
+
+
+    self.Data = profile.Data[Slot]
 
     if self.Character.Parent ~= Workspace.Characters then
         self.Character.Parent = workspace.Characters
     end
+
+	while self.Movement.IsReady == false do
+		task.wait(0.1)
+	end
+
+	local Cframeparts = self.Data.LastLocation
+
+	if Cframeparts then
+		local Cframe = CFrame.new(table.unpack(Cframeparts))
+		self.Character:SetPrimaryPartCFrame(Cframe)
+	end
+
+
+
+	local Highlight = Instance.new("Highlight")
+	Highlight.Parent = self.Character
+	Highlight.FillColor = Color3.new(0, 1, 0)
+	Highlight.Name = "InitializeHighlight"
+	self.Character:SetAttribute("Iframes",true)
 
     self.CurrentSlot = Slot
     self.HairColor = Color3.new(self.Data.Appearance.Hair_Colour.Red, self.Data.Appearance.Hair_Colour.Green, self.Data.Appearance.Hair_Colour.Blue)
@@ -115,17 +348,55 @@ function plr.new(Player: Player, Slot: string):PLR?
 
     LoadCharacterAppearance(self)
     SetupStats(self)
+    SetupStates(self)
+
+    for i,v in pairs(self.Character:GetDescendants()) do
+        if v.Parent:IsA("Accessory") and v:IsA("Part") then
+            v.CanTouch = false
+            v. CanQuery =false
+        end
+    end
+
+
+    local Torso = self.Character:FindFirstChild("Torso") 
+    helpfullModule.ChangeWeapon(self.Player, self.Character, Torso)
+
+
 
     
     playertoPLR[Player] = self
+    self.IsReady = true
+	Highlight:Destroy()
+	self.Character:SetAttribute("Iframes",false)
+	print(self)
+	print(self.Movement)
+    
 
     return self
+
 
   
 end
 
 
-function plr:GetPLRFromPlayer(Player: Player): PLR?
+function plr:Destroy()
+	local HRP:BasePart = self.Character:FindFirstChild("HumanoidRootPart")
+	local CframeParts = {HRP.CFrame:GetComponents()}
+	print(CframeParts)
+	self.Data.LastLocation = CframeParts
+    AcessoryManager.cleanup(self.Player)
+    playertoPLR[self.Player] = nil
+    self.Character:Destroy()
+    table.clear(self)
+    table.freeze(self)
+    for i, Table in pairs(CombatData) do
+        if type(Table) == "table" and Table ~= nil then
+            table.remove(table, table.find(table, self))
+        end
+    end
+end
+
+function plr.GetPLRFromPlayer(Player: Player): PLR?
     if playertoPLR[Player] then
         return playertoPLR[Player]
     else

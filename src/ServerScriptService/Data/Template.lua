@@ -30,7 +30,8 @@ local Template = {
 		Current_Slot= "1",
 		Diffculty = "...",  -- Standard or Skill Check
 		Is_Tainted = false, -- This Means if the slot is wiped or not
-
+		LastLocation = {}, -- The last location the player was in, used for teleporting them back there when they log in
+	
 
 
 

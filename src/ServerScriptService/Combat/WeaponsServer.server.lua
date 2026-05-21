@@ -28,44 +28,9 @@ local EquipModule = require(ServerStorage.Modules.Combat.EquipModule)
 local Welds = Combat_Data.Welds
 local EquipDebounce = Combat_Data.EquipDebounce
 
-Players.PlayerAdded:Connect(function(plr)
-	plr.CharacterAdded:Connect(function(char)
-		local profile
-		while true do
-			profile = DataManager.Profiles[plr]
-			if profile then
-				break
-			end
-			task.wait(0.1)
-		end
 
-		local torso = char.Torso
-		char:SetAttribute("CurrentWeapon", "Fists")
-		char:SetAttribute("Element", "Astral")
-		char:SetAttribute("Stamina", 100)
-		char:SetAttribute("MaxStamina", 100)
-		char:SetAttribute("InCombat", false)
-		char:SetAttribute("Dodges", 0)
-		char:SetAttribute("MF", 0)
-		char.Parent = workspace.Characters
-		HelpfullModule.ChangeWeapon(plr, char, torso)
 
-		plr.CharacterAppearanceLoaded:Connect(function(char)
-			for i, v in pairs(char:GetDescendants()) do
-				if v.Parent:IsA("Accessory") and v:IsA("Part") then
-					v.CanTouch = false
-					v.CanQuery = false
-				end
-			end
-		end)
-	end)
-end)
 
-Players.PlayerRemoving:Connect(function(plr)
-	if Welds[plr] then
-		table.remove(Welds, table.find(Welds, Welds[plr]))
-	end
-end)
 
 WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 	local char = plr.Character

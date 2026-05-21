@@ -5,6 +5,8 @@ local RS = game:GetService("ReplicatedStorage")
 local Timer = require(SS.Modules.Packages.Timer)
 local StatusEffectsModule = require(SS.Modules.StatusEffectsModule)
 local CombatData = require(SS.Modules.Combat.Data.CombatData)
+local PLRModule = require(SS.Modules.Objects.plr)
+
 
 
 
@@ -22,8 +24,8 @@ local CONFIG = {
 	},
 
 	STAMINA = {
-		BASE_REGEN_TIME = 5,
-		BASE_REGEN_PERCENT = 9,
+		BASE_REGEN_TIME = 2,
+		BASE_REGEN_PERCENT = 10,
 	},
 
 	MANA = {
@@ -309,6 +311,12 @@ end
 
 game.Players.PlayerAdded:Connect(function(plr)
 	plr.CharacterAdded:Connect(function(char)
+		local PLR = PLRModule.GetPLRFromPlayer(plr)
+		while not PLR or not PLR.IsReady do
+			task.wait(0.1)
+			PLR = PLRModule.GetPLRFromPlayer(plr)
+		end
+
 		char:GetAttributeChangedSignal("Blocking"):Connect(function()
 			onBlockingChanged(char)
 			SetupCharacter(char)

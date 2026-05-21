@@ -10,6 +10,7 @@ local TS = game:GetService("TweenService")
 
 local SoundsModule = require(RS.Modules.Combat.SoundsModule)
 local Cast = require(RS.Modules.Cast)
+local Movement = require(RS.Modules.Movement.Objects.Movement)
 
 --[Player Variables]--
 local plr = Players.LocalPlayer
@@ -30,7 +31,7 @@ local Events = RS.Events
 local MovementEvent = Events.Movement
 local AccessoryEvent = Events.AccessoryEvent
 
--- Wait for CurrentWeapon
+-- Wait for CurrentWeapon and the movement object
 local CurrentWeapon = char:GetAttribute("CurrentWeapon")
 while CurrentWeapon == nil do
 	CurrentWeapon = char:GetAttribute("CurrentWeapon")
@@ -39,6 +40,9 @@ while CurrentWeapon == nil do
 	end
 	task.wait(0.3)
 end
+
+local object  = Movement.new(plr)
+
 
 --[Animation Setup]--
 local WeaponAnimations = RS.Animations.Weapons
@@ -53,7 +57,6 @@ local L_anim = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Moveme
 
 local Lanim_Jump = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallhopL)
 
-local AnimationsTable = {}
 local SprintAnim = nil
 local SprintTrack = nil
 local conn
@@ -127,53 +130,20 @@ Bottom_tilt.Rotation = 0
 -------------------------------------------------
 -- WALK ANIMATION SYSTEM
 -------------------------------------------------
-local function UpdateWalkTracks()
-	for _, track in pairs(AnimationsTable) do
-		track:Stop(0.1)
-		track:Destroy()
-	end
 
-	local isEquipped = char:GetAttribute("Equipped")
-	local currentWeapon = char:GetAttribute("CurrentWeapon")
-	local IsLow = char:GetAttribute("IsLow")
-	local InCombat = char:GetAttribute("InCombat")
-	local targetFolder
 
-	if isEquipped and currentWeapon and AnimationsFolder.Weapons:FindFirstChild(currentWeapon) then
-		if IsLow and InCombat then
-			targetFolder = AnimationsFolder.Weapons[currentWeapon].IsLow
-		else
-			targetFolder = AnimationsFolder.Weapons[currentWeapon]
-		end
-	else
-		if IsLow and InCombat then
-			targetFolder = AnimationsFolder.IsLow
-		else
-			targetFolder = AnimationsFolder
-		end
-	end
 
-	AnimationsTable.WalkForward = Hum:LoadAnimation(targetFolder.WalkForward)
-	AnimationsTable.WalkRight = Hum:LoadAnimation(targetFolder.WalkRight)
-	AnimationsTable.WalkLeft = Hum:LoadAnimation(targetFolder.WalkLeft)
-	AnimationsTable.WalkBack = Hum:LoadAnimation(targetFolder.WalkBack)
-
-	for _, track in pairs(AnimationsTable) do
-		track:Play(0.1, 0, 0)
-	end
-end
-
-char:GetAttributeChangedSignal("CurrentWeapon"):Connect(UpdateWalkTracks)
-char:GetAttributeChangedSignal("Equipped"):Connect(UpdateWalkTracks)
-char:GetAttributeChangedSignal("IsLow"):Connect(UpdateWalkTracks)
-char:GetAttributeChangedSignal("InCombat"):Connect(UpdateWalkTracks)
+char:GetAttributeChangedSignal("CurrentWeapon"):Connect(function() object:UpdateWalkTracks() end)
+char:GetAttributeChangedSignal("Equipped"):Connect(function() object:UpdateWalkTracks() end)
+char:GetAttributeChangedSignal("IsLow"):Connect(function() object:UpdateWalkTracks() end)
+char:GetAttributeChangedSignal("InCombat"):Connect(function() object:UpdateWalkTracks() end)
 AccessoryEvent.OnClientEvent:Connect(function(action)
 	if action == "RefreshAnimations" then
-		UpdateWalkTracks()
+		object:UpdateWalkTracks()
 	end
 end)
 
-UpdateWalkTracks()
+		object:UpdateWalkTracks()
 
 -------------------------------------------------
 -- WALL CLIMB
@@ -273,7 +243,7 @@ local function toggleSprintState()
 			conn:Disconnect()
 		end
 
-		UpdateWalkTracks()
+		object:UpdateWalkTracks()
 		char:SetAttribute("Sprinting", false)
 		task.wait(0.1)
 		debounce = false
@@ -300,10 +270,7 @@ local function toggleSprintState()
 			end
 		end)
 
-		for _, track in pairs(AnimationsTable) do
-			track:Stop(0.1)
-			track:Destroy()
-		end
+		object:ClearWalkAnims()
 	end
 end
 
@@ -354,41 +321,8 @@ char:GetAttributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
 -- RENDER STEPPED — Walk weights
 -------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	if not AnimationsTable.WalkForward then
-		return
-	end
-
-	local DirectionOfMovement = HRP.CFrame:VectorToObjectSpace(HRP.AssemblyLinearVelocity)
-	local walkSpeed = Hum.WalkSpeed
-
-	local Forward = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, -1, -0.001))
-	local Backwards = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, 0.001, 1))
-	local Right = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, 0.001, 1))
-	local Left = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, -1, -0.001))
-	local SpeedUnit = DirectionOfMovement.Magnitude / walkSpeed
-
-	if DirectionOfMovement.Z / walkSpeed < 0.1 then
-		AnimationsTable.WalkForward:AdjustWeight(Forward)
-		AnimationsTable.WalkBack:AdjustWeight(Backwards)
-		AnimationsTable.WalkRight:AdjustWeight(Right)
-		AnimationsTable.WalkLeft:AdjustWeight(Left)
-
-		local playbackSpeed = (DirectionOfMovement.Z > 0) and  SpeedUnit or -SpeedUnit
-		AnimationsTable.WalkForward:AdjustSpeed(playbackSpeed)
-		AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit)
-		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit)
-		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit)
-	else
-		AnimationsTable.WalkForward:AdjustWeight(Forward)
-		AnimationsTable.WalkBack:AdjustWeight(Backwards)
-		AnimationsTable.WalkRight:AdjustWeight(Left)
-		AnimationsTable.WalkLeft:AdjustWeight(Right)
-          
-		AnimationsTable.WalkForward:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit * -1)
-	end
+	object:WalkCycle()
+	
 end)
 
 local function StartWallRunBars(side, hum)
@@ -641,7 +575,7 @@ local function StartWallRun(char, hit: RaycastResult, side)
 		R_anim:Stop()
 		L_anim:Stop()
 
-		UpdateWalkTracks()
+		object:UpdateWalkTracks()
 		StopWallRunBars(side, hum, action)
 	end
 
@@ -721,10 +655,7 @@ local function WallRunStart(char)
 		return
 	end
 
-	for i, v in pairs(AnimationsTable) do
-		v:Stop()
-		v:Destroy()
-	end
+	object:UpdateWalkTracks()
 
 	StartWallRun(char, hit, side)
 end

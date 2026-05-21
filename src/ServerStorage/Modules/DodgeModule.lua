@@ -28,8 +28,8 @@ local DodgeIsCancelling = {}
 local currentDodgeForce = {}
 
 
-local DODGE_SPEED = 35
-local DODGE_TIME = 0.73
+local DODGE_SPEED = 30
+local DODGE_TIME = 0.5
 
 local function resetVelocity(char,Identifier)
     local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -98,12 +98,13 @@ local function dodge(char,Identifier,TargetDirection)
 
     currentDodgeForce[Identifier] = lv
 
-    task.delay(DODGE_TIME, function()
-        game.Debris:AddItem(lv)
-        game.Debris:AddItem(algin)
+
+        game.Debris:AddItem(lv, DODGE_TIME)
+        game.Debris:AddItem(algin, DODGE_TIME)
+        task.wait(DODGE_TIME)
         Hum.AutoRotate = false
 
-    end)
+    
   
    
 end
