@@ -46,6 +46,12 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 		TS:Create(Highlight,TweenInfo.new(duration,Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), TweenGoal):Play()
 		Debris:AddItem(Highlight,duration)
 	end
+
+	if action  ==  "HighlightBlink" then
+		local target, fillcolor, duration, blinkSpeed = ...
+		CombatEffectsModule.HighlightBlink(target, fillcolor, duration, blinkSpeed)
+	end
+
 	
 	
 end)

@@ -92,8 +92,10 @@ function module.Parrying(char,eChar,hitPos,npc)
 	ServerCombatModule.stopAnims(char.Humanoid)
 	
 	char.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[char:GetAttribute("CurrentWeapon")].Blocking.GotParried):Play()
+	eChar.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[eChar:GetAttribute("CurrentWeapon")].Blocking.ParryLanded):Play()
 	local plr = players:GetPlayerFromCharacter(char)
 	if plr then VFX_Event:FireClient(plr, "CustomShake", 4,8,0,1.2) end
+	VFX_Event:FireAllClients("Highlight", eChar, 1, Color3.new(1, 1, 0), Color3.new(0.894118, 0.607843, 0.0588235))
 
 	StunHandler.Stun(char.Humanoid,1.25,5,0)
 

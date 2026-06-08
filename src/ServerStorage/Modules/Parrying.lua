@@ -21,6 +21,7 @@ function ParryModule.ParryAttempt(char, npc)
 	local Identifer = Players:GetPlayerFromCharacter(char) or npc
 	local hum = char.Humanoid
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
+	local WeaponModel = char:FindFirstChild(currentWeapon)
 	if char:GetAttribute("ParryCD") then return end
 	local isStunned = char:GetAttribute("Stunned")
 
@@ -39,7 +40,10 @@ function ParryModule.ParryAttempt(char, npc)
         -- clear leftover attack flags from the swing that got parried
     end
 
+	VFX_Event:FireAllClients("HighlightBlink", WeaponModel, Color3.new(0.980392, 0.380392, 0.003922), 0.25, 4)
+
 	char:SetAttribute("Parrying", true)
+	char:SetAttribute("HyprParry", true)
 	char:SetAttribute("Stunned", true)
 	hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed / 3)
 	hum.JumpHeight = 0
@@ -47,7 +51,10 @@ function ParryModule.ParryAttempt(char, npc)
 	ParryAnims[Identifer] = hum:LoadAnimation(WeaponAnimsFolder[currentWeapon].Blocking.TryParry)
 	ParryAnims[Identifer]:Play()
 
-	VFX_Event:FireAllClients("Highlight", char, 1, Color3.new(1, 1, 0), Color3.new(0.894118, 0.607843, 0.0588235))
+	ParryAnims[Identifer]:GetMarkerReachedSignal("HyprParryOver"):Connect(function()
+		char:SetAttribute("HyprParry", false)
+	end)
+	
 
 	ParryAnims[Identifer]:GetMarkerReachedSignal("ParryOver"):Connect(function()
 		char:SetAttribute("Parrying", false)

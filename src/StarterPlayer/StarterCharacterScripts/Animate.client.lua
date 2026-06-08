@@ -321,8 +321,7 @@ char:GetAttributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
 -- RENDER STEPPED — Walk weights
 -------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	object:WalkCycle()
-	
+	object:WalkCycle()	
 end)
 
 local function StartWallRunBars(side, hum)
@@ -660,7 +659,7 @@ local function WallRunStart(char)
 	StartWallRun(char, hit, side)
 end
 
-local function WallRunJump(action)
+local function WallRunJump()
 	if not IsWallRunning then
 		return
 	end

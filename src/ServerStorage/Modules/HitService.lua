@@ -194,6 +194,50 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 
    return "Missed"
 end
+
+
+function module.Blink_Hitbox(char,weapon,eHum,npc,Hit,...)
+	local hitAnim = ...
+	local Truehit = hitAnim
+	
+	if eHum and eHum.Parent ~= char then
+		
+		local eChar = eHum.Parent
+		local Eplr = game.Players:GetPlayerFromCharacter(eChar)
+		local Enpc = CombatData.LastResortNPC(eChar) -- We have to use the last resort because of cyclic errors
+
+		
+
+		local BaseDmg = 20 -- would replace with actual WPN scaling when we have it
+
+		local stop, result = HelpfulModule.CheckForStatus(eChar,char,Enpc,BaseDmg,Hit.CFrame,true,true)
+		print(result,"helpful result")
+		if stop then return result end
+
+	 -- local PassiveCheckDmg, isCrit, damageAlreadydealt =	PassiveManger.BlinkHitPassive(char,eChar,BaseDmg)  doesnt exist yet but will be added in the future
+         
+
+
+	    if eChar:GetAttribute("Dodges") > 1 then
+			local hitAnim = WeaponsAnimations.TwinSpears.Dodge["Dodge"..char:GetAttribute("Combo")]
+			eHum.Animator:LoadAnimation(hitAnim):Play()
+			VFX_Event:FireAllClients("AfterImage",eChar,hitAnim,nil)
+		else
+			eHum.Animator:LoadAnimation(Truehit):Play()
+		end
+		
+        SoundsModule.PlaySound(WeaponSounds[weapon].Combat.Hit, eChar.Torso)
+	    VFX_Event:FireAllClients("Highlight",eChar,.5,Color3.fromRGB(255, 255, 255),Color3.fromRGB(37, 33, 33))
+
+
+		
+
+		
+	end
+
+	return "Missed"
+end
+	
 		
 		
 

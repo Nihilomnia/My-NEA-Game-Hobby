@@ -18,7 +18,7 @@ local updateEvent = Events.UpdateMovement
 local HelpfullModule = require(SSModules.Other.Helpful)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local Mode_Module = require(SSModules.Combat.Mode_Module)
-local DataManager = require(ServerScripts.Data.Modules.DataManager)
+local PlrObjectService = require(SSModules.Objects.plr)
 local BlockModule = require(ServerStorage.Modules.BlockModule)
 local ParryModule = require(ServerStorage.Modules.Parrying)
 local DodgeModule = require(ServerStorage.Modules.DodgeModule)
@@ -39,8 +39,10 @@ WeaponsEvent.OnServerEvent:Connect(function(plr, action)
 	if HelpfullModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
 		return
 	end
+	print(EquipDebounce[plr])
 
 	if action == "Equip/UnEquip" and not char:GetAttribute("Equipped") and not EquipDebounce[plr] then
+		print(EquipDebounce[plr])
 		EquipModule.EquipWeapon(char)
 	elseif action == "Equip/UnEquip" and char:GetAttribute("Equipped") and not EquipDebounce[plr] then
 		EquipModule.UnequipWeapon(char)
@@ -104,6 +106,14 @@ end)
 
 updateEvent.OnServerEvent:Connect(function(player, keyName)
 	local character = player.Character
+	local PLROBJ = PlrObjectService.GetPLRFromPlayer(player)
+	local moveflag = PLROBJ.HasMoved
+
+	if moveflag == false then
+		PLROBJ:FirstMovement()
+	end
+
+
 	if character then
 		character:SetAttribute("CurrentMoveKey", keyName)
 	end

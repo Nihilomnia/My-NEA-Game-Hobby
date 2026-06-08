@@ -70,7 +70,7 @@ function module.ChangeWeapon(plr, char, torso)
 
 	Welds[plr].Parent = torso
 	Welds[plr].Part0 = torso
-	Welds[plr].Part1 = Weapon
+	Welds[plr].Part1 = Weapon[currentWeapon]
 
 	if module.CheckForAttributes(char, true, true, true, true, nil, true, true, true) then
 		return

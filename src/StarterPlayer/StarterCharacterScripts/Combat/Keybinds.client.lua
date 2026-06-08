@@ -1,7 +1,11 @@
+
 local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
 
 local DodgeVelocity = require(RS.Modules.Combat.DodgeVelocity)
+local Movement = require(RS.Modules.Movement.Objects.Movement)
+
 
 
 local Events = RS.Events
@@ -9,7 +13,7 @@ local Events = RS.Events
 local blockingEvent =  Events.Blocking
 local Transform = Events.Tranform
 local WeaponsEvent= Events.WeaponsEvent
-local combatEvent = Events.Combat
+local combatEvent:RemoteEvent = Events.Combat
 local Moves_Event = Events.SkillEvent
 local DodgeEvent = Events.Dodge
 local updateEvent = Events.UpdateMovement
@@ -57,6 +61,23 @@ local function getEquippedTool(char)
 	end
 	return nil
 end
+
+
+local hl = Instance.new("Highlight")
+hl.FillTransparency = 1
+hl.OutlineColor = Color3.new(1, 1, 1)
+hl.OutlineTransparency = 0.5
+hl.DepthMode = Enum.HighlightDepthMode.Occluded
+
+
+local enemy = nil
+
+local AirBorneStates = {
+	[Enum.HumanoidStateType.Jumping] = true,
+	[Enum.HumanoidStateType.Freefall] = true,
+	[Enum.HumanoidStateType.FallingDown] = true,
+}
+
 
 
 
@@ -225,16 +246,82 @@ end)
 -----------------------------------------------------------------------------------------
 --- Swinging
 
+local function MouseCast()
+	local mousepos = uis:GetMouseLocation()
+	local ray = workspace.CurrentCamera:ViewportPointToRay(mousepos.X, mousepos.Y)
+
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterDescendantsInstances = {char}
+	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+	local result = workspace:Raycast(ray.Origin, ray.Direction * 100, raycastParams)
+
+	if result and result.Instance and result.Instance.Parent:FindFirstChildOfClass("Humanoid") then
+		return result.Instance.Parent
+	else
+		return nil
+	end
+end
 
 
 
+
+local function EnemyCheck(char)
+	if not char or not char:FindFirstChildOfClass("Humanoid") then return false end
+	local Eplr = game:GetService("Players"):GetPlayerFromCharacter(char)
+	local MovementObj = nil
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return false end
+
+	if Eplr and Eplr~= plr then
+		MovementObj = Movement.GetMovementObj(Eplr)
+		if MovementObj.IsActing.Climbing then return true end
+		if MovementObj.IsActing.WallRunning then return true end
+		if MovementObj.IsActing.Dodging and MovementObj.InfoTable.Dodge.Type == "Airdodge" then return true end
+		if AirBorneStates[hum:GetState()] then return true end
+		return false
+
+	elseif char then
+		if char:GetAttribute("IsWallRunning") then  print("wallrun") return true end
+		if char:GetAttribute("IsClimbing") then print("climbing") return true end
+		if char:GetAttribute("Dodging") and char:GetAttribute("DodgeType") == "Airdodge" then print("dodging") return true end
+		if AirBorneStates[hum:GetState()] then return true end
+	end
+	
+	return false
+end
+
+RunService.RenderStepped:Connect(function()
+	if char:GetAttribute("IsTransforming") then return end
+	local target = MouseCast()
+	if target and EnemyCheck(target) and target~= enemy then
+		enemy = target
+		if enemy then
+			hl.Parent = enemy
+		else
+		  hl.Parent = nil
+		end
+
+	end
+end)
+
+	
 
 uis.InputBegan:Connect(function(input, gameProcessed)
 	if isActuallyTyping() then return end
 	if char:GetAttribute("IsTransforming") then return end
 
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		combatEvent:FireServer("Swing")
+		 
+			if EnemyCheck(enemy) and AirBorneStates[char.Humanoid:GetState()] then
+				print("passed 2")
+				combatEvent:FireServer("Blink", enemy)
+
+			else
+				print("STandardswong1")
+				combatEvent:FireServer("Swing")
+			end
+		
 	end
 end)
 
@@ -287,6 +374,8 @@ uis.InputEnded:Connect(function(input,isTyping)
 	end
 
 end)
+
+
 ------------------------------------------------------------------------------------------
 -- Weapon Equip/Unequip and Revert Transformations
 ------------------------------------------------------------------------------------------
@@ -301,6 +390,7 @@ uis.InputEnded:Connect(function(input,isTyping)
 			Transform:FireServer("Revert")
 		else
            WeaponsEvent:FireServer("Equip/UnEquip")
+		   print("hell")
 		end
 		
 		

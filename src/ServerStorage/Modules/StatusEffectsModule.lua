@@ -94,6 +94,7 @@ function StatusEffectsModule.ApplyStatusEffect(char,npc,effectName, stacks, Dura
 
     if plr then UI_Update_Event:FireClient(plr, "StatusEffectAdded", effectName, stacks)  end
     --VFX_Event:FireAllClients("CombatEffects", effectInfo.VFX, char.HumanoidRootPart.Position)
+    VFX_Event:FireAllClients("HighlightBlink", char, effectInfo.HighlightColor, ActiveStatusEffects[identifier][effectName].Duration, 0.5)
     StatusEffectsModule.Signal:Fire(char,npc,"StatusEffectAdded", effectName)
     print("Signal sent for",char)
 end

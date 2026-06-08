@@ -104,6 +104,11 @@ end
 
 
 
+
+
+
+
+
 function npc.new(NpcName: string, char: Model?): NPC
 	local self = setmetatable({
 		FirstName = "",
@@ -175,7 +180,8 @@ function npc.new(NpcName: string, char: Model?): NPC
 	-- This is where the npc's drops are loaded into the npc object so that they can be accessed later when the npc dies
 	--self.drops = PickDrops(NpcName)
 
-	Combat_Data.ActiveNPCs[self.Character] = self
+	Combat_Data.ActiveNPCs[self.Character] = self 
+	 --^ fall back for getting npcs in combat data, this is incase there is a situation where i need to get an npc but i cant use the GetNpcFromCharacter function for some reason, this way i can still get the npc object from the character for example the many cyclic errors that would happen if i try to require the npc module in the combat modules, this way i can just get the npc from the combat data without having to require the npc module in the combat modules and cause cyclic errors
 
 	-- The NPC should be ready by now
 	self:Idle()
@@ -194,6 +200,7 @@ end
 
 function npc:Destroy()
 	CharToNPC[self.Character] = nil
+	Combat_Data.ActiveNPCs[self.Character] = nil  
 	self.Character:Destroy()
 	table.clear(self)
 	table.freeze(self)
@@ -290,3 +297,5 @@ function npc:WallRun()
 end
 
 return npc
+
+

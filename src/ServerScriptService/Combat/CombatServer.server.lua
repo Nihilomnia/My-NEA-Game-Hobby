@@ -25,10 +25,17 @@ local function ToolEquipped(char:Model)
 	return stop
 end
 
+local function ServerEnemyCheck(char)
+	if char and char:GetAttribute("IswallRunning") then return true end
+	if char and char:GetAttribute("IsClimbing") then return true end
+	if char and char:GetAttribute("Dodging") and char:GetAttribute("DodgeType") == "Airdodge" then return true end
+	return false
+end
 
 
 
-CombatEvent.OnServerEvent:Connect(function(plr,action)
+
+CombatEvent.OnServerEvent:Connect(function(plr,action, target)
 	if action == "Swing" then
 		if ToolEquipped(plr.Character) then return end
 		CombatHelperModule.Attack(plr.Character)
@@ -36,6 +43,14 @@ CombatEvent.OnServerEvent:Connect(function(plr,action)
 
 	if action == "Feint" then 
 		CombatHelperModule.CancelAttack(plr.Character)
+	end
+
+	if action == "Blink" then
+		if ToolEquipped(plr.Character) then return end
+		if target and not ServerEnemyCheck(target) then return end
+		CombatHelperModule.Blink(plr.Character,nil,target)
+		
+		
 	end
 	
 end)

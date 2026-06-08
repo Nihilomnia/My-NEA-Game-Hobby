@@ -4,6 +4,7 @@ local info = {
         EffectType = "DamageOverTime",
 		BaseDuration = 5,
         DamagePerSecond = 25,
+        HighlightColor = Color3.new(1, 0.5, 0),
         
     },
     
@@ -12,13 +13,15 @@ local info = {
         BaseDuration = 8,
         DamagePerSecond = 0.02,
         StackingBehavior = "Stack",
+        HighlightColor = Color3.new(0.027451, 0.337255, 0.027451),
     },
 
     ["Shock"] = {
         EffectType = "Debuff",
-        BaseDuration = 4,
-        DamagePerSecond = 12,
+        BaseDuration = 10,
+        StunDuration = 0.25,
         StackingBehavior = "Refresh",
+        HighlightColor = Color3.new(0.92549, 0.92549, 0.019608),
     },
 
     ["Bleed"] = {
@@ -26,6 +29,7 @@ local info = {
         BaseDuration = 20,
         DamagePerSecond = 2,
         StackingBehavior = "Stack",
+        HighlightColor = Color3.new(0.5, 0, 0),
     },
 
     ["Void"] = {
@@ -33,6 +37,7 @@ local info = {
         BaseDuration = 10,
         DamagePerSecond = 0,
         StackingBehavior = "Refresh",
+        HighlightColor = Color3.new(0.5, 0, 0.5),
     },
     
 

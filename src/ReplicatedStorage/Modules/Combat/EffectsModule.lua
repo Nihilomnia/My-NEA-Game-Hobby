@@ -124,6 +124,8 @@ function module.AfterImage(char, anim, type)
 
 			local animTrack = clone.Humanoid.Animator:LoadAnimation(anim)
 			animTrack:Play()
+			animTrack:AdjustSpeed(0) -- Freeze on first frame immediately
+			animTrack.TimePosition = 0
 
 			-- Fade out all parts
 			local fadeInfo = TweenInfo.new(0.3, Enum.EasingStyle.Linear)
@@ -256,6 +258,39 @@ function module.AfterImage(char, anim, type)
 		end
 	end
 end
+
+function module.HighlightBlink(target, fillcolor, duration,blinkSpeed)
+	print("Started highlight", target)
+	local hl = Instance.new("Highlight")
+	hl.FillColor = fillcolor
+	hl.OutlineColor = fillcolor
+	hl.FillTransparency = 0
+	hl.OutlineTransparency = 0
+	hl.Parent = target
+	hl.DepthMode = Enum.HighlightDepthMode.Occluded
+
+	local elapsed = 0
+	local blinkTime = blinkSpeed or 0.5 -- Total time for one full blink cycle (0.25 out + 0.25 back)
+
+	while elapsed < duration do
+		print(duration)
+		-- Fade out
+		local blinkTween = TS:Create(hl, TweenInfo.new(0.25, Enum.EasingStyle.Linear), { FillTransparency = 0.5, OutlineTransparency = 0.5 })
+		blinkTween:Play()
+		blinkTween.Completed:Wait() -- Wait for fade out to finish
+
+		-- Fade back in
+		local resetTween = TS:Create(hl, TweenInfo.new(0.25, Enum.EasingStyle.Linear), { FillTransparency = 0, OutlineTransparency = 0 })
+		resetTween:Play()
+		resetTween.Completed:Wait() -- Wait for fade in to finish
+
+		elapsed += blinkTime
+	end
+
+	hl:Destroy()
+	print("Finished highlight")
+end
+
 
 module.DestroyEffects = function(char, effect)
 	for i, v in pairs(workspace.VFX:GetChildren()) do

@@ -24,6 +24,7 @@ local Connections = {}
 local MaxCombo = 4
 
 local FeintFlags = {}
+local BlinkCooldowns = {}
 
 
 function module.Attack(char, npc)
@@ -170,6 +171,39 @@ function module.CancelAttack(char, npc)
 	VolumeHitbox.DestroyHitboxes(char)
 	HelpfullModule.ResetMobility(char)
 	VFX_Event:FireAllClients("DestroyVFX", char, SwingEffect)
+end
+
+function module.Blink(char,npc,target)
+	local plr = Players:GetPlayerFromCharacter(char)
+	local Identifier = plr or npc
+	if BlinkCooldowns[Identifier] and tick() - BlinkCooldowns[Identifier] < 0.5 then return end
+	BlinkCooldowns[Identifier] = tick()
+
+	local HRP = char:FindFirstChild("HumanoidRootPart")
+	local Hum = char.Humanoid
+	local currentWeapon = char:GetAttribute("CurrentWeapon")
+	if not HRP or not Hum then return end
+	local HitAnim = WeaponsAnimations[currentWeapon].Hit["Hit" .. char:GetAttribute("Combo")]
+
+	HRP.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0,2,0)
+
+	--local BlinkAnim = Hum.Animator:LoadAnimation(WeaponsAnimations[currentWeapon].Blink):Play()
+	--SoundsModule.PlaySound(WeaponSounds[currentWeapon].Combat.Blink, HRP) will uncomment when blink sound is added
+	local Size = Vector3.new(5,5,5)
+	local Attachment = Instance.new("Attachment")
+	Attachment.Parent = HRP
+	Attachment.Name = "BlinkEffectAttachment"
+	Attachment.WorldCFrame = HRP.CFrame * CFrame.new(0,-2,0)
+
+	VolumeHitbox.NormalHitBox(Size, Attachment, char, npc, function(Ehum,hit)
+		HitServiceModule.Blink_Hitbox(char, currentWeapon, Ehum, npc, hit,hit)
+	end)
+
+	task.delay(0.5, function() -- would replace with anim event when added so its actually possbile to parry it
+		VolumeHitbox.DestroyHitboxes(char)
+	end)
+
+
 end
 
 

@@ -11,6 +11,7 @@ local RSModules = RS.Modules
 
 local DataManger = require(ServerScriptService.Data.Modules.DataManager)
 local MovementObj = require(RSModules.Movement.Objects.Movement)
+local MOvementObjType = require(RSModules.Movement.Objects.Movement.Types)
 local AcessoryManager = require(SSModules.Other.AccessoriesManager)
 local CombatData = require(SSModules.Combat.Data.CombatData)
 local helpfullModule = require(SSModules.Other.Helpful)
@@ -58,6 +59,8 @@ local CONFIG = {
 export type PLR = typeof(setmetatable(
     {} :: {
         IsReady: boolean,
+		Highlight: Highlight,
+		HasMoved: boolean,
         Player: Player,
         Data: DataManger.SlotData,
         Character: Model,
@@ -66,7 +69,7 @@ export type PLR = typeof(setmetatable(
         LastName: string,
         HairColor: Color3,
         Element: string,
-        Movement: MovementObj.MovementObj,
+        Movement: MOvementObjType.MovementObj,
         Stats: {
             VIT: number,
             END: number,
@@ -284,6 +287,8 @@ local playertoPLR = {}
 function plr.new(Player: Player, Slot: string):PLR?
     local self = setmetatable({
         IsReady = false,
+		HasMoved = false,
+		Highlight = nil,
         Player = Player,
         Data = nil,
 		FirstName = "",
@@ -340,6 +345,7 @@ function plr.new(Player: Player, Slot: string):PLR?
 	Highlight.Parent = self.Character
 	Highlight.FillColor = Color3.new(0, 1, 0)
 	Highlight.Name = "InitializeHighlight"
+	self.Highlight = Highlight
 	self.Character:SetAttribute("Iframes",true)
 
     self.CurrentSlot = Slot
@@ -366,11 +372,6 @@ function plr.new(Player: Player, Slot: string):PLR?
     
     playertoPLR[Player] = self
     self.IsReady = true
-	Highlight:Destroy()
-	self.Character:SetAttribute("Iframes",false)
-	print(self)
-	print(self.Movement)
-    
 
     return self
 
@@ -420,6 +421,18 @@ function plr:UnequipAccessory(accessoryType: string)
     AcessoryManager.UnequipAccessory(self.Character, accessoryType)
     DataManger.UpdateAccessories(self.Player, accessoryType, "")
 end
+
+
+function plr:FirstMovement()
+	self.HasMoved = true
+	local char = self.Character
+	char:SetAttribute("Iframes", false)
+	local hl = self.Highlight
+	if hl and hl.Parent then
+		hl:Destroy()
+	end
+end
+
 
 
 

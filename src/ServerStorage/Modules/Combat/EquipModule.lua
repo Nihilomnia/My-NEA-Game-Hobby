@@ -80,6 +80,7 @@ function EquipModule.UnequipWeapon(char, npc)
 	EquipDebounce[Identifier] = true
 
 	char:SetAttribute("Equipped", false)
+	print("Unequped for", char)
 
 	SoundsModule.PlaySound(WeaponsSounds[currentWeapon].Main.UnEquip, torso)
 
@@ -87,6 +88,7 @@ function EquipModule.UnequipWeapon(char, npc)
 
 	UnEquipAnims[Identifier] = hum:LoadAnimation(WeaponsAnimations[currentWeapon].Main.UnEquip)
 	UnEquipAnims[Identifier]:Play()
+	EquipDebounce[Identifier] = false
 
 	UnEquipAnims[Identifier]:GetMarkerReachedSignal("Weld"):Connect(function()
 		Welds[Identifier].Part0 = torso
@@ -102,6 +104,7 @@ function EquipModule.UnequipWeapon(char, npc)
 			Welds[Identifier].Part0 = torso
 			Welds[Identifier].C1 = WeaponsWeld[currentWeapon].IdleWeaponWeld.C1
 			char:SetAttribute("Equipped", false)
+			print("EQuipdebouce, stop!")
 			EquipDebounce[Identifier] = false
 		end
 	end)

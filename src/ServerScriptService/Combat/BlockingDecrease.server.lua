@@ -186,120 +186,107 @@ local function SetupManaRegen(char)
 	--- Mana regen- Lowkey function actually like STAM but i think the rate is going to be slower in combat and the wait time wil be like 1 secs or so
 end
 
-StatusEffectsModule.Signal:Connect(function(char,npc ,action, effectName)
+StatusEffectsModule.Signal:Connect(function(char, npc, action, effectName)
 	print("Signal Gotten!")
-	if action == "StatusEffectAdded" then
-		local plr = game.Players:GetPlayerFromCharacter(char)
-		local identifier = plr or npc
-		local hum: Humanoid = char:FindFirstChildOfClass("Humanoid")
-		local effectData = CombatData.ActiveStatusEffects[identifier][effectName]
-		local Duration = effectData.Duration
-		local Stacks = effectData.Stacks
-		if effectName == "Burn" then
-			print("Burn active!")
-			local Damage = 25 * 2 ^ (1 - Stacks)
-			local clock = Timer.new(1) -- Every 1 seconds dmg is taken
 
-			clock.Tick:Connect(function()
-				
+	if action ~= "StatusEffectAdded" then return end
 
-				-- Effect was removed externally (combo consumed it, etc.)
-				if effectData == nil then
-					clock:Destroy()
-					return
-				end
+	local plr = game.Players:GetPlayerFromCharacter(char)
+	local identifier = plr or npc
 
-				-- Tick down duration
-				Duration -= 1
+	local hum: Humanoid = char:FindFirstChildOfClass("Humanoid")
+	local effectData = CombatData.ActiveStatusEffects[identifier] and CombatData.ActiveStatusEffects[identifier][effectName]
 
+	if not effectData then return end
 
-				if Duration <= 0 then
-					clock:Destroy()
-					StatusEffectsModule.RemoveStatusEffect(char, effectName)
-					return
-				end
+	local duration = effectData.Duration
+	local stacks = effectData.Stacks
 
-				hum:TakeDamage(Damage)
-			end)
+	local startTime = tick()
 
-			clock:Start()
+	local function isExpired()
+		local current = CombatData.ActiveStatusEffects[identifier]
+		if not current or not current[effectName] then
+			return true
 		end
 
-		if effectName == "Bleed" then
-			print("Bleed Now")
-			local DPS = 2 * 2^(1-Stacks)
+		return (tick() - startTime) >= duration
+	end
 
-			local Clock = Timer.new(0.5)
+	---------------------------------------------------
+	-- BURN
+	---------------------------------------------------
+	if effectName == "Burn" then
+		print("Burn active!")
 
-			Clock.Tick:Connect(function()
-				if effectData == nil then
-				Clock:Destroy()
-				end
+		local damage = 25 * 2 ^ (1 - stacks)
+		local clock = Timer.new(1)
 
-				print("Bleeddin")
+		clock.Tick:Connect(function()
+			if isExpired() then
+				clock:Destroy()
+				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				return
+			end
 
-				Duration -= 1
+			hum:TakeDamage(damage)
+		end)
 
+		clock:Start()
+	end
 
-				if Duration <= 0 then
-					Clock:Destroy()
-					StatusEffectsModule.RemoveStatusEffect(char, effectName)
-					return
-				end
+	---------------------------------------------------
+	-- BLEED
+	---------------------------------------------------
+	if effectName == "Bleed" then
+		print("Bleed Now")
 
-				hum:TakeDamage(DPS)
-			end)
-			Clock:Start()
-		end
+		local dps = 2 * 2 ^ (1 - stacks)
+		local clock = Timer.new(0.5)
 
-		if effectName == "Poison" then 
-			print("PoisonNow")
-			local Clock = Timer.new(3)
+		clock.Tick:Connect(function()
+			if isExpired() then
+				clock:Destroy()
+				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				return
+			end
 
-			Clock.Tick:Connect(function()
-				local MaxHealth  = hum.MaxHealth
-				local CurrentHealth = hum.Health
-			    local DPS = ((5+ (Stacks))/100) * MaxHealth
-				print("Poison Tick")
-				print(DPS)
-				-- I am checking every time it tick to make sure the percent dmg is accurate if the players usues something to change their health
+			hum:TakeDamage(dps)
+		end)
 
-				if effectData == nil then
-					print("Was nil")
-					Clock:Destroy()
-					StatusEffectsModule.RemoveStatusEffect(char, effectName)
-					return
-				end
+		clock:Start()
+	end
 
-				Duration -= 1
+	---------------------------------------------------
+	-- POISON
+	---------------------------------------------------
+	if effectName == "Poison" then
+		print("PoisonNow")
 
-				if Duration <= 0 then
-					print("Duration Was 0")
-					Clock:Destroy()
-					StatusEffectsModule.RemoveStatusEffect(char, effectName)
-					return
-				end
+		local clock = Timer.new(3)
 
-				if CurrentHealth - DPS <= 0 then
-					print("health Was 0")
-					Clock:Destroy()
-					StatusEffectsModule.RemoveStatusEffect(char, effectName)
-					return
+		clock.Tick:Connect(function()
+			if isExpired() then
+				clock:Destroy()
+				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				return
+			end
 
-					-- Poison should never kill 
-				end
+			local maxHealth = hum.MaxHealth
+			local dps = ((5 + stacks) / 100) * maxHealth
 
-				hum:TakeDamage(DPS)
-				print(hum)
+			if hum.Health - dps <= 0 then
+				clock:Destroy()
+				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				return
+			end
 
-			end)
+			hum:TakeDamage(dps)
+		end)
 
-			Clock:Start()
-		end
-
+		clock:Start()
 	end
 end)
-
 for i, v in workspace.NPC:GetChildren() do
 	if v:IsA("Model") and v:FindFirstChild("Humanoid") then
 		v:GetAttributeChangedSignal("Blocking"):Connect(function()
