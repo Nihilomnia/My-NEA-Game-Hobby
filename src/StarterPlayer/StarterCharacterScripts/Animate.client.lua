@@ -11,6 +11,8 @@ local TS = game:GetService("TweenService")
 local SoundsModule = require(RS.Modules.Combat.SoundsModule)
 local Cast = require(RS.Modules.Cast)
 local Movement = require(RS.Modules.Movement.Objects.Movement)
+local Crouch = require(RS.Modules.Movement.Mechnanics.Crouch)
+local Wallrun = require(RS.Modules.Movement.Mechnanics.Wallrun)
 
 --[Player Variables]--
 local plr = Players.LocalPlayer
@@ -41,8 +43,7 @@ while CurrentWeapon == nil do
 	task.wait(0.3)
 end
 
-local object  = Movement.new(plr)
-
+local object = Movement.new(plr)
 
 --[Animation Setup]--
 local WeaponAnimations = RS.Animations.Weapons
@@ -128,28 +129,36 @@ Top_tilt.Rotation = 0
 Bottom_tilt.Rotation = 0
 
 -------------------------------------------------
--- WALK ANIMATION SYSTEM
+-- WALK  Cycles
 -------------------------------------------------
 
-
-
-char:GetAttributeChangedSignal("CurrentWeapon"):Connect(function() object:UpdateWalkTracks() end)
-char:GetAttributeChangedSignal("Equipped"):Connect(function() object:UpdateWalkTracks() end)
-char:GetAttributeChangedSignal("IsLow"):Connect(function() object:UpdateWalkTracks() end)
-char:GetAttributeChangedSignal("InCombat"):Connect(function() object:UpdateWalkTracks() end)
+char:GetAttributeChangedSignal("CurrentWeapon"):Connect(function()
+	object:UpdateWalkTracks()
+end)
+char:GetAttributeChangedSignal("Equipped"):Connect(function()
+	object:UpdateWalkTracks()
+end)
+char:GetAttributeChangedSignal("IsLow"):Connect(function()
+	object:UpdateWalkTracks()
+end)
+char:GetAttributeChangedSignal("InCombat"):Connect(function()
+	object:UpdateWalkTracks()
+end)
 AccessoryEvent.OnClientEvent:Connect(function(action)
 	if action == "RefreshAnimations" then
 		object:UpdateWalkTracks()
 	end
 end)
 
-		object:UpdateWalkTracks()
+object:UpdateWalkTracks()
 
 -------------------------------------------------
 -- WALL CLIMB
 -------------------------------------------------
 local function triggerWallClimb()
-	if  IsWallRunning then return end
+	if IsWallRunning then
+		return
+	end
 	grounded = false
 	IsClimbing = true
 	char:SetAttribute("IsClimbing", true)
@@ -175,7 +184,7 @@ end
 -------------------------------------------------
 -- SPRINT SYSTEM
 -------------------------------------------------
-local baseSpeed = StarterPlayer.CharacterWalkSpeed 
+local baseSpeed = StarterPlayer.CharacterWalkSpeed
 
 local function canSprint()
 	return not (
@@ -186,6 +195,7 @@ local function canSprint()
 		or char:GetAttribute("IsCrouching")
 		or IsClimbing
 		or IsWallRunning
+		or object.States.IsCrouching
 	)
 end
 
@@ -197,7 +207,7 @@ local function ResetSpeedCheck()
 		and not char:GetAttribute("IsCrouching")
 		and not IsClimbing
 		and not IsWallRunning
-		
+
 	)
 end
 
@@ -225,11 +235,11 @@ local function selectSprintAnim()
 end
 
 local function toggleSprintState()
-	if isSprinting and not debounce then
+	if isSprinting and not debounce  then
 		debounce = true
 
 		if ResetSpeedCheck() then
-			Hum.WalkSpeed = baseSpeed 
+			Hum.WalkSpeed = baseSpeed
 		end
 
 		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 })
@@ -321,7 +331,7 @@ char:GetAttributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
 -- RENDER STEPPED — Walk weights
 -------------------------------------------------
 RunService.RenderStepped:Connect(function()
-	object:WalkCycle()	
+	object:WalkCycle()
 end)
 
 local function StartWallRunBars(side, hum)
@@ -337,9 +347,10 @@ end
 
 local function JumpBars(side, hum)
 	local TOP = UDim2.new(-0.001, 0, -0.987, 0)
-    local BOTTOM = UDim2.new(-0.034, 0, 0.95, 0)
+	local BOTTOM = UDim2.new(-0.034, 0, 0.95, 0)
 
-	local FOVChange: Tween = TS:Create(cam, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 280 })
+	local FOVChange: Tween =
+		TS:Create(cam, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 280 })
 	FOVChange:Play()
 	local camreturn = Vector3.new(0, 0, 0)
 	TS:Create(hum, TweenInfo.new(0.40, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CameraOffset = camreturn })
@@ -350,11 +361,7 @@ local function JumpBars(side, hum)
 	top:Play()
 	bottom:Play()
 	FOVChange.Completed:Connect(function()
-		TS:Create(
-			cam,
-			TweenInfo.new(1, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ FieldOfView = 70 }
-		):Play()
+		TS:Create(cam, TweenInfo.new(1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
 	end)
 
 	top.Completed:Connect(function()
@@ -366,9 +373,6 @@ local function JumpBars(side, hum)
 			Bottom_tilt.Position = Tilt_BOTTOM_HIDDEN_LEFT
 		end)
 	end)
-
-	
-
 end
 
 local function StopWallRunBars(side, hum, action)
@@ -395,7 +399,7 @@ local function StopWallRunBars(side, hum, action)
 			TS:Create(Bottom_tilt, tweenSlide, { Position = Tilt_BOTTOM_HIDDEN_LEFT, Rotation = -15 }):Play()
 		end
 	elseif action == "Jump" then
-		JumpBars(side,hum)
+		JumpBars(side, hum)
 	end
 end
 
@@ -479,7 +483,6 @@ local function StartWallRun(char, hit: RaycastResult, side)
 	end
 
 	Lanim_Jump:Stop()
-	
 
 	local WallRunSpeed = 50
 
@@ -517,7 +520,6 @@ local function StartWallRun(char, hit: RaycastResult, side)
 	StartWallRunBars(side)
 	TS:Create(hum, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CameraOffset = CamOffset })
 		:Play()
-	
 
 	local Attacment = HRP:FindFirstChild("WallRunAttachment")
 	if not Attacment then
@@ -641,7 +643,7 @@ local function WallRunStart(char)
 	if hum.FloorMaterial ~= Enum.Material.Air then
 		return
 	end
-	if IsWallRunning or IsClimbing  or IsHoldingLedge then
+	if IsWallRunning or IsClimbing or IsHoldingLedge then
 		return
 	end
 
@@ -673,7 +675,7 @@ local function WallRunJump()
 	local uppower = Jumppower * 2
 	local Lateral = (Side == -1 and HRP.CFrame.RightVector or -HRP.CFrame.RightVector)
 
-	local jumpVect = (Normal * Jumppower) + (Lateral * 0.5)  + Vector3.new(0, uppower, 0) -- The wall jump should go the side then up a little  
+	local jumpVect = (Normal * Jumppower) + (Lateral * 0.5) + Vector3.new(0, uppower, 0) -- The wall jump should go the side then up a little
 	if Side == 1 then
 		--Animation for Right when done
 	elseif Side == -1 then
@@ -746,7 +748,7 @@ UIS.InputBegan:Connect(function(input, isTyping)
 
 		FindFowardwall(char)
 
-		if isInAir and heldKeys.W and canClimb and not IsClimbing  then
+		if isInAir and heldKeys.W and canClimb and not IsClimbing then
 			if isSprinting then
 				toggleSprintState()
 				task.wait(0.15)
@@ -758,6 +760,10 @@ UIS.InputBegan:Connect(function(input, isTyping)
 			--stopWallRun()
 			WallRunJump()
 		end
+	end
+
+	if key == Enum.KeyCode.LeftControl then
+		Crouch.Start(object)
 	end
 end)
 UIS.InputEnded:Connect(function(input, isTyping)
@@ -777,7 +783,7 @@ end)
 -------------------------------------------------
 -- HUMANOID STATE
 -------------------------------------------------
-Hum.StateChanged:Connect(function(_, newState)
+Hum.StateChanged:Connect(function(_, newState) -- other state stuff
 	if newState == Enum.HumanoidStateType.Freefall or newState == Enum.HumanoidStateType.Jumping then
 		isInAir = true
 		grounded = false
@@ -787,6 +793,21 @@ Hum.StateChanged:Connect(function(_, newState)
 	end
 end)
 
+function CrouchStatesChecker(_, Newstates)
+	if object.States.IsCrouching then
+		if
+			Newstates == Enum.HumanoidStateType.Dead
+			or Newstates == Enum.HumanoidStateType.Climbing
+			or Newstates == Enum.HumanoidStateType.Swimming
+			or Newstates == Enum.HumanoidStateType.Seated
+			or Newstates == Enum.HumanoidStateType.Physics
+		then
+			object.InfoTable.Crouch.Stop()
+		end
+	end
+end
+
+Hum.StateChanged:Connect(CrouchStatesChecker)
 -------------------------------------------------
 -- LEDGES
 -------------------------------------------------

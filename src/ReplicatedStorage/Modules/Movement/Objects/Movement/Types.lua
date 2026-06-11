@@ -15,6 +15,8 @@ export type MovementObjData = {
 			IsGrounded: boolean, -- Standard is on ground
 			IsInAir: boolean, -- In the air
 			IsOnWall: boolean, -- Is holding onto a wall
+			IsCrouching:boolean, -- Is crouching
+			IsSliding:boolean, -- Is sliding 
 		},
 
 
@@ -47,7 +49,19 @@ export type MovementObjData = {
 			WallHold: {
 				Type : string, -- Type of wall hold (Ledge, Parallel, etc.)
 				Stop : () -> (),
+			},
+
+
+			Crouch: {
+				Stop : () -> (),
+			},
+
+			Slide: {
+				Stop : () -> (),
 			}
+
+
+			
 
 
 		},

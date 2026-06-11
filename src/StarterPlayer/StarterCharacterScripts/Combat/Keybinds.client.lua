@@ -23,6 +23,7 @@ local debounce = false
 
 local plr = game:GetService("Players").LocalPlayer
 local char = plr.Character
+local moveentobj = Movement.GetMovementObj(plr)
 
 
 local MOVE_KEYS = {
@@ -61,6 +62,9 @@ local function getEquippedTool(char)
 	end
 	return nil
 end
+
+
+
 
 
 local hl = Instance.new("Highlight")
@@ -312,10 +316,14 @@ uis.InputBegan:Connect(function(input, gameProcessed)
 	if char:GetAttribute("IsTransforming") then return end
 
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+		print(moveentobj)
 		 
 			if EnemyCheck(enemy) and AirBorneStates[char.Humanoid:GetState()] then
 				print("passed 2")
 				combatEvent:FireServer("Blink", enemy)
+			elseif moveentobj.States.IsCrouching then
+				print("Once i make the backstab logic this is where it woiuld be")
 
 			else
 				print("STandardswong1")

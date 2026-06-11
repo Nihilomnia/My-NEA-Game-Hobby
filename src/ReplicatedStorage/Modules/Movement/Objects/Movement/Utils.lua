@@ -40,7 +40,7 @@ local function WallJumpBars(side,MovementObj:Type.MovementObj)
     local FOVChange: Tween = TS:Create(cam, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { FieldOfView = 280 })
 	FOVChange:Play()
 	local camreturn = Vector3.new(0, 0, 0)
-	TS:Create(hum, TweenInfo.new(0.40, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CameraOffset = camreturn })
+	TS:Create(hum, TweenInfo.new(0.40, Enum.EasingStyle.Back, Enum.EasingDirection.Out,0,false,0), { CameraOffset = camreturn })
 		:Play()
 	local top: Tween = TS:Create(Top_tilt, tweenSlide, { Position = TOP, Rotation = 0 })
 	print(FOVChange)
@@ -50,7 +50,7 @@ local function WallJumpBars(side,MovementObj:Type.MovementObj)
 	FOVChange.Completed:Connect(function()
 		TS:Create(
 			cam,
-			TweenInfo.new(1, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+			TweenInfo.new(0.50, Enum.EasingStyle.Back, Enum.EasingDirection.Out,0,false,0),
 			{ FieldOfView = 70 }
 		):Play()
 	end)

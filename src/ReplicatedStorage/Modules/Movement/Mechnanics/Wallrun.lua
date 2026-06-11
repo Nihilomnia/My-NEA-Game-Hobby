@@ -233,7 +233,7 @@ function Wallrun.Start(MovementObj: MovementTypes.MovementObj)
       return
    end
 
-   if MovementObj.IsActing.WallRunning  or MovementObj.IsActing.Climbing or MovementObj.States.IsOnWall then
+   if MovementObj.IsActing.WallRunning  or MovementObj.IsActing.Climbing or MovementObj.States.IsOnWall or MovementObj.States.IsCrouching then
       return
    end
 

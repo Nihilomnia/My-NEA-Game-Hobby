@@ -68,6 +68,8 @@ function Movement.new(identifer): Type.MovementObj -- Creates the new movement o
 				IsGrounded = false,
 				IsInAir = false,
 				IsOnWall = false,
+				IsCrouching = false,
+				ISSliding = false,
 			},
 
 			InfoTable = { -- Table for storing important info for the movement system (like wallrun dir, climb dir, etc.)
@@ -81,24 +83,32 @@ function Movement.new(identifer): Type.MovementObj -- Creates the new movement o
 					Dir = "", -- Direction of the dodge (forward, back, left, right and spot)
 					Type = "", -- Type of dodge (standard, airdash,)
 					Stop = function() end,
-
-					Climb = {
-						Stop = function() end,
-					},
-
-					Sprint = {
-						Stop = function() end,
-					},
-
-					EXSprint = {
-						Stop = function() end,
-					},
-
-					WallHold = {
-						Type = "", -- Type of wall hold (Ledge, Parallel, etc.)
-						Stop = function() end,
-					},
 				},
+
+				Climb = {
+					Stop = function() end,
+				},
+
+				Sprint = {
+					Stop = function() end,
+				},
+
+				EXSprint = {
+					Stop = function() end,
+				},
+
+				WallHold = {
+					Type = "", -- Type of wall hold (Ledge, Parallel, etc.)
+					Stop = function() end,
+				},
+
+				Crouch = {
+					Stop = function() end,
+				},
+
+				Slide = {
+					Stop = function() end,
+				}
 			},
 
 			WalkCycleAnims = {
@@ -168,6 +178,7 @@ function Movement:BarTweenStop(infoTable)
 end
 
 function Movement:UpdateWalkTracks()
+	
 	local AnimationsTable = self.WalkCycleAnims
 
 	for i, track in pairs(AnimationsTable) do
@@ -185,7 +196,7 @@ function Movement:UpdateWalkTracks()
 	local HasCombatTag = char:GetAttribute("InCombat")
 	local TargetFolder
 
-	if isEquipped and currentWeapon and AnimationsFolder.Weapons:FindFirstChild(currentWeapon) then
+	if isEquipped and currentWeapon and not  self.States.IsCrouching  and  AnimationsFolder.Weapons:FindFirstChild(currentWeapon) then
 		if IsLow and HasCombatTag then
 			TargetFolder = AnimationsFolder.Weapons[currentWeapon].IsLow
 		else
