@@ -1,5 +1,6 @@
 
 local RS = game:GetService("ReplicatedStorage")
+local TS = game:GetService("TweenService")
 local plr = game.Players.LocalPlayer
 local PlayerGui = plr:WaitForChild("PlayerGui")
 local StatusBars = PlayerGui:WaitForChild("StatusBars")
@@ -34,10 +35,11 @@ UI_Update_Event.OnClientEvent:Connect(function(action,...)
         else
             local newIcon = UIFolder:FindFirstChild(effectName)
             if newIcon then
-                local clonedIcon = newIcon:Clone()
-                clonedIcon.Parent = StatusBars.Frame.StatusEffectsFRame
-                clonedIcon.Stacks.Text = CONFIG.IconText[stacks] or tostring(stacks)
-                clonedIcon.Name = effectName
+                local clonedIconGroup = newIcon:Clone()
+                clonedIconGroup.Parent = StatusBars.Frame.StatusEffectsFRame
+                local IconFrame = clonedIconGroup[effectName]
+                IconFrame.Stacks.Text = CONFIG.IconText[stacks] or tostring(stacks)
+                IconFrame.Name = effectName
             else
                 warn("No icon found in UIFolder for effect:", effectName)
             end
@@ -48,7 +50,17 @@ UI_Update_Event.OnClientEvent:Connect(function(action,...)
         local effectName = ...
         local icon = StatusBars.Frame.StatusEffectsFRame:FindFirstChild(effectName)
         if icon then
-            icon:Destroy()
+            print("removing",icon)
+            local TweenInfo = TweenInfo.new(0.5,Enum.EasingStyle.Quint,Enum.EasingDirection.Out,0,false,0)
+            local tween = TS:Create(icon, TweenInfo, {GroupTransparency = 1})
+            tween:Play()
+
+            tween.Completed:Connect(function()
+                icon:Destroy()
+
+            end)
+        
+          
         end
     end
 end)

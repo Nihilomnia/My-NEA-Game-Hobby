@@ -108,7 +108,7 @@ function CrouchModule.StartCrouch(MovementObj: MovemenTypes.MovementObj)
 	MovementObj.States.IsCrouching = true
 	CrouchAnim:Play()
 	MovementObj:ClearWalkAnims()
-	-- I need would need a rmote event or some form of replicator here to tell the other clients to player a sound
+	MovementObj:ServerRequest("CrouchStart")
 	hum.WalkSpeed = Config.Speed
 
 	local playerflag = MovementObj.identifer
@@ -150,7 +150,7 @@ function CrouchModule.StartCrouch(MovementObj: MovemenTypes.MovementObj)
 		MovementObj.States.IsCrouching = false
 		CrouchAnim:Stop()
 		MovementObj:UpdateWalkTracks()
-		-- Sound replcation again
+		MovementObj:ServerRequest("CrouchEnd")
 		hum.WalkSpeed = game:GetService("StarterPlayer").CharacterWalkSpeed
 		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
 

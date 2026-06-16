@@ -24,9 +24,10 @@ local WeaponsWeld = RS.Welds.Weapons
 local WeaponsAnimations = RS.Animations.Weapons
 local TransformConnections = {}
 
-
 local function MakeWeaponInvisible(char, Weapon)
-	if not Weapon and char then return end
+	if not Weapon and char then
+		return
+	end
 
 	Weapon.transparency = 0.011
 	Weapon.Reflectance = -0.4
@@ -43,14 +44,23 @@ local function MakeWeaponInvisible(char, Weapon)
 end
 
 local function RemoveInvisibleParts(char, Weapon)
-	if not char then return end
+	if not char then
+		return
+	end
 	local HRP = char:FindFirstChild("HumanoidRootPart")
-	if not HRP then return end
+	if not HRP then
+		return
+	end
 	for _, part in ipairs(HRP:GetChildren()) do
 		if part.Name == "InvisiblePart" then
 			part:Destroy()
 		end
 	end
+end
+
+local function ModelRefresher(weapon) -- debug function untill the obve function is ready
+	weapon.Transparency = 0
+	weapon.Reflectance = 0
 end
 
 -- Force-clears any in-progress attack state that may have been left hanging
@@ -66,15 +76,21 @@ end
 -- MODE 1 TRANSFORMATION
 ---------------------------------------------------------------------
 function module.Mode1(char, npc)
-	if not char or not char:FindFirstChild("Humanoid") then return end
+	if not char or not char:FindFirstChild("Humanoid") then
+		return
+	end
 
 	local hum = char.Humanoid
 	local rootPart = char:WaitForChild("HumanoidRootPart")
 
 	local plr = game.Players:GetPlayerFromCharacter(char)
 	local Identifier = plr or npc
-	if not Identifier then return end
-	if EquipDebounce[Identifier] then return end
+	if not Identifier then
+		return
+	end
+	if EquipDebounce[Identifier] then
+		return
+	end
 
 	EquipDebounce[Identifier] = true
 	char:SetAttribute("iframes", true)
@@ -96,69 +112,82 @@ function module.Mode1(char, npc)
 		TransformConnections[Identifier]:Disconnect()
 	end
 
-	TransformConnections[Identifier] = TransformAnims[Identifier]
-		:GetMarkerReachedSignal("Transform")
-		:Connect(function()
-			TransformConnections[Identifier]:Disconnect()
+	TransformConnections[Identifier] = TransformAnims[Identifier]:GetMarkerReachedSignal("Transform"):Connect(function()
+		TransformConnections[Identifier]:Disconnect()
 
-			for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
-				if anim.Name == "Swing1" or anim.Name == "Swing2" or anim.Name == "Swing3" or anim.Name == "Swing4" then
-					return
-				end
+		for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
+			if anim.Name == "Swing1" or anim.Name == "Swing2" or anim.Name == "Swing3" or anim.Name == "Swing4" then
+				return
 			end
+		end
 
-			if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then return end
+		if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
+			return
+		end
 
-			-- A transformation can interrupt a swing before HitEnd fires, leaving
-			-- Attacking/Swing stuck. Clear them here before restoring normal state.
-			clearAttackState(char)
+		-- A transformation can interrupt a swing before HitEnd fires, leaving
+		-- Attacking/Swing stuck. Clear them here before restoring normal state.
+		clearAttackState(char)
 
-			char:SetAttribute("CurrentWeapon", newWeapon)
+		char:SetAttribute("CurrentWeapon", newWeapon)
+		
 
-			local torso = char:FindFirstChild("Torso")
-			local rightArm = char:FindFirstChild("Right Arm")
+		local torso = char:FindFirstChild("Torso")
+		local rightArm = char:FindFirstChild("Right Arm")
 
-			for _, weapon in ipairs(WeaponsModels:GetChildren()) do
-				local existing = char:FindFirstChild(weapon.Name)
-				if existing then existing:Destroy() end
+		for _, weapon in ipairs(WeaponsModels:GetChildren()) do
+			local existing = char:FindFirstChild(weapon.Name)
+			if existing then
+				existing:Destroy()
 			end
+		end
 
-			HelpfulModule.ChangeWeapon(Identifier, char, torso)
+		HelpfulModule.ChangeWeapon(Identifier, char, torso)
+		local WeaponMOdel = char:FindFirstChild(char:GetAttribute("CurrentWeapon"),true)
+		ModelRefresher(WeaponMOdel[WeaponMOdel.Name])
 
-			if Welds[Identifier] then
-				Welds[Identifier].Part0 = rightArm
-				Welds[Identifier].C0 = WeaponsWeld[newWeapon].HoldingWeaponWeld.C0
-			end
 
-			IdleAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Idle)
-			EquipAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Equip)
+		
+		if Welds[Identifier] then
+			Welds[Identifier].Part0 = rightArm
+			Welds[Identifier].C0 = WeaponsWeld[newWeapon].HoldingWeaponWeld.C0
+		end
 
-			rootPart.Anchored = false
-			char:SetAttribute("IsTransforming", false)
-			char:SetAttribute("Equipped", true)
-			char:SetAttribute("iframes", false)
-			char:SetAttribute("Mode1", true)
-			EquipDebounce[Identifier] = false
+		IdleAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Idle)
+		EquipAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Equip)
 
-			if IdleAnims[Identifier] then
-				IdleAnims[Identifier]:Play()
-			end
-		end)
+		rootPart.Anchored = false
+		char:SetAttribute("IsTransforming", false)
+		char:SetAttribute("Equipped", true)
+		char:SetAttribute("iframes", false)
+		char:SetAttribute("Mode1", true)
+		EquipDebounce[Identifier] = false
+
+		if IdleAnims[Identifier] then
+			IdleAnims[Identifier]:Play()
+		end
+	end)
 end
 
 ---------------------------------------------------------------------
 -- MODE 2 TRANSFORMATION
 ---------------------------------------------------------------------
 function module.Mode2(char, npc)
-	if not char or not char:FindFirstChild("Humanoid") then return end
+	if not char or not char:FindFirstChild("Humanoid") then
+		return
+	end
 
 	local hum = char.Humanoid
 	local rootPart = char:WaitForChild("HumanoidRootPart")
 
 	local plr = game.Players:GetPlayerFromCharacter(char)
 	local Identifier = plr or npc
-	if not Identifier then return end
-	if EquipDebounce[Identifier] then return end
+	if not Identifier then
+		return
+	end
+	if EquipDebounce[Identifier] then
+		return
+	end
 
 	EquipDebounce[Identifier] = true
 	char:SetAttribute("iframes", true)
@@ -189,95 +218,108 @@ function module.Mode2(char, npc)
 		TransformConnections[Identifier]:Disconnect()
 	end
 
-	TransformConnections[Identifier] = TransformAnims[Identifier]
-		:GetMarkerReachedSignal("Transform")
-		:Connect(function()
-			TransformConnections[Identifier]:Disconnect()
+	TransformConnections[Identifier] = TransformAnims[Identifier]:GetMarkerReachedSignal("Transform"):Connect(function()
+		TransformConnections[Identifier]:Disconnect()
 
-			for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
-				if anim.Name == "Swing1" or anim.Name == "Swing2" or anim.Name == "Swing3" or anim.Name == "Swing4" then
-					return
-				end
+		for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
+			if anim.Name == "Swing1" or anim.Name == "Swing2" or anim.Name == "Swing3" or anim.Name == "Swing4" then
+				return
 			end
+		end
 
-			if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then return end
+		if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
+			return
+		end
 
-			-- Clear any stuck attack state from a swing that was interrupted by this transformation
-			clearAttackState(char)
+		-- Clear any stuck attack state from a swing that was interrupted by this transformation
+		clearAttackState(char)
 
-			char:SetAttribute("CurrentWeapon", newWeapon)
+		char:SetAttribute("CurrentWeapon", newWeapon)
+		
+		
 
-			local torso = char:FindFirstChild("Torso")
-			local rightArm = char:FindFirstChild("Right Arm")
+		local torso = char:FindFirstChild("Torso")
+		local rightArm = char:FindFirstChild("Right Arm")
 
-			for _, weapon in ipairs(WeaponsModels:GetChildren()) do
-				local existing = char:FindFirstChild(weapon.Name)
-				if existing then existing:Destroy() end
+		for _, weapon in ipairs(WeaponsModels:GetChildren()) do
+			local existing = char:FindFirstChild(weapon.Name)
+			if existing then
+				existing:Destroy()
 			end
+		end
 
-			HelpfulModule.ChangeWeapon(Identifier, char, torso)
+		HelpfulModule.ChangeWeapon(Identifier, char, torso)
+		local WeaponMOdel = char:FindFirstChild(char:GetAttribute("CurrentWeapon"),true)
+		ModelRefresher(WeaponMOdel[WeaponMOdel.Name])
 
-			if Welds[Identifier] then
-				Welds[Identifier].Part0 = rightArm
-				Welds[Identifier].C0 = WeaponsWeld[newWeapon].HoldingWeaponWeld.C0
-				if Welds[Identifier].C1 then
-					Welds[Identifier].C1 = WeaponsWeld[newWeapon].HoldingWeaponWeld.C1
-				end
+
+		if Welds[Identifier] then
+			Welds[Identifier].Part0 = rightArm
+			Welds[Identifier].C0 = WeaponsWeld[newWeapon].HoldingWeaponWeld.C0
+			if Welds[Identifier].C1 then
+				Welds[Identifier].C1 = WeaponsWeld[newWeapon].HoldingWeaponWeld.C1
 			end
+		end
 
-			IdleAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Idle)
-			EquipAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Equip)
+		IdleAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Idle)
+		EquipAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations[newWeapon].Main.Equip)
 
-			rootPart.Anchored = false
-			char:SetAttribute("IsTransforming", false)
-			char:SetAttribute("Equipped", true)
-			char:SetAttribute("iframes", false)
-			char:SetAttribute("Mode2", true)
-			EquipDebounce[Identifier] = false
 
-			if IdleAnims[Identifier] then
-				IdleAnims[Identifier]:Play()
-			end
+		rootPart.Anchored = false
+		char:SetAttribute("IsTransforming", false)
+		char:SetAttribute("Equipped", true)
+		char:SetAttribute("iframes", false)
+		char:SetAttribute("Mode2", true)
+		EquipDebounce[Identifier] = false
 
-			-- Only start MF drain coroutine for players, not NPCs
-			if npc == nil then
-				coroutine.wrap(function()
-					local mf = char:GetAttribute("MF")
-					local maxMF = char:GetAttribute("MaxMF")
-					print("hello starting MF gain")
-					while char:GetAttribute("Mode2") do
-						task.wait(1)
-						mf = char:GetAttribute("MF")
-						maxMF = char:GetAttribute("MaxMF")
-						if mf and mf < maxMF then
-							while char:GetAttribute("AstralDodgeActive") do
-								task.wait(0.1)
-							end
-							char:SetAttribute("MF", mf + 2.5)
-						else
-							module.Revert(char)
-							return
+		if IdleAnims[Identifier] then
+			IdleAnims[Identifier]:Play()
+		end
+
+		-- Only start MF drain coroutine for players, not NPCs
+		if npc == nil then
+			coroutine.wrap(function()
+				local mf = char:GetAttribute("MF")
+				local maxMF = char:GetAttribute("MaxMF")
+				print("hello starting MF gain")
+				while char:GetAttribute("Mode2") do
+					task.wait(1)
+					mf = char:GetAttribute("MF")
+					maxMF = char:GetAttribute("MaxMF")
+					if mf and mf < maxMF then
+						while char:GetAttribute("AstralDodgeActive") do
+							task.wait(0.1)
 						end
+						char:SetAttribute("MF", mf + 2.5)
+					else
+						module.Revert(char)
+						return
 					end
-				end)()
-			end
-		end)
+				end
+			end)()
+		end
+	end)
 end
-
 
 ---------------------------------------------------------------------
 -- REVERT
 ---------------------------------------------------------------------
 function module.Revert(char, npc)
-	if not char or not char:FindFirstChild("Humanoid") then return end
+	if not char or not char:FindFirstChild("Humanoid") then
+		return
+	end
 
 	local hum = char:FindFirstChild("Humanoid")
 	local torso = char:FindFirstChild("Torso")
 	local rightArm = char:FindFirstChild("Right Arm")
 	local plr = game.Players:GetPlayerFromCharacter(char)
 	local Identifier = plr or npc
-	if not Identifier then return end
-	if EquipDebounce[Identifier] then return end
+	if not Identifier then
+		return
+	end
+	if EquipDebounce[Identifier] then
+		return
+	end
 
 	if char:GetAttribute("Mode1") then
 		EquipDebounce[Identifier] = true
@@ -299,12 +341,19 @@ function module.Revert(char, npc)
 				TransformConnections[Identifier]:Disconnect()
 
 				for _, anim in ipairs(hum.Animator:GetPlayingAnimationTracks()) do
-					if anim.Name == "Swing1" or anim.Name == "Swing2" or anim.Name == "Swing3" or anim.Name == "Swing4" then
+					if
+						anim.Name == "Swing1"
+						or anim.Name == "Swing2"
+						or anim.Name == "Swing3"
+						or anim.Name == "Swing4"
+					then
 						return
 					end
 				end
 
-				if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then return end
+				if HelpfulModule.CheckForAttributes(char, true, true, true, true, nil, true, true, nil) then
+					return
+				end
 
 				-- Clear any stuck attack state from a swing interrupted by this revert
 				clearAttackState(char)
@@ -313,7 +362,9 @@ function module.Revert(char, npc)
 
 				for _, weapon in ipairs(WeaponsModels:GetChildren()) do
 					local existing = char:FindFirstChild(weapon.Name)
-					if existing then existing:Destroy() end
+					if existing then
+						existing:Destroy()
+					end
 				end
 
 				HelpfulModule.ChangeWeapon(Identifier, char, torso)
@@ -337,13 +388,11 @@ function module.Revert(char, npc)
 					IdleAnims[Identifier]:Play()
 				end
 			end)
-
 	elseif char:GetAttribute("Mode2") then
 		module.Mode1(char)
 	else
 		warn(char, "Is performing a false revert")
 	end
 end
-
 
 return module

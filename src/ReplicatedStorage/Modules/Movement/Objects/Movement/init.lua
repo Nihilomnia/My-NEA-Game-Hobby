@@ -1,4 +1,10 @@
 local Type = require(script.Types)
+local RS  = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local Events = RS.Events
+
+local MovementEvent:RemoteEvent  = Events.Movement
+
 
 local Movement = {}
 Movement.__index = Movement
@@ -70,6 +76,7 @@ function Movement.new(identifer): Type.MovementObj -- Creates the new movement o
 				IsOnWall = false,
 				IsCrouching = false,
 				ISSliding = false,
+				IsResting = false,
 			},
 
 			InfoTable = { -- Table for storing important info for the movement system (like wallrun dir, climb dir, etc.)
@@ -82,6 +89,7 @@ function Movement.new(identifer): Type.MovementObj -- Creates the new movement o
 				Dodge = {
 					Dir = "", -- Direction of the dodge (forward, back, left, right and spot)
 					Type = "", -- Type of dodge (standard, airdash,)
+					Speed = 0,
 					Stop = function() end,
 				},
 
@@ -152,28 +160,36 @@ function Movement.GetMovementObj(Identifer): Type.MovementObj? -- this function 
 end
 
 function Movement:BarTween(infoTable)
-	if self.identifer.Player == nil then
-		return
-	end -- This means that it wasn't a player so we can ignore it
-
+    local plrflag = self.identifer
+	if plrflag:IsA("Player") then plrflag = nil end 
+	if plrflag then return end 
+	
 	local action = infoTable.Action
 
 	if action == "Wallrun" then
-		local side = infoTable.side
+		local side = self.InfoTable.Wallrun.Side
 		Utils.StartWallrunBars(side, self)
+	end
+
+	if action == "Dodge" then
+		local Speed = self.InfoTable.Dodge.Speed
+		Utils.StartDodgeCam(Speed)
 	end
 end
 
 function Movement:BarTweenStop(infoTable)
-	if self.identifer.Player == nil then
-		return
-	end -- This means that it wasn't a player so we can ignore it
-
+ local plrflag = self.identifer
+	if plrflag:IsA("Player") then plrflag = nil end 
+	if plrflag then return end 
 	local action = infoTable.Action
 
 	if action == "Wallrun" then
-		local side = infoTable.side
+		local side = self.InfoTable.Wallrun.Side
 		Utils.StopWallrunBars(side, self, nil)
+	end
+
+	if action == "Dodge" then 
+		Utils.RestDodgeCam()
 	end
 end
 
@@ -273,5 +289,14 @@ function Movement:ClearWalkAnims()
 		end
 	end
 end
+
+function Movement:ServerRequest(action)
+	if action  == "CrouchStart" then MovementEvent:FireServer(action) end
+	if action == "CrouchEnd" then MovementEvent:FireServer(action) end
+	if action == "Dodge" then MovementEvent:FireServer(action) end
+	
+end
+
+
 
 return Movement

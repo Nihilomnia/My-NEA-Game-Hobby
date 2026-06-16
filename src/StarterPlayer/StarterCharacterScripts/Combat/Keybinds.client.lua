@@ -5,6 +5,7 @@ local uis = game:GetService("UserInputService")
 
 local DodgeVelocity = require(RS.Modules.Combat.DodgeVelocity)
 local Movement = require(RS.Modules.Movement.Objects.Movement)
+local Dodge = require(RS.Modules.Movement.Mechnanics.Dodge)
 
 
 
@@ -175,7 +176,7 @@ uis.InputBegan:Connect(function(input)
 
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         if char:GetAttribute("Dodging") then
-            DodgeEvent:FireServer("DodgeCancel")
+            Dodge.DodgeCancel(moveentobj)
         elseif char:GetAttribute("Swing") then
 			combatEvent:FireServer("Feint")
 		else
@@ -190,7 +191,11 @@ uis.InputBegan:Connect(function(input, gp)
     if gp or isActuallyTyping() then return end
 
     if input.KeyCode == Enum.KeyCode.Q then
-        DodgeEvent:FireServer("Dodge",lastSentKey)
+		if not moveentobj then 
+			moveentobj = Movement.GetMovementObj(plr)
+		end
+		print("dodoging",moveentobj)
+		Dodge.Dodge(moveentobj)
     end
 end)
 
@@ -318,6 +323,9 @@ uis.InputBegan:Connect(function(input, gameProcessed)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 
 		print(moveentobj)
+		if moveentobj == nil then moveentobj = Movement.GetMovementObj(plr) end
+		print(plr)
+		
 		 
 			if EnemyCheck(enemy) and AirBorneStates[char.Humanoid:GetState()] then
 				print("passed 2")

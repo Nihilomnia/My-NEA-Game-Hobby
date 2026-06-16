@@ -125,7 +125,8 @@ function module.Attack(char, npc)
 			print("stopped hitend")
 
 			if char:GetAttribute("Combo") == MaxCombo then
-				task.wait(0.5)
+				task.wait(swingReset + 0.5)
+				
 			else
 				task.wait(swingReset)
 			end
@@ -183,7 +184,7 @@ function module.Blink(char,npc,target)
 	local Hum = char.Humanoid
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	if not HRP or not Hum then return end
-	local HitAnim = WeaponsAnimations[currentWeapon].Hit["Hit" .. char:GetAttribute("Combo")]
+	local HitA2nim = WeaponsAnimations[currentWeapon].Hit["Hit" .. char:GetAttribute("Combo")]
 
 	HRP.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0,2,0)
 

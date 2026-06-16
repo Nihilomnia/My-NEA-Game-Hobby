@@ -56,7 +56,7 @@ local CONFIG = {
 
 
 
-export type PLR = typeof(setmetatable(
+export type PLR = typeof(setmetatable( -- Custom type to make looking for stuff such much easier serves no other purpose 
     {} :: {
         IsReady: boolean,
 		Highlight: Highlight,

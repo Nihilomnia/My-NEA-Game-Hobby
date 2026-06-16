@@ -174,12 +174,12 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 			BoneModule.DodgeRandomTP(eChar,char)
 
 		elseif char:GetAttribute("Combo")>=4 then
-			Knockback= Knockback*5
+			Knockback= Knockback* 9
 			--HelpfulModule.Ragdoll(eChar,RagdollTime)
 		end
 
 
-		module.BodyVelocity(eHRP,char.HumanoidRootPart,Knockback,.2)
+		module.BodyVelocity(eHRP,char.HumanoidRootPart,Knockback,.3)
 
       
 		

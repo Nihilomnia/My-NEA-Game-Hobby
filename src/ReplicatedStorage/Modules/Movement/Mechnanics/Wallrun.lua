@@ -52,7 +52,7 @@ local function StartWallRun(MovementObj: MovementTypes.MovementObj, hit: Raycast
 	local CurrentWeapon = char:GetAttribute("CurrentWeapon")
 	local Hum = char.Humanoid
 	local HRP: Part = char.HumanoidRootPart
-	local WallrunSpeed = 50
+	local WallrunSpeed = 60
 
 	if not Hum or not HRP then
 		return
@@ -87,12 +87,12 @@ local function StartWallRun(MovementObj: MovementTypes.MovementObj, hit: Raycast
 	end
 
 	local entryvel = HRP.AssemblyLinearVelocity
+	MovementObj.InfoTable.Wallrun.Side = side
 
 	local playerFlag = MovementObj.identifer
 	if playerFlag:IsA("Player") then
 		local infotable = {
 			Action = "Wallrun",
-			side = side,
 		}
 
 
@@ -148,7 +148,7 @@ local function StartWallRun(MovementObj: MovementTypes.MovementObj, hit: Raycast
 			return
 		end
 
-		WallrunCooldowns[MovementObj.identifer] = tick()
+		WallrunCooldowns[MovementObj] = tick()
 		HRP.AssemblyLinearVelocity += Normal * 15
 		vel:Destroy()
 		algin:Destroy()
@@ -164,7 +164,6 @@ local function StartWallRun(MovementObj: MovementTypes.MovementObj, hit: Raycast
 		MovementObj:UpdateWalkTracks()
 		MovementObj:BarTweenStop({
 			Action = "Wallrun",
-			side = side,
 		})
 	end
 
@@ -212,9 +211,9 @@ local function StartWallRun(MovementObj: MovementTypes.MovementObj, hit: Raycast
 			return
 		end
 
-		local gforce = Vector3.new(0, -workspace.Gravity, 0)
+		local gforce = Vector3.new(0, -workspace.Gravity *0.5, 0)
 
-		vel.VectorVelocity = WallDir * WallrunSpeed * gforce * dt + entryvel * 0.15
+		vel.VectorVelocity = WallDir * WallrunSpeed + gforce * dt + entryvel * 0.15
 		algin.CFrame = CFrame.lookAt(HRP.Position, HRP.Position + WallDir, Vector3.new(0, 1, 0))
 		MovementObj.InfoTable.Wallrun.Stop = StopWallRun
 		MovementObj.InfoTable.Wallrun.Side = side
@@ -237,7 +236,7 @@ function Wallrun.Start(MovementObj: MovementTypes.MovementObj)
       return
    end
 
-   if WallrunCooldowns and tick() - WallrunCooldowns[MovementObj.identifer] < 0.2 then
+   if WallrunCooldowns[MovementObj] and tick() - WallrunCooldowns[MovementObj] < 0.2 then
       return
    end
 
@@ -250,17 +249,19 @@ function Wallrun.Start(MovementObj: MovementTypes.MovementObj)
 end
 
 function Wallrun.Jump(MovementObj: MovementTypes.MovementObj)
+	
 	if not MovementObj or not MovementObj.IsActing.WallRunning then
 		return
 	end
+
 
 	local char = MovementObj.char
 	local Hum = char.Humanoid
 	local HRP = char.HumanoidRootPart
 	local CurrentWeapon = char:GetAttribute("CurrentWeapon")
 	if not HRP then return end
-	local R_animJump = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallrunJumpR)
-	local L_animJump = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallrunJumpL)
+	local R_animJump = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallhopR)
+	local L_animJump = Hum.Animator:LoadAnimation(WeaponAnimations[CurrentWeapon].Movement.WallhopL)
 
 	MovementObj.InfoTable.Wallrun.Stop("Jump")
 	if not MovementObj.InfoTable.Wallrun.Side or not MovementObj.InfoTable.Wallrun.Normal then return end

@@ -17,6 +17,7 @@ export type MovementObjData = {
 			IsOnWall: boolean, -- Is holding onto a wall
 			IsCrouching:boolean, -- Is crouching
 			IsSliding:boolean, -- Is sliding 
+			IsResting:boolean -- Is resting 
 		},
 
 
@@ -29,9 +30,11 @@ export type MovementObjData = {
 			},
 
 			Dodge: {
-				Dir :  string, -- Direction of the dodge (forward, back, left, right and spot)
+				Dir :  Vector3, -- Direction of the dodge (forward, back, left, right and spot)
 				Type : string, -- Type of dodge (standard, airdash,)
+				Speed:number, -- How fast the dodge is going
 				Stop : () -> (),
+				
 			},
 
 			Climb: {
@@ -85,11 +88,13 @@ export type MovementObjData = {
 
 
 export type MovementObjMethods = {
-    BarTween: (self: MovementObj, infoTable: {[string]: any}) -> (),
-    BarTweenStop: (self: MovementObj, infoTable: {[string]: any}) -> (),
+    BarTween: (self: MovementObj, infoTable: {any}) -> (),
+    BarTweenStop: (self: MovementObj, infoTable: {any}) -> (),
     UpdateWalkTracks: (self:MovementObj) -> (),
     WalkCycle: (self:MovementObj) -> (),
     ClearWalkAnims: (self:MovementObj) -> (),
+	ServerRequest:(self:MovementObj, action:string) -> (),
+
 }
 
 

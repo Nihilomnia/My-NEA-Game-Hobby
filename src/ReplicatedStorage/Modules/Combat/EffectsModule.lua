@@ -124,8 +124,9 @@ function module.AfterImage(char, anim, type)
 
 			local animTrack = clone.Humanoid.Animator:LoadAnimation(anim)
 			animTrack:Play()
-			animTrack:AdjustSpeed(0) -- Freeze on first frame immediately
-			animTrack.TimePosition = 0
+			
+		
+			
 
 			-- Fade out all parts
 			local fadeInfo = TweenInfo.new(0.3, Enum.EasingStyle.Linear)

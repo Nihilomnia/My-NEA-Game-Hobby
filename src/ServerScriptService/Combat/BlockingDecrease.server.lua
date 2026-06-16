@@ -8,6 +8,9 @@ local CombatData = require(SS.Modules.Combat.Data.CombatData)
 local PLRModule = require(SS.Modules.Objects.plr)
 
 
+local Events = RS.Events
+local UI_Update:RemoteEvent = Events.UI_Update
+
 
 
 --[[Events]]
@@ -211,6 +214,7 @@ StatusEffectsModule.Signal:Connect(function(char, npc, action, effectName)
 		end
 
 		return (tick() - startTime) >= duration
+		
 	end
 
 	---------------------------------------------------
@@ -225,7 +229,7 @@ StatusEffectsModule.Signal:Connect(function(char, npc, action, effectName)
 		clock.Tick:Connect(function()
 			if isExpired() then
 				clock:Destroy()
-				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				StatusEffectsModule.RemoveStatusEffect(char,npc, effectName)
 				return
 			end
 
@@ -247,7 +251,7 @@ StatusEffectsModule.Signal:Connect(function(char, npc, action, effectName)
 		clock.Tick:Connect(function()
 			if isExpired() then
 				clock:Destroy()
-				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				StatusEffectsModule.RemoveStatusEffect(char,npc,effectName)
 				return
 			end
 
@@ -268,7 +272,7 @@ StatusEffectsModule.Signal:Connect(function(char, npc, action, effectName)
 		clock.Tick:Connect(function()
 			if isExpired() then
 				clock:Destroy()
-				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				StatusEffectsModule.RemoveStatusEffect(char, npc,effectName)
 				return
 			end
 
@@ -277,7 +281,7 @@ StatusEffectsModule.Signal:Connect(function(char, npc, action, effectName)
 
 			if hum.Health - dps <= 0 then
 				clock:Destroy()
-				StatusEffectsModule.RemoveStatusEffect(char, effectName)
+				StatusEffectsModule.RemoveStatusEffect(char, npc ,effectName)
 				return
 			end
 

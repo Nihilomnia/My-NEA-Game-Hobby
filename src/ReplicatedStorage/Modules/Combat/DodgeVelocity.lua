@@ -2,8 +2,8 @@ local DodgeVelocity = {}
 local currentDodgeForce = {}
 
 
-local DODGE_SPEED = 30
-local DODGE_TIME = 0.5
+local DODGE_SPEED = 85
+local DODGE_TIME = 0.2
 
 
 function DodgeVelocity.resetVelocity(char,Identifier)
