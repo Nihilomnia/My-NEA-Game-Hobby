@@ -1,12 +1,11 @@
 local module = {}
-local StarterPlayer = game:GetService("StarterPlayer")
-local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
-local SS = game:GetService("ServerStorage")
+local RSModules = RS.Modules
 
 
 
 
+local ClientMovementCoolDowns = {}
 
 
 
@@ -64,6 +63,46 @@ function module.CheckForAttributes(char, attack, swing, stun, ragdoll, equipped,
 		stop = true
 	end
 	return stop
+end
+
+function module.CheckStamina(char, action)
+	local Stamina = char:GetAttribute("Stamina")
+	local Fail = false
+
+	if action == "Dodge" then
+		if Stamina >= 20 then
+			Fail = false
+			return Fail
+		else
+			Fail = true
+			print(char, "Did not have enough stamina to perform a dodge")
+			return Fail
+		end
+	end
+
+	if action == "Swing" then
+		if Stamina >= 2 then
+			Fail = false
+			return Fail
+		else
+			Fail = true
+			return Fail
+		end
+	end
+
+	if action == "Climb" then
+		if Stamina >= 10 then
+			Fail = false
+			char:SetAttribute("Stamina", (Stamina - 10))
+			return Fail
+		else
+			print(char, "Did not have enough stamina to climb")
+			Fail = true
+			return Fail
+		end
+	end
+
+	return Fail
 end
 
 

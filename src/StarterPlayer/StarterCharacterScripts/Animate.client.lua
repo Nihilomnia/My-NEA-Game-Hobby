@@ -13,7 +13,6 @@ local Cast = require(RS.Modules.Cast)
 local Movement = require(RS.Modules.Movement.Objects.Movement)
 local Crouch = require(RS.Modules.Movement.Mechnanics.Crouch)
 local Wallrun = require(RS.Modules.Movement.Mechnanics.Wallrun)
-local Dodge = require(RS.Modules.Movement.Mechnanics.Dodge)
 --[Player Variables]--
 local plr = Players.LocalPlayer
 local char = plr.Character or plr.CharacterAdded:Wait()
@@ -60,11 +59,10 @@ local conn
 local canClimb = false
 local lastClimbState = nil
 local heldKeys = {}
-local IsClimbing = false
 local IsHoldingLedge = false
 local LedgeGrabCoolDown = false
-local isSprinting = false
-local IsWallRunning = false
+
+
 local debounce = false
 
 local LastKeyPressTime = 0
@@ -135,12 +133,13 @@ object:UpdateWalkTracks()
 -- WALL CLIMB
 -------------------------------------------------
 local function triggerWallClimb()
-	if IsWallRunning then
+	if object.IsActing.WallRunning then
 		return
 	end
-	grounded = false
-	IsClimbing = true
-	char:SetAttribute("IsClimbing", true)
+	object.States.IsGrounded = true
+	object.IsActing.Climbing = true
+	-- here i would use the request to update the servers movemnt obj and vaildate 
+	
 
 	WallClimbAnim:Play()
 
@@ -155,8 +154,8 @@ local function triggerWallClimb()
 	end)
 
 	task.delay(1, function()
-		IsClimbing = false
-		char:SetAttribute("IsClimbing", false)
+		object.IsActing.Climbing = false
+		-- I would use the request to update the server's movement obj
 	end)
 end
 
@@ -172,8 +171,8 @@ local function canSprint()
 		or char:GetAttribute("IsBlocking")
 		or char:GetAttribute("Attacking")
 		or char:GetAttribute("IsCrouching")
-		or IsClimbing
-		or IsWallRunning
+		or object.IsActing.Climbing
+		or object.IsActing.WallRunning
 		or object.States.IsCrouching
 	)
 end
@@ -184,8 +183,8 @@ local function ResetSpeedCheck()
 		and not char:GetAttribute("IsBlocking")
 		and not char:GetAttribute("Attacking")
 		and not char:GetAttribute("IsCrouching")
-		and not IsClimbing
-		and not IsWallRunning
+		and not object.IsActing.Climbing
+		and not object.IsActing.WallRunning
 
 	)
 end
@@ -214,7 +213,7 @@ local function selectSprintAnim()
 end
 
 local function toggleSprintState()
-	if isSprinting and not debounce  then
+	if object.IsActing.IsSprinting and not debounce  then
 		debounce = true
 
 		if ResetSpeedCheck() then
@@ -223,7 +222,7 @@ local function toggleSprintState()
 
 		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 })
 			:Play()
-		isSprinting = false
+		object.IsActing.IsSprinting = false
 
 		if SprintAnim then
 			SprintAnim:Stop()
@@ -236,7 +235,7 @@ local function toggleSprintState()
 		char:SetAttribute("Sprinting", false)
 		task.wait(0.1)
 		debounce = false
-	elseif not isSprinting and not debounce then
+	elseif not object.IsActing.IsSprinting and not debounce then
 		char:SetAttribute("Sprinting", true)
 
 		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
@@ -247,7 +246,7 @@ local function toggleSprintState()
 
 		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 80 })
 			:Play()
-		isSprinting = true
+		object.IsActing.IsSprinting = true
 
 		selectSprintAnim()
 
@@ -265,7 +264,7 @@ end
 
 local function OnCharStateChanged()
 	if not canSprint() or HRP.Anchored then
-		if isSprinting then
+		if object.IsActing.IsSprinting then
 			toggleSprintState()
 		end
 	end
@@ -274,7 +273,7 @@ end
 MovementEvent.OnClientEvent:Connect(function(action)
 	if action == "AstralDodge" then
 		local PastState = false
-		if isSprinting then
+		if object.IsActing.IsSprinting then
 			PastState = true
 			toggleSprintState()
 		end
@@ -285,7 +284,7 @@ MovementEvent.OnClientEvent:Connect(function(action)
 			:Play()
 
 		task.delay(5, function()
-			if not isSprinting then
+			if not object.IsActing.IsSprinting then
 				Hum.WalkSpeed = baseSpeed
 				TS:Create(
 					cam,
@@ -312,9 +311,6 @@ char:GetAttributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
 RunService.RenderStepped:Connect(function()
 	object:WalkCycle()
 end)
-
-
-
 
 
 local function FindFowardwall(char)
@@ -352,9 +348,6 @@ local function FindFowardwall(char)
 		lastClimbState = hitClimable
 	end
 end
-
-
-
 
 
 RunService.Heartbeat:Connect(function(dt)
@@ -421,8 +414,8 @@ UIS.InputBegan:Connect(function(input, isTyping)
 
 		FindFowardwall(char)
 
-		if object.States.IsInAir and heldKeys.W and canClimb and not IsClimbing then
-			if isSprinting then
+		if object.States.IsInAir and heldKeys.W and canClimb and not object.IsActing.Climbing then
+			if object.IsActing.IsSprinting then
 				toggleSprintState()
 				task.wait(0.15)
 			end
@@ -449,7 +442,7 @@ UIS.InputEnded:Connect(function(input, isTyping)
 
 	if key == Enum.KeyCode.W then
 		heldKeys.W = nil
-		if isSprinting then
+		if object.IsActing.IsSprinting then
 			toggleSprintState()
 		end
 	end
@@ -461,10 +454,10 @@ end)
 Hum.StateChanged:Connect(function(_, newState) -- other state stuff
 	if newState == Enum.HumanoidStateType.Freefall or newState == Enum.HumanoidStateType.Jumping then
 		object.States.IsInAir = true 
-		grounded = false
+		object.States.IsGrounded = false
 	elseif newState == Enum.HumanoidStateType.Landed then
 		object.States.IsInAir = false
-		grounded = true
+		object.States.IsGrounded = true
 	end
 end)
 
@@ -542,7 +535,7 @@ end
 
 for _, ledge in ledges do
 	ledge.Touched:Connect(function(part)
-		if LedgeGrabCoolDown or IsHoldingLedge or not IsClimbing then
+		if LedgeGrabCoolDown or IsHoldingLedge or not object.IsActing.Climbing then
 			return
 		end
 		if not part:IsDescendantOf(char) then
@@ -551,7 +544,7 @@ for _, ledge in ledges do
 
 		LedgeGrabCoolDown = true
 		IsHoldingLedge = true
-		IsClimbing = false
+		object.IsActing.Climbing = false
 		MovementEvent:FireServer("LedgeHold", ledge)
 
 		task.delay(0.1, function()

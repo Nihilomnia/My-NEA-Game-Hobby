@@ -1,12 +1,13 @@
 local Debris = game:GetService("Debris")
 local RS = game:GetService("ReplicatedStorage")
 local SFX = game:GetService("SoundService")
-local ServerStorage = game:GetService("ServerStorage")
+local SS = game:GetService("ServerStorage")
 
 local RSModules = RS.Modules
-local Helpful = require(ServerStorage.Modules.Other.Helpful)
+local Helpful = require(SS.Modules.Other.Helpful)
 local Movement = require(RSModules.Movement.Objects.Movement)
 local SoundsModule = require(RSModules.Combat.SoundsModule)
+local StatusEffects = require(SS.Modules.StatusEffectsModule)
 
 local Events = RS.Events
 local MovementEvent: RemoteEvent = Events.Movement
@@ -113,6 +114,11 @@ MovementEvent.OnServerEvent:Connect(function(plr, action, ...)
         
 		
 		char:SetAttribute("Dodging",true)
+	    StatusEffects.RemoveStatusEffect(char, nil, "Burn")
+		if Helpful.ManageStamina(char, action) then 
+			print("Obviously you performed a dodge while without the stamina so you spoofted it")
+			plr:Kick("Stamina Spoofing for Dodge")
+		end
 
 		local StartTime = workspace:GetServerTimeNow()
 		local StartPostion = HRP.Position
@@ -162,6 +168,10 @@ MovementEvent.OnServerEvent:Connect(function(plr, action, ...)
 
 		end)
 		
+		
+	end
+
+	if action == "DodgeCancel" then 
 		
 	end
 

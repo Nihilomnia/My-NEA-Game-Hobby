@@ -1,6 +1,6 @@
 local Type = require(script.Types)
 local RS  = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
+local Types = require(script.Types)
 local Events = RS.Events
 
 local MovementEvent:RemoteEvent  = Events.Movement
@@ -18,20 +18,10 @@ local BOTTOM_HIDDEN = UDim2.new(-0.034, 0, 1.1, 0)
 local Tilt_TOP_HIDDEN_LEFT = UDim2.new(-1.325, 0, -2, 0)
 local Tilt_BOTTOM_HIDDEN_LEFT = UDim2.new(-1.325, 0, 2, 0)
 
--- Normal (resting) positions
-local TOP_NORMAL = UDim2.new(-0.001, 0, -0.187, 0)
-local BOTTOM_NORMAL = UDim2.new(-0.034, 0, 0.75, 0)
-
--- Breathe positions
-local TOP_INHALE = UDim2.new(-0.001, 0, -0.15, 0)
-local BOTTOM_INHALE = UDim2.new(-0.034, 0, 0.72, 0)
-
-local tweenSlide = TweenInfo.new(0.35, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-local tweenBreathe = TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
 local Utils = require(script.Utils)
 
-local objTable = {} -- This sotres the movementobjs
+local objTable = {} -- This stores the movementobjs
 
 local function Ui_init(movementObJ: Type.MovementObj)
 	local plr = movementObJ.identifer
@@ -295,6 +285,29 @@ function Movement:ServerRequest(action)
 	if action == "CrouchEnd" then MovementEvent:FireServer(action) end
 	if action == "Dodge" then MovementEvent:FireServer(action) end
 	
+end
+
+
+
+
+function Movement:StateChecker(self:Types.MovementObj,action,Ignore)  -- Not complte yet
+	local Fail = false
+	if not action then warn("["..script.Name.."] - You forgot to add the action for a StateChecker") Fail = true return Fail end
+
+	if action == "Dodge" then 
+
+		if self.IsActing.Climbing then Fail = true return Fail end 
+		if self.IsActing.WallRunning then Fail = true return Fail end
+		if self.States.IsResting then Fail = true return Fail end 
+		if not Ignore and self.IsActing.Dodging then Fail = true return end 
+	end
+
+
+
+
+	
+
+	return Fail
 end
 
 

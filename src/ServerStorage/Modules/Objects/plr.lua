@@ -308,7 +308,7 @@ function plr.new(Player: Player, Slot: string):PLR?
 			WPN = 0,
 		},
 		Movement = MovementObj.new(Player),
-	}, plr) :: PLR
+	},  plr) :: PLR
 
 	local profile
 		while true do

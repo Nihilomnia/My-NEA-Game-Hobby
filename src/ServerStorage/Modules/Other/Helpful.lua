@@ -20,7 +20,7 @@ local IdleAnims = Combat_Data.IdleAnims
 local BlockingAnims = Combat_Data.BlockingAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 local WeaponsWeld = RS.Welds.Weapons
-local npc_table = {}
+
 
 -- Constants
 local k = 0.02 -- This is the rate of the drop off for DEX Crit Rate Scaling
@@ -124,7 +124,6 @@ end
 
 function module.ResetMobility(char)
 	local hum = char.Humanoid
-	local plr = Players:GetPlayerFromCharacter(char)
 	if char:GetAttribute("IsLow") and char:GetAttribute("InCombat") then
 		if char:GetAttribute("Sprinting") then
 			hum.WalkSpeed = StarterPlayer.CharacterWalkSpeed * 1.25
@@ -171,10 +170,11 @@ function module.CheckForStatus(
 	end
 
 	if checkForDodging and not stop then
-		--if eChar:GetAttribute("Dodging") then BlockingModule.Dodging(char,eChar,hitPos) stop = true end
+		if eChar:GetAttribute("Dodging") then BlockingModule.Dodging(char,eChar,hitPos) 
+		stop = true end
 	end
 
-	if eChar.Humanoid.Health <= 0 or eChar:GetAttribute("Iframes") or eChar:GetAttribute("Dodging") then
+	if eChar.Humanoid.Health <= 0 or eChar:GetAttribute("Iframes")  then
 		stop = true
 	end
 
@@ -250,6 +250,11 @@ function module.Ragdoll(char, ragdollTime)
 	end)
 end
 
+
+
+
+
+
 function module.ManageStamina(char, action)
 	local Stamina = char:GetAttribute("Stamina")
 	local Fail = false
@@ -299,7 +304,6 @@ end
 function module.RefundStamina(char, action)
 	local Stamina = char:GetAttribute("Stamina")
 	local Fail = false
-	local plr = Players:GetPlayerFromCharacter(char)
 
 	if action == "Dodge" then
 		char:SetAttribute("Stamina", (Stamina + 20))

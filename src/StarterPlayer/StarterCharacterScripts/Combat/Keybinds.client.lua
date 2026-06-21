@@ -3,7 +3,7 @@ local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
 
-local DodgeVelocity = require(RS.Modules.Combat.DodgeVelocity)
+
 local Movement = require(RS.Modules.Movement.Objects.Movement)
 local Dodge = require(RS.Modules.Movement.Mechnanics.Dodge)
 
@@ -16,7 +16,6 @@ local Transform = Events.Tranform
 local WeaponsEvent= Events.WeaponsEvent
 local combatEvent:RemoteEvent = Events.Combat
 local Moves_Event = Events.SkillEvent
-local DodgeEvent = Events.Dodge
 local updateEvent = Events.UpdateMovement
 local InventoryEvent = Events.InventoryEvent
 
@@ -159,17 +158,6 @@ end
 
 
 
-DodgeEvent.OnClientEvent:Connect(function(action)
-    if action == "DodgeCancelConfirmed" then
-        DodgeVelocity.resetVelocity(char,plr)
-    end
-
-	if action == "Dodge" then
-		DodgeVelocity.dodge(char,plr,lastSentKey)
-	end
-end)
-
-
 
 uis.InputBegan:Connect(function(input)
     if isActuallyTyping() then return end
@@ -178,9 +166,7 @@ uis.InputBegan:Connect(function(input)
         if char:GetAttribute("Dodging") then
             Dodge.DodgeCancel(moveentobj)
         elseif char:GetAttribute("Swing") then
-			combatEvent:FireServer("Feint")
-		else
-            blockingEvent:FireServer("Parry")
+			combatEvent:FireServer("Feint")      
         end
     end
 end)
@@ -207,7 +193,11 @@ uis.InputBegan:Connect(function(key,istyping)
 	if char:GetAttribute("IsTransforming") then return end
 	
 	if key.KeyCode == Enum.KeyCode.F then
-		startBlocking()
+		if char:GetAttribute("Parrying") or char:GetAttribute("HyprParry") then
+			startBlocking()
+		else
+			blockingEvent:FireServer("Parry")
+		end
 	end
 end)
 
@@ -251,9 +241,9 @@ uis.InputEnded:Connect(function(input,isTyping)
 
 end)
 -----------------------------------------------------------------------------------------
---- Attack Mechanics (Swinging and Skills)
+--- Attack Mechanics (Swinging, Blink and Skills)
 -----------------------------------------------------------------------------------------
---- Swinging
+--- Swinging and Blink
 
 local function MouseCast()
 	local mousepos = uis:GetMouseLocation()
@@ -307,8 +297,10 @@ RunService.RenderStepped:Connect(function()
 		enemy = target
 		if enemy then
 			hl.Parent = enemy
+			hl.Adornee =nil
 		else
 		  hl.Parent = nil
+		  hl.Adornee = nil
 		end
 
 	end

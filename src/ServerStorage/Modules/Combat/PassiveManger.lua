@@ -1,8 +1,6 @@
 local PassiveManger = {}
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
-
 
 local SSModules = SS.Modules
 local Events = RS.Events
@@ -10,14 +8,29 @@ local UI_Update = Events.UI_Update
 local VFX_Event = Events.VFX
 local Movement_Event = Events.Movement
 
-local HelpfulModule = require(SSModules.Other.Helpful)
-local DataManager = require(ServerScriptService.Data.Modules.DataManager)
 
 
 -- Maths Contants
 local p = 2.0 -- Soft Cap Exponent for Crit Dmg
 local BaseCritDmg = 1.5 -- Base Crit Dmg Multiplier
 local MaxBonus = 1.7 -- Max Crit Dmg Multiplier
+
+local CritDropoffRate = 0.02
+local BaseCritRate = 0.15 -- In %
+local MaxCritRate = 0.45 -- Max Crit from DEX
+
+local function CalcCrit(DEX: number)
+	local roll = math.random(1, 100)
+
+	local CritChance = BaseCritRate + (MaxCritRate - BaseCritRate) * (1 - math.exp(-CritDropoffRate * DEX))
+	CritChance = CritChance * 100
+
+	if roll <= CritChance then
+		return true
+	else
+		return false
+	end
+end
 
 function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) -- This refers to when a light attack lands on char
 	--[[
@@ -40,7 +53,7 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 	local CritDmgMult = BaseCritDmg + (MaxBonus - BaseCritDmg) * (DEX_Points / 99) ^ p
 	local Attack_Dodged = false
 	local damageAlreadydealt = false
-	local Profile 
+	local Profile
 
 	local MultipliedDamage = damage * (1 + DamageModifiers / 100)
 	MultipliedDamage = MultipliedDamage * (1 - TotalRes)
@@ -48,7 +61,7 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 	if Attacker:GetAttribute("CritTest") then
 		isCrit = true
 	else
-		isCrit = HelpfulModule.CalculateCrit(DEX_Points)
+		isCrit = CalcCrit(DEX_Points)
 		print(isCrit)
 	end
 
@@ -69,9 +82,9 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 				TargetHum:TakeDamage(MultipliedDamage)
 				Attack_Dodged = true
 				damageAlreadydealt = true
-            else
-                TargetHum:TakeDamage(MultipliedDamage)
-                damageAlreadydealt = true
+			else
+				TargetHum:TakeDamage(MultipliedDamage)
+				damageAlreadydealt = true
 			end
 		end
 	end
@@ -97,7 +110,9 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 			task.spawn(function()
 				while totalDamage < MultipliedDamage and Karma > 0 and TargetHum and TargetHum.Health > 0 do
 					Karma = Defender:GetAttribute("Karma")
-                    if Karma <= 0 then break end 
+					if Karma <= 0 then
+						break
+					end
 					TargetHum:TakeDamage(dotDamage)
 					totalDamage += dotDamage
 
@@ -112,9 +127,14 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 				end
 				damageAlreadydealt = true
 				if Defender_plr then
-					UI_Update:FireClient(Defender_plr, totalDamage, TargetHum.Health, TargetHum.MaxHealth, MultipliedDamage)
+					UI_Update:FireClient(
+						Defender_plr,
+						totalDamage,
+						TargetHum.Health,
+						TargetHum.MaxHealth,
+						MultipliedDamage
+					)
 				end
-				
 			end)
 		end
 	end
@@ -135,7 +155,7 @@ function PassiveManger.M1LandedPassive(Attacker, Defender, damage, STAT_POINTS) 
 			if Attacker:GetAttribute("CritTest") then
 				isCrit = true
 			else
-				isCrit = HelpfulModule.CalculateCrit(DEX_Points)
+				isCrit = CalcCrit(DEX_Points)
 				print(isCrit)
 			end
 
@@ -151,63 +171,71 @@ end
 function PassiveManger.DefensivePassive(char, damage) -- This refers to when char blocks an attack
 end
 
+function PassiveManger.DodgePassive(char) -- This for when the char starts a dodge 
+	local plr = game.Players:GetPlayerFromCharacter(char)
+	local Hum = char.Humanoid
+	local Element = char:GetAttribute("Element")
+	local Second_ModeCheck = char:GetAttribute("Mode2")
 
-function PassiveManger.DodgePassive(char)
-    local plr = game.Players:GetPlayerFromCharacter(char)
-    local Hum = char.Humanoid
-    local Element = char:GetAttribute("Element")
-    local Second_ModeCheck = char:GetAttribute("Mode2")
+	if Element == "Astral" and Second_ModeCheck then
+		if char:GetAttribute("AstralDodgeActive") then
+			return false
+		end
+		char:SetAttribute("AstralDodgeActive", true)
 
-    if Element == "Astral" and Second_ModeCheck then
-        if char:GetAttribute("AstralDodgeActive") then return false end
-        char:SetAttribute("AstralDodgeActive", true)
+		-- Cache original speed so restore is accurate
+		local originalSpeed = Hum.WalkSpeed
 
-        -- Cache original speed so restore is accurate
-        local originalSpeed = Hum.WalkSpeed
-
-        -- Ghost out
-        for _, v in ipairs(char:GetDescendants()) do
-            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
-                v.Transparency = 1
-            end
-        end
+		-- Ghost out
+		for _, v in ipairs(char:GetDescendants()) do
+			if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+				v.Transparency = 1
+			end
+		end
 
 		if plr then
 			Movement_Event:FireClient(plr, "AstralDodge")
 		else
-            Hum.WalkSpeed = originalSpeed * 8	
+			Hum.WalkSpeed = originalSpeed * 8
 		end
 
-        
-        char:SetAttribute("Iframes", true)
+		char:SetAttribute("Iframes", true)
 
 		VFX_Event:FireAllClients("AfterImage", char, nil, "AstralDodge")
 
-        task.delay(5, function()
-            if not char or not char:FindFirstChild("Humanoid") then return end
+		task.delay(5, function()
+			if not char or not char:FindFirstChild("Humanoid") then
+				return
+			end
 
-            -- Restore visibility
-            for _, v in ipairs(char:GetDescendants()) do
-                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
-                    v.Transparency = 0
-                end
-            end
+			-- Restore visibility
+			for _, v in ipairs(char:GetDescendants()) do
+				if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+					v.Transparency = 0
+				end
+			end
 
-            Hum.WalkSpeed = originalSpeed -- Restore exact value
-            char:SetAttribute("Iframes", false)
-            char:SetAttribute("AstralDodgeActive", false)
-        end)
+			Hum.WalkSpeed = originalSpeed -- Restore exact value
+			char:SetAttribute("Iframes", false)
+			char:SetAttribute("AstralDodgeActive", false)
+		end)
 
-        return true -- Dodge passive fired
-    end
+		return true -- Dodge passive fired
+	end
 
-    return false
+	return false
+end
+
+function PassiveManger.DodgeLanded(char) -- As the name impled this is when a char succesfully dodged something
+	
 end
 
 function PassiveManger.BackStabPassive(char, damage) -- This refers to when char lands a backstab attack
 end
 
-function PassiveManger.OnSkillLanded(attacker, defender, damage, skill) --
+function PassiveManger.OnSkillLanded(attacker, defender, damage, skill) -- this
 end
+
+
 
 return PassiveManger

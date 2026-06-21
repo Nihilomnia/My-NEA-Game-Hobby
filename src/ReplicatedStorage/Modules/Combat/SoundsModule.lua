@@ -1,8 +1,8 @@
 local module = {}
 
 local Debris = game:GetService("Debris")
-function module.PlaySound(Sound, Parent)
-	local Sound = Sound:Clone()
+function module.PlaySound(TargetSound, Parent)
+	local Sound = TargetSound:Clone()
 	Sound.Parent = Parent
 	Sound:Play()
 	

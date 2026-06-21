@@ -1,14 +1,59 @@
 local module = {}
 
 local Debris = game:GetService("Debris")
-RS = game:GetService("ReplicatedStorage")
-TS = game:GetService("TweenService")
+local RS = game:GetService("ReplicatedStorage")
+local TS = game:GetService("TweenService")
+local PLayers = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localplr = PLayers.LocalPlayer
+local cam = workspace.CurrentCamera
 
 local AnimationsFolder = RS.Animations
 local ElementAnims = AnimationsFolder.Element
 
-function module.EmitEffect(effect, cframe, destroytime)
-	local effect = effect:Clone()
+
+
+local hiddenElements = {}
+
+
+function module.HideUI(char)
+	local plr = PLayers:GetPlayerFromCharacter(char)
+	
+	if plr and plr == localplr then
+		local playerGui = plr:FindFirstChild("PlayerGui")
+		if playerGui then
+			for _, gui in ipairs(playerGui:GetChildren()) do
+				if gui:IsA("ScreenGui") and gui.Enabled then
+					gui.Enabled = false
+					table.insert(hiddenElements, gui)
+				end
+			end
+		end
+	end
+
+	if char then
+		for _, gui in ipairs(char:GetDescendants()) do
+			if (gui:IsA("BillboardGui") or gui:IsA("SurfaceGui")) and gui.Enabled then
+				gui.Enabled = false
+				table.insert(hiddenElements, gui)
+			end
+		end
+	end
+end
+
+function module.ShowUI()
+	for _, gui in ipairs(hiddenElements) do
+		if gui and gui.Parent then
+			gui.Enabled = true
+		end
+	end
+	table.clear(hiddenElements)
+end
+
+
+
+function module.EmitEffect(Targeteffect, cframe, destroytime)
+	local effect = Targeteffect:Clone()
 	effect.Parent = workspace.VFX
 	effect.CFrame = cframe
 
@@ -23,7 +68,20 @@ end
 
 local targetObject = nil
 
-function module.triggerEffects(parentObject, char)
+function module.Highlight(char, duration, FillColor, OutlineColor)
+	local Highlight = Instance.new("Highlight")
+	Highlight.Parent = char
+	Highlight.DepthMode = Enum.HighlightDepthMode.Occluded
+	Highlight.FillTransparency = 0 -- was .2
+	Highlight.FillColor = FillColor
+	Highlight.OutlineTransparency = 0.2
+	Highlight.OutlineColor = OutlineColor
+	local TweenGoal = { FillTransparency = 1, OutlineTransparency = 1 }
+	TS:Create(Highlight, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), TweenGoal):Play()
+	Debris:AddItem(Highlight, duration)
+end
+
+function module.triggerEffects(parentObject, char, Iswing)
 	local HRP = char:FindFirstChild("HumanoidRootPart")
 	if not HRP then
 		warn("No HRP found!")
@@ -33,6 +91,8 @@ function module.triggerEffects(parentObject, char)
 	-- Clone the whole effect object
 	local EffectPart = parentObject:Clone()
 	EffectPart.Parent = workspace.VFX
+
+	-- i need to add offset customazsation
 
 	EffectPart.CFrame = HRP.CFrame * CFrame.new(0, 0, -0.894) * (parentObject.CFrame - parentObject.Position)
 
@@ -107,6 +167,7 @@ function module.triggerEffects(parentObject, char)
 			EffectPart:Destroy()
 		end
 	end)
+	return EffectPart
 end
 
 function module.AfterImage(char, anim, type)
@@ -114,7 +175,6 @@ function module.AfterImage(char, anim, type)
 		local clone = RS.Effects.AfterImage:Clone()
 		clone.Parent = workspace.VFX
 		clone.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame
-	
 
 		task.delay(0.09, function()
 			local humanoid = clone:FindFirstChildOfClass("Humanoid")
@@ -124,9 +184,6 @@ function module.AfterImage(char, anim, type)
 
 			local animTrack = clone.Humanoid.Animator:LoadAnimation(anim)
 			animTrack:Play()
-			
-		
-			
 
 			-- Fade out all parts
 			local fadeInfo = TweenInfo.new(0.3, Enum.EasingStyle.Linear)
@@ -184,7 +241,7 @@ function module.AfterImage(char, anim, type)
 					Highlight.FillColor = Color3.fromRGB(119, 0, 255)
 					Highlight.OutlineTransparency = 0.5
 					Highlight.OutlineColor = Color3.fromRGB(113, 5, 255)
-					local PointLight = Instance.new("PointLight",clone.HumanoidRootPart)
+					local PointLight = Instance.new("PointLight", clone.HumanoidRootPart)
 					PointLight.Brightness = 2.5
 					PointLight.Color = Color3.fromRGB(119, 0, 255)
 					PointLight.Range = 6
@@ -206,12 +263,6 @@ function module.AfterImage(char, anim, type)
 						if part:IsA("BasePart") or part:IsA("MeshPart") and part.Name ~= "HumanoidRootPart" then
 							if part:IsA("MeshPart") then
 								part.TextureID = ""
-								local sa = part:FindFirstChildOfClass("SurfaceAppearance")
-								if sa then
-									--sa.ColorMap = ""
-									--sa.MetalnessMap = ""
-									--sa.RoughnessMap = ""
-								end
 							end
 
 							part.Transparency = 0.5
@@ -260,7 +311,7 @@ function module.AfterImage(char, anim, type)
 	end
 end
 
-function module.HighlightBlink(target, fillcolor, duration,blinkSpeed)
+function module.HighlightBlink(target, fillcolor, duration, blinkSpeed)
 	print("Started highlight", target)
 	local hl = Instance.new("Highlight")
 	hl.FillColor = fillcolor
@@ -274,14 +325,21 @@ function module.HighlightBlink(target, fillcolor, duration,blinkSpeed)
 	local blinkTime = blinkSpeed or 0.5 -- Total time for one full blink cycle (0.25 out + 0.25 back)
 
 	while elapsed < duration do
-		print(duration)
 		-- Fade out
-		local blinkTween = TS:Create(hl, TweenInfo.new(0.25, Enum.EasingStyle.Linear), { FillTransparency = 0.5, OutlineTransparency = 0.5 })
+		local blinkTween = TS:Create(
+			hl,
+			TweenInfo.new(0.25, Enum.EasingStyle.Linear),
+			{ FillTransparency = 0.5, OutlineTransparency = 0.5 }
+		)
 		blinkTween:Play()
 		blinkTween.Completed:Wait() -- Wait for fade out to finish
 
 		-- Fade back in
-		local resetTween = TS:Create(hl, TweenInfo.new(0.25, Enum.EasingStyle.Linear), { FillTransparency = 0, OutlineTransparency = 0 })
+		local resetTween = TS:Create(
+			hl,
+			TweenInfo.new(0.25, Enum.EasingStyle.Linear),
+			{ FillTransparency = 0, OutlineTransparency = 0 }
+		)
 		resetTween:Play()
 		resetTween.Completed:Wait() -- Wait for fade in to finish
 
@@ -292,7 +350,88 @@ function module.HighlightBlink(target, fillcolor, duration,blinkSpeed)
 	print("Finished highlight")
 end
 
+function module.HyprVfx(char, echar, isMainSource)
+	if not char then
+		return
+	end
+	local HRP: BasePart = char:FindFirstChild("HumanoidRootPart")
+	if not HRP then
+		return
+	end
 
+	local Middlepart
+	if isMainSource then
+		local VFXpart = RS.Effects.Combat.HyprParryVFX
+		Middlepart = module.triggerEffects(VFXpart, char)
+	end
+
+	local hl = Instance.new("Highlight")
+	hl.FillTransparency = 1
+	hl.OutlineTransparency = 0.4
+	hl.OutlineColor = Color3.fromRGB(216, 181, 55)
+	hl.Parent = char
+
+	Debris:AddItem(hl, 0.5)
+
+	local middlePosition: Vector3 = HRP.Position
+
+	if Middlepart then
+		local middleAttachment = Middlepart:FindFirstChild("Middle", true)
+		if middleAttachment then
+			middlePosition = middleAttachment.WorldPosition
+			print("The Attachment was used")
+		else
+			middlePosition = Middlepart.Position
+			print("The  Part was used ")
+		end
+	elseif echar and echar:FindFirstChild("HumanoidRootPart") then
+		middlePosition = HRP.Position:Lerp(echar.HumanoidRootPart.Position, 0.5)
+		print("The hrp was used")
+	end
+
+	local plrflag = PLayers:GetPlayerFromCharacter(char)
+
+	if plrflag == localplr then
+		local camoffset = CFrame.new(4, -1.5, 9)
+		local camworldpos = (HRP.CFrame * camoffset).Position
+		local TargetCframe = CFrame.lookAt(camworldpos, middlePosition)
+
+		cam.CameraType = Enum.CameraType.Scriptable
+		cam.CFrame = TargetCframe
+		cam.FieldOfView = 60
+		module.HideUI(char)
+
+		task.wait(0.2)
+
+		local trackingConnection
+		local fovInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		local fovTween = TS:Create(cam, fovInfo, { FieldOfView = 75 })
+		
+		trackingConnection = RunService.RenderStepped:Connect(function()
+			if char and char.Parent and echar and echar.Parent then
+				local currentHRP = char.HumanoidRootPart
+				local currentEHRP = echar.HumanoidRootPart
+				
+				local liveMiddle = currentHRP.Position:Lerp(currentEHRP.Position, 0.5)
+				local liveCamWorldPos = (currentHRP.CFrame * camoffset).Position
+				
+				cam.CFrame = CFrame.lookAt(liveCamWorldPos, liveMiddle)
+			else
+				trackingConnection:Disconnect()
+			end
+		end)
+
+		fovTween:Play()
+
+		fovTween.Completed:Connect(function()
+			if trackingConnection then
+				trackingConnection:Disconnect()
+			end
+			cam.CameraType = Enum.CameraType.Custom
+			module.ShowUI()
+		end)
+	end
+end
 module.DestroyEffects = function(char, effect)
 	for i, v in pairs(workspace.VFX:GetChildren()) do
 		if v.Name == effect.Name then

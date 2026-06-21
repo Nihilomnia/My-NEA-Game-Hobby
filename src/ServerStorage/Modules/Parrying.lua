@@ -15,67 +15,85 @@ local Combat_Data = require(SSModule.Combat.Data.CombatData)
 -- Tables
 local ParryAnims = Combat_Data.ParryAnims
 local Success = Combat_Data.SuccessfulParry
+local HyprSucess = Combat_Data.SuccessfulHyprParry
 
+local ParryCD = {
+	Hypr = {},
+	Reg = {},
+}
 
 function ParryModule.ParryAttempt(char, npc)
 	local Identifer = Players:GetPlayerFromCharacter(char) or npc
 	local hum = char.Humanoid
 	local currentWeapon = char:GetAttribute("CurrentWeapon")
 	local WeaponModel = char:FindFirstChild(currentWeapon)
-	if char:GetAttribute("ParryCD") then return end
-	local isStunned = char:GetAttribute("Stunned")
+	if ParryCD.Reg[Identifer] and tick() - ParryCD.Reg[Identifer] < 1.2 then
+		return
+	end
 
-	if isStunned and char:GetAttribute("Parrying") then return end
+	if char:GetAttribute("Parrying") or char:GetAttribute("HyprParry") then
+		return
+	end
 
-	  if not isStunned then
-        -- normal check — can't parry while attacking, swinging, ragdolled, etc.
-        if HelpfullModule.CheckForAttributes(char, true, true, false, true, true, true, true) then
-            return
-        end
-    else
-        -- bypassing hitstun — but still block on ragdoll, unequipped, dodging
-        if HelpfullModule.CheckForAttributes(char, false, false, false, true, true, false, true) then
-            return
-        end
-        -- clear leftover attack flags from the swing that got parried
-    end
+	if HelpfullModule.CheckForAttributes(char, true, true, false, true, true, true, true) then
+		return
+	end
 
-	VFX_Event:FireAllClients("HighlightBlink", WeaponModel, Color3.new(0.980392, 0.380392, 0.003922), 0.25, 4)
+	
 
 	char:SetAttribute("Parrying", true)
-	char:SetAttribute("HyprParry", true)
 	char:SetAttribute("Stunned", true)
-	hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed / 3)
-	hum.JumpHeight = 0
-
+	
 	ParryAnims[Identifer] = hum:LoadAnimation(WeaponAnimsFolder[currentWeapon].Blocking.TryParry)
 	ParryAnims[Identifer]:Play()
+	
+	if not ParryCD.Hypr[Identifer] or tick() - ParryCD.Hypr[Identifer] >  1.7 then  -- Reversing the if statment to see if that works 
+		char:SetAttribute("HyprParry", true)
+		VFX_Event:FireAllClients("HighlightBlink", WeaponModel, Color3.new(0.980392, 0.380392, 0.003922), 0.30, 3, 0.3)		
+	end
+	
+	
+	hum.WalkSpeed = (StarterPlayer.CharacterWalkSpeed / 2.5)
+	hum.JumpHeight = 0
+
+
 
 	ParryAnims[Identifer]:GetMarkerReachedSignal("HyprParryOver"):Connect(function()
 		char:SetAttribute("HyprParry", false)
+		ParryCD.Hypr[Identifer] = tick()
 	end)
-	
 
 	ParryAnims[Identifer]:GetMarkerReachedSignal("ParryOver"):Connect(function()
 		char:SetAttribute("Parrying", false)
+		ParryCD.Reg[Identifer] = tick()
 	end)
 
-
 	ParryAnims[Identifer].Ended:Connect(function()
+		if HyprSucess[Identifer] then
+			HelpfullModule.ResetMobility(char)
+			char:SetAttribute("Parrying", false)
+			char:SetAttribute("HyprParry", false)
+			char:SetAttribute("Stunned", false)
+			ParryCD.Reg[Identifer] = nil
+			ParryCD.Hypr[Identifer] = nil
+			HyprSucess[Identifer] = nil
+			return
+		end
+    
+
 		if Success[Identifer] then
 			HelpfullModule.ResetMobility(char)
 			char:SetAttribute("Parrying", false)
 			char:SetAttribute("Stunned", false)
-			char:SetAttribute("ParryCD", false)
+			ParryCD.Reg[Identifer] = nil
 			Success[Identifer] = nil
 			return
 		end
 
+	
+
 		HelpfullModule.ResetMobility(char)
 		char:SetAttribute("Stunned", false)
-		char:SetAttribute("ParryCD", true)
-		task.wait(1.2)
-		char:SetAttribute("ParryCD", false)
 	end)
 end
 

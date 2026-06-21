@@ -94,6 +94,7 @@ export type MovementObjMethods = {
     WalkCycle: (self:MovementObj) -> (),
     ClearWalkAnims: (self:MovementObj) -> (),
 	ServerRequest:(self:MovementObj, action:string) -> (),
+	StateChecker:(self:MovementObj,action:string,Ignore:boolean) -> ()
 
 }
 

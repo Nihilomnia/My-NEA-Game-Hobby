@@ -31,20 +31,17 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 		local char, effect = ...
 		CombatEffectsModule.DestroyEffects(char, effect)
 	end
+
+	if action == "HyprParry" then 
+		local char,echar = ...
+		CombatEffectsModule.HyprVfx(char,echar,true)
+		CombatEffectsModule.HyprVfx(echar,char,false)
+	end
 	
 	if	action == "Highlight" then
 		local char, duration, FillColor, OutlineColor = ...
 		
-		local Highlight = Instance.new("Highlight")
-		Highlight.Parent = char
-		Highlight.DepthMode = Enum.HighlightDepthMode.Occluded
-		Highlight.FillTransparency = 0 -- was .2
-		Highlight.FillColor = FillColor
-		Highlight.OutlineTransparency = 0.2
-		Highlight.OutlineColor = OutlineColor
-		local TweenGoal = {FillTransparency= 1, OutlineTransparency = 1}
-		TS:Create(Highlight,TweenInfo.new(duration,Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), TweenGoal):Play()
-		Debris:AddItem(Highlight,duration)
+		CombatEffectsModule.Highlight(char, duration, FillColor, OutlineColor)
 	end
 
 	if action  ==  "HighlightBlink" then
