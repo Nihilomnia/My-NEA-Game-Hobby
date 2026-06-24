@@ -21,7 +21,6 @@ local BlockingAnims = Combat_Data.BlockingAnims
 local EquipDebounce = Combat_Data.EquipDebounce
 local WeaponsWeld = RS.Welds.Weapons
 
-
 -- Constants
 local k = 0.02 -- This is the rate of the drop off for DEX Crit Rate Scaling
 local BaseCritRate = 0.15 -- Base Crit Rate %
@@ -150,13 +149,17 @@ function module.CheckForStatus(
 	hitPos,
 	CheckForBlocking,
 	CheckForParrying,
-	checkForDodging
+	checkForDodging,
+	checkForHyprParry
 )
 	local stop = false
 	local Result = "HitLanded"
 
 	if CheckForParrying and not stop then
-		if eChar:GetAttribute("Parrying") or eChar:GetAttribute("HyprParrying") and module.CheckInFront(char, eChar) then
+		if
+			eChar:GetAttribute("Parrying")
+			or eChar:GetAttribute("HyprParrying") and module.CheckInFront(char, eChar)
+		then
 			Result = BlockingModule.Parrying(char, eChar, hitPos, npc)
 			stop = true
 		end
@@ -170,11 +173,20 @@ function module.CheckForStatus(
 	end
 
 	if checkForDodging and not stop then
-		if eChar:GetAttribute("Dodging") then BlockingModule.Dodging(char,eChar,hitPos) 
-		stop = true end
+		if eChar:GetAttribute("Dodging") then
+			BlockingModule.Dodging(char, eChar, hitPos)
+			stop = true
+		end
 	end
 
-	if eChar.Humanoid.Health <= 0 or eChar:GetAttribute("Iframes")  then
+	if checkForHyprParry and not stop then
+		if eChar:GetAttribute("HyprParry") then
+			BlockingModule.HyprParrying(char, eChar, hitPos, npc)
+			stop = true
+		end
+	end
+
+	if eChar.Humanoid.Health <= 0 or eChar:GetAttribute("Iframes") then
 		stop = true
 	end
 
@@ -249,11 +261,6 @@ function module.Ragdoll(char, ragdollTime)
 		char:SetAttribute("iframes", false)
 	end)
 end
-
-
-
-
-
 
 function module.ManageStamina(char, action)
 	local Stamina = char:GetAttribute("Stamina")

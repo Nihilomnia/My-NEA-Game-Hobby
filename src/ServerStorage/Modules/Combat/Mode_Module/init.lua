@@ -324,7 +324,7 @@ function module.Revert(char, npc)
 	if char:GetAttribute("Mode1") then
 		EquipDebounce[Identifier] = true
 		char:SetAttribute("iframes", true)
-		char:SetAttribute("IsTransforming", true)
+		char:SetAttribute("IsTransforming", false)
 
 		local newWeapon = "Fists"
 		TransformAnims[Identifier] = hum.Animator:LoadAnimation(WeaponsAnimations.Transformations.Revert)

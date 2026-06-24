@@ -21,13 +21,20 @@ local ParryAnims = Combat_Data.ParryAnims
 local SucessfulParry = Combat_Data.SuccessfulParry
 local SuccssfulHypr = Combat_Data.SuccessfulHyprParry
 
+
 local VFX_Event: RemoteEvent = Events.VFX
+local MovementEvent: RemoteEvent = Events.Movement
 
 local SoundsModule = require(RSModules.Combat.SoundsModule)
 local ServerCombatModule = require(SSModule.CombatModule)
 local WeaponStatsModule = require(SSModule.Dictionaries.WeaponStats)
 local PassiveManger = require(SSModule.Combat.PassiveManger)
 local StunHandler = require(SSModule.Other.StunHandlerV2)
+
+
+
+
+
 
 local function ResetMobility(char)
 	local hum = char.Humanoid
@@ -50,41 +57,114 @@ local function ResetMobility(char)
 end
 
 
-local function HyprKnockback(Char)
-	if not Char then
-		return
-	end
-	local HRP: BasePart = Char:FindFirstChild("HumanoidRootPart")
-	local hum = Char:FindFirstChildOfClass("Humanoid")
-	if not HRP or not hum then
-		return
-	end
 
-	local att = HRP:FindFirstChild("HyprAtt") or Instance.new("Attachment")
-	att.Name = "HyprAtt"
-	att.Parent = HRP
 
-	local backwardDirection = -HRP.CFrame.LookVector
+local function FreezeAnims(hum: Humanoid, duration: number)
+    local animator = hum:FindFirstChildOfClass("Animator") or Instance.new("Animator", hum)
+    
+    -- 1. Snapshot the track states by their Asset ID and current frame time
+    local frozenSnapshots = {}
+    
+    for _, anim in ipairs(animator:GetPlayingAnimationTracks()) do
+        local animObject = anim.Animation
+        if animObject and animObject.AnimationId ~= "" then
+            -- Save everything needed to recreate/resume the animation state
+            table.insert(frozenSnapshots, {
+                animationId = animObject.AnimationId,
+                timePosition = anim.TimePosition,
+                speed = anim.Speed > 0 and anim.Speed or 1,
+                weight = anim.WeightTarget
+            })
+            anim:AdjustSpeed(0)
+        end
+    end
 
-	local popUpwardForce = 22.6
-	local popBackwardForce = 36.1
-	local impulseVector = (backwardDirection * popBackwardForce) + Vector3.new(0, popUpwardForce, 0)
-	
-	HRP:ApplyImpulse(impulseVector * HRP:GetMass())
+    -- 2. Catch tracks triggered mid-hitstop
+    local newTrackConnection = animator.AnimationPlayed:Connect(function(track)
+        local animObject = track.Animation
+        if animObject and animObject.AnimationId ~= "" then
+            table.insert(frozenSnapshots, {
+                animationId = animObject.AnimationId,
+                timePosition = 0,
+                speed = 1,
+                weight = 1
+            })
+            track:AdjustSpeed(0)
+        end
+    end)
 
-	local slideSpeed = 56.7
-	local lv = Instance.new("LinearVelocity")
-	lv.Name = "HyprForce"
-	lv.Attachment0 = att
-	lv.MaxForce = math.huge
-	lv.VectorVelocity = backwardDirection * slideSpeed
-	lv.Parent = HRP
+    -- Hitstop duration
+    task.wait(duration)
+    newTrackConnection:Disconnect()
 
-	Debris:AddItem(lv, 0.25)
-	Debris:AddItem(att,0.25)
+    -- 3. Restore tracks using the immutable IDs
+    print("Attempting to unfreeze tracks from snapshots... Total logged:", #frozenSnapshots)
+    
+    -- Clear out any dead server tracks to rebuild cleanly
+    for _, anim in ipairs(animator:GetPlayingAnimationTracks()) do
+        anim:Stop(0)
+    end
+
+    for _, snapshot in ipairs(frozenSnapshots) do
+        -- Create a clean tracking instance using the saved ID
+        local newAnimInstance = Instance.new("Animation")
+        newAnimInstance.AnimationId = snapshot.animationId
+        
+        local success, newTrack = pcall(function()
+            return animator:LoadAnimation(newAnimInstance)
+        end)
+        
+        if success and newTrack then
+            newTrack:Play(0, snapshot.weight, snapshot.speed)
+            newTrack.TimePosition = snapshot.timePosition
+            print("Successfully restored track ID:", snapshot.animationId, "at time:", snapshot.timePosition)
+        else
+            print("Failed to restore snapshot for ID:", snapshot.animationId)
+        end
+    end
 end
+local function HyprKnockback(Char)
+    if not Char then return end
+    
+    local HRP: BasePart = Char:FindFirstChild("HumanoidRootPart")
+    local hum = Char:FindFirstChildOfClass("Humanoid")
+    if not HRP or not hum then return end
 
+    -- Since this runs on the client, explicitly clear AutoRotate to kill Shift Lock
+    hum.AutoRotate = false
 
+    local att = HRP:FindFirstChild("HyprAtt") or Instance.new("Attachment")
+    att.Name = "HyprAtt"
+    att.Parent = HRP
+
+    local backwardDirection = -HRP.CFrame.LookVector
+
+    -- 1. Restored Impulse Force
+    local popUpwardForce = 22.6
+    local popBackwardForce = 36.1
+    local impulseVector = (backwardDirection * popBackwardForce) + Vector3.new(0, popUpwardForce, 0)
+    HRP:ApplyImpulse(impulseVector * HRP:GetMass())
+
+    -- 2. Restored LinearVelocity Constraint
+    local slideSpeed = 56.7
+    local lv = Instance.new("LinearVelocity")
+    lv.Name = "HyprForce"
+    lv.Attachment0 = att
+    lv.MaxForce = math.huge
+    lv.VectorVelocity = backwardDirection * slideSpeed
+    lv.Parent = HRP
+
+    -- Clean up physics objects locally
+    game:GetService("Debris"):AddItem(lv, 0.25)
+    game:GetService("Debris"):AddItem(att, 0.25)
+
+    -- Restore AutoRotate right after the knockback objects are destroyed
+    task.delay(0.25, function()
+        if hum and hum.Parent then
+            hum.AutoRotate = true
+        end
+    end)
+end
 
 function module.HyprParrying(char, eChar, hitpos, npc)
 	if not char or not eChar then
@@ -97,14 +177,14 @@ function module.HyprParrying(char, eChar, hitpos, npc)
 		return
 	end
 
-	local currentWeapon = char:GetAttribute("CurrentWeapon")
+	
 	local EcurrentWeapon = char:GetAttribute("CurrentWeapon")
 
 	local hum : Humanoid = char.Humanoid
-	local Ehum : Humanoid = char.Humanoid
+	local Ehum : Humanoid = eChar.Humanoid
 	
-
-	local identifer = players:GetPlayerFromCharacter(eChar) or npc
+    local plr = players:GetPlayerFromCharacter(eChar)
+	local identifer =  plr or npc
 	local Result = "Hitlanded"
 	SuccssfulHypr[identifer] = true
 
@@ -116,24 +196,44 @@ function module.HyprParrying(char, eChar, hitpos, npc)
 	
 	local HyprSound = WeaponSounds[EcurrentWeapon].Blocking.HyprParrySFX
 
-	local Defenderhitstop =
-		eChar.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[EcurrentWeapon].Blocking.HyprParryLanded) --- Its a a one frame animation for hitstop
-	local AttackerHitstop -- wait i need created something i need to find out to check what kind of attack is being hypr-parried  so i can grab the approte hitdtop frame
+	local Defenderhitstop = eChar.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[EcurrentWeapon].Blocking.HyprParryLanded) --- Its a a one frame animation for hitstop
+	
 
 	VFX_Event:FireAllClients("HyprParry", char, eChar)
 
+	local tag = Instance.new("ObjectValue",eChar)
+	tag.Name = "RevengeTarget"
+	tag.Value = char
+	
+
+
+
 	Defenderhitstop:Play()
-	--AttackerHitstop:Play()
+	FreezeAnims(hum, 0.2)  -- freeze the currently playing animation although some "weighty" attacks it might not stop though (though is more than the current prototype needs)
 	Ehum.AutoRotate = false
 	hum.AutoRotate = false
+	HRP.Anchored = true
+    EHRP.Anchored = true
+	
 
 
 
+	char:SetAttribute("Iframes",true)
+	char:SetAttribute("Stunned", true)
+	eChar:SetAttribute("Stunned", true)
+	eChar:SetAttribute("Iframes",true)
 
+
+
+ 
 
 	task.wait(0.2) -- change to how long the hitstop is was 0.2
 	Defenderhitstop:Stop()
-	--AttackerHitstop:Stop()
+	char:SetAttribute("Stunned", false)
+	eChar:SetAttribute("Stunned", false)
+	char:SetAttribute("Iframes",false)
+	HRP.Anchored = false
+    EHRP.Anchored = false
 
 
 
@@ -142,7 +242,7 @@ function module.HyprParrying(char, eChar, hitpos, npc)
 		local breakDamage = 50 -- Adjust based on weapon data
 		local newbreak = math.max(0, currentBreak - breakDamage)
 
-		char:GetAtrribute("BreakMeter", newbreak)
+		char:SetAttribute("BreakMeter", newbreak)
 
 		if newbreak <= 0 then
 			-- trigger the Weapon Breaking Logic Here
@@ -150,24 +250,35 @@ function module.HyprParrying(char, eChar, hitpos, npc)
 	end
 
 	local recover = eChar.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[EcurrentWeapon].Blocking.Hypr_Recover)
-	HyprKnockback(eChar)
+	if not plr then
+		HyprKnockback(eChar)
+	else
+       MovementEvent:FireClient(plr,"HyprParry",eChar)
+	end
+	
 --	local stagger = char.Humanoid.Animator:LoadAnimation(WeaponAnimsFolder[EcurrentWeapon].Blocking.HyprParryStagger)
 	recover:Play()
+	local targetPlr = players:GetPlayerFromCharacter(eChar) or npc
+    Combat_Data.ActiveRecoveryTracks[targetPlr] = recover
 	--stagger:Play()
 	eChar:SetAttribute("CanRevenge", true)
 	SoundsModule.PlaySound(HyprSound,EHRP)
 
-	task.delay(0.6, function()
+	task.delay(1.2, function()
 		if eChar and eChar.Parent then
-			eChar:SetAttribute("CanRevenge", nil)
+			char:SetAttribute("CanRevenge", false)
+			eChar:SetAttribute("Iframes",false)
+			print("help me")
+			ResetMobility(eChar)
+			ResetMobility(char)
 			Ehum.AutoRotate = true
 			hum.AutoRotate = true
+			tag:Destroy()
 		end
 	end)
-	-- Stun = hitstop + the actual stun
-	-- Stun = 0.2 + 1.5 = 1.7
 
-	StunHandler.Stun(char.Humanoid, 1.7, 2, 0)
+
+	StunHandler.Stun(char.Humanoid, 1.5, 2, 0)
 
 	Result = "Hypr-Parried"
 

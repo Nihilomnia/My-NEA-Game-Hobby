@@ -24,7 +24,7 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 	if action == "SwingEffect" then
 		local effect, char =...
 
-		CombatEffectsModule.triggerEffects(effect,char)
+		--CombatEffectsModule.triggerEffects(effect,char)
 	end
 
 	if action == "DestroyVFX" then
@@ -47,6 +47,12 @@ Events.VFX.OnClientEvent:Connect(function(action,...)
 	if action  ==  "HighlightBlink" then
 		local target, fillcolor, duration, blinkSpeed = ...
 		CombatEffectsModule.HighlightBlink(target, fillcolor, duration, blinkSpeed)
+	end
+
+	if action == "HyprIndicator" then
+		local cframe = ...
+		local effect = RS.Effects.Combat.HyprIndicator
+		CombatEffectsModule.EmitEffect(effect, cframe)
 	end
 
 	

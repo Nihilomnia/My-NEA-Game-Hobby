@@ -101,7 +101,7 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 		local RagdollTime= WeaponStats.RagdollTime
 		local stunTime =WeaponStats.StunTime
 
-		local stop, result = HelpfulModule.CheckForStatus(eChar,char,Enpc,BaseDmg,Hit.CFrame,true,true)
+		local stop, result = HelpfulModule.CheckForStatus(eChar,char,Enpc,BaseDmg,Hit.CFrame,true,true,true,true)
 		print(result,"helpful result")
 		if stop then return result end
 		

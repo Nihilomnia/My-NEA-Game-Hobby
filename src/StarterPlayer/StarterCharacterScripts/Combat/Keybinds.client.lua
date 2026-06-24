@@ -187,17 +187,17 @@ end)
 
 
 
-
-uis.InputBegan:Connect(function(key,istyping)
-	if istyping or debounce then return end
-	if char:GetAttribute("IsTransforming") then return end
+uis.InputBegan:Connect(function(key, istyping)
+	if istyping or debounce then
+		return
+	end
+	if char:GetAttribute("IsTransforming") then
+		return
+	end
 	
 	if key.KeyCode == Enum.KeyCode.F then
-		if char:GetAttribute("Parrying") or char:GetAttribute("HyprParry") then
-			startBlocking()
-		else
-			blockingEvent:FireServer("Parry")
-		end
+		blockingEvent:FireServer("Parry")
+		startBlocking()
 	end
 end)
 

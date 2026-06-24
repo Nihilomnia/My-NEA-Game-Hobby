@@ -47,9 +47,10 @@ function ParryModule.ParryAttempt(char, npc)
 	ParryAnims[Identifer] = hum:LoadAnimation(WeaponAnimsFolder[currentWeapon].Blocking.TryParry)
 	ParryAnims[Identifer]:Play()
 	
-	if not ParryCD.Hypr[Identifer] or tick() - ParryCD.Hypr[Identifer] >  1.7 then  -- Reversing the if statment to see if that works 
+	if not ParryCD.Hypr[Identifer] or tick() - ParryCD.Hypr[Identifer] >  2 then  -- Reversing the if statment to see if that works 
 		char:SetAttribute("HyprParry", true)
 		VFX_Event:FireAllClients("HighlightBlink", WeaponModel, Color3.new(0.980392, 0.380392, 0.003922), 0.30, 3, 0.3)		
+		print(char:GetAttribute("HyprParry"))
 	end
 	
 	
@@ -60,6 +61,8 @@ function ParryModule.ParryAttempt(char, npc)
 
 	ParryAnims[Identifer]:GetMarkerReachedSignal("HyprParryOver"):Connect(function()
 		char:SetAttribute("HyprParry", false)
+		print("HYPROVER")
+		print(char:GetAttribute("HyprParry"))
 		ParryCD.Hypr[Identifer] = tick()
 	end)
 

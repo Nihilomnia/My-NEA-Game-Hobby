@@ -5,6 +5,7 @@ local RS = game:GetService("ReplicatedStorage")
 local TS = game:GetService("TweenService")
 local PLayers = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local uis = game:GetService("UserInputService")
 local localplr = PLayers.LocalPlayer
 local cam = workspace.CurrentCamera
 
@@ -14,6 +15,13 @@ local ElementAnims = AnimationsFolder.Element
 
 
 local hiddenElements = {}
+
+local function Shiftoff(char)
+	local hum = char.Humanoid 
+	uis.MouseBehavior = Enum.MouseBehavior.Default
+	localplr.CameraMode = Enum.CameraMode.Classic
+	hum.AutoRotate = false
+end
 
 
 function module.HideUI(char)
@@ -81,93 +89,85 @@ function module.Highlight(char, duration, FillColor, OutlineColor)
 	Debris:AddItem(Highlight, duration)
 end
 
-function module.triggerEffects(parentObject, char, Iswing)
-	local HRP = char:FindFirstChild("HumanoidRootPart")
-	if not HRP then
-		warn("No HRP found!")
-		return
-	end
+function module.triggerEffects(parentObject, char, customOffset)
+    local HRP = char:FindFirstChild("HumanoidRootPart")
+    if not HRP then
+        warn("No HRP found!")
+        return
+    end
 
-	-- Clone the whole effect object
-	local EffectPart = parentObject:Clone()
-	EffectPart.Parent = workspace.VFX
+    local EffectPart = parentObject:Clone()
+    EffectPart.Parent = workspace.VFX
 
-	-- i need to add offset customazsation
+    local offsetCFrame = customOffset or CFrame.new(0, 0, -0.894)
+    EffectPart.CFrame = HRP.CFrame * offsetCFrame * (parentObject.CFrame - parentObject.Position)
 
-	EffectPart.CFrame = HRP.CFrame * CFrame.new(0, 0, -0.894) * (parentObject.CFrame - parentObject.Position)
+    local cleanupTime = 0 
 
-	local cleanupTime = 0 -- track longest effect duration
+    for _, instance in ipairs(EffectPart:GetDescendants()) do
+        if instance:IsA("ParticleEmitter") or instance:IsA("Beam") or instance:IsA("Sound") then
+            task.spawn(function()
+                if not instance.Parent then
+                    return
+                end
 
-	-- Process all child effects
-	for _, instance in ipairs(EffectPart:GetDescendants()) do
-		if instance:IsA("ParticleEmitter") or instance:IsA("Beam") or instance:IsA("Sound") then
-			task.spawn(function()
-				if not instance.Parent then
-					return
-				end
+                local delay = instance:GetAttribute("EmitDelay") or 0
+                local duration = instance:GetAttribute("EmitDuration")
 
-				local delay = instance:GetAttribute("EmitDelay") or 0
-				local duration = instance:GetAttribute("EmitDuration")
+                if delay + (duration or 0) > cleanupTime then
+                    cleanupTime = delay + (duration or 0)
+                end
 
-				-- Track cleanup time
-				if delay + (duration or 0) > cleanupTime then
-					cleanupTime = delay + (duration or 0)
-				end
+                if delay > 0 then
+                    task.wait(delay)
+                end
+                if not instance.Parent then
+                    return
+                end
 
-				if delay > 0 then
-					task.wait(delay)
-				end
-				if not instance.Parent then
-					return
-				end
+                if instance:IsA("Sound") then
+                    instance:Play()
+                    if instance.TimeLength > cleanupTime then
+                        cleanupTime = instance.TimeLength
+                    end
 
-				-- SOUND
-				if instance:IsA("Sound") then
-					instance:Play()
-					if instance.TimeLength > cleanupTime then
-						cleanupTime = instance.TimeLength
-					end
+                elseif instance:IsA("ParticleEmitter") then
+                    local count = instance:GetAttribute("EmitCount")
 
-					-- PARTICLES
-				elseif instance:IsA("ParticleEmitter") then
-					local count = instance:GetAttribute("EmitCount")
+                    if duration and duration > 0 then
+                        instance.Enabled = true
+                        task.wait(duration)
+                        if instance.Parent then
+                            instance.Enabled = false
+                        end
+                    elseif count and count > 0 then
+                        instance:Emit(count)
+                    else
+                        instance:Emit(1)
+                    end
 
-					if duration and duration > 0 then
-						instance.Enabled = true
-						task.wait(duration)
-						if instance.Parent then
-							instance.Enabled = false
-						end
-					elseif count and count > 0 then
-						instance:Emit(count)
-					else
-						instance:Emit(1)
-					end
+                elseif instance:IsA("Beam") then
+                    local beamClone = instance:Clone()
+                    beamClone.Parent = instance.Parent
+                    beamClone.Enabled = true
 
-					-- BEAMS
-				elseif instance:IsA("Beam") then
-					local beamClone = instance:Clone()
-					beamClone.Parent = instance.Parent
-					beamClone.Enabled = true
+                    local beamDuration = duration and duration > 0 and duration or 0.03
+                    task.wait(beamDuration)
 
-					local beamDuration = duration and duration > 0 and duration or 0.03
-					task.wait(beamDuration)
+                    if beamClone then
+                        beamClone:Destroy()
+                    end
+                end
+            end)
+        end
+    end
 
-					if beamClone then
-						beamClone:Destroy()
-					end
-				end
-			end)
-		end
-	end
-
-	-- Destroy effect object after all child effects finish
-	task.delay(cleanupTime + 1, function()
-		if EffectPart then
-			EffectPart:Destroy()
-		end
-	end)
-	return EffectPart
+    task.delay(cleanupTime + 1, function()
+        if EffectPart then
+            EffectPart:Destroy()
+        end
+    end)
+    return EffectPart
 end
 
 function module.AfterImage(char, anim, type)
@@ -351,87 +351,114 @@ function module.HighlightBlink(target, fillcolor, duration, blinkSpeed)
 end
 
 function module.HyprVfx(char, echar, isMainSource)
-	if not char then
-		return
-	end
-	local HRP: BasePart = char:FindFirstChild("HumanoidRootPart")
-	if not HRP then
-		return
-	end
+    if not char then
+        return
+    end
+    local HRP: BasePart = char:FindFirstChild("HumanoidRootPart")
+    if not HRP then
+        return
+    end
 
-	local Middlepart
-	if isMainSource then
-		local VFXpart = RS.Effects.Combat.HyprParryVFX
-		Middlepart = module.triggerEffects(VFXpart, char)
-	end
+    local Middlepart
+    if isMainSource then
+        local VFXpart = RS.Effects.Combat.HyprParryVFX
+        Middlepart = module.triggerEffects(VFXpart, char, CFrame.new(-0.861, -0.1, -1.948))
+    end
 
-	local hl = Instance.new("Highlight")
-	hl.FillTransparency = 1
-	hl.OutlineTransparency = 0.4
-	hl.OutlineColor = Color3.fromRGB(216, 181, 55)
-	hl.Parent = char
+    local hl = Instance.new("Highlight")
+    hl.FillTransparency = 0.9
+    hl.OutlineTransparency = 0.2
+    hl.OutlineColor = Color3.fromRGB(216, 181, 55)
+    hl.OutlineColor = Color3.fromRGB(171, 141, 33)
+    hl.Parent = char
 
-	Debris:AddItem(hl, 0.5)
+    Debris:AddItem(hl, 0.5)
 
-	local middlePosition: Vector3 = HRP.Position
+    Shiftoff(char)
 
-	if Middlepart then
-		local middleAttachment = Middlepart:FindFirstChild("Middle", true)
-		if middleAttachment then
-			middlePosition = middleAttachment.WorldPosition
-			print("The Attachment was used")
-		else
-			middlePosition = Middlepart.Position
-			print("The  Part was used ")
-		end
-	elseif echar and echar:FindFirstChild("HumanoidRootPart") then
-		middlePosition = HRP.Position:Lerp(echar.HumanoidRootPart.Position, 0.5)
-		print("The hrp was used")
-	end
+    local middlePosition: Vector3 = HRP.Position
 
-	local plrflag = PLayers:GetPlayerFromCharacter(char)
+    if Middlepart then
+        local middleAttachment = Middlepart:FindFirstChild("Middle", true)
+        if middleAttachment then
+            middlePosition = middleAttachment.WorldPosition
+        else
+            middlePosition = Middlepart.Position
+        end
+    elseif echar and echar:FindFirstChild("HumanoidRootPart") then
+        middlePosition = HRP.Position:Lerp(echar.HumanoidRootPart.Position, 0.5)
+    end
 
-	if plrflag == localplr then
-		local camoffset = CFrame.new(4, -1.5, 9)
-		local camworldpos = (HRP.CFrame * camoffset).Position
-		local TargetCframe = CFrame.lookAt(camworldpos, middlePosition)
+    local plrflag = PLayers:GetPlayerFromCharacter(char)
 
-		cam.CameraType = Enum.CameraType.Scriptable
-		cam.CFrame = TargetCframe
-		cam.FieldOfView = 60
-		module.HideUI(char)
+    if plrflag == localplr then
+        localplr.CameraMode = Enum.CameraMode.Classic
+        
+        local PlayerScripts = localplr:FindFirstChild("PlayerScripts")
+        local PlayerModule = PlayerScripts and PlayerScripts:FindFirstChild("PlayerModule")
+        if PlayerModule then
+            local CameraModule = require(PlayerModule):GetCameras()
+            if CameraModule and CameraModule.activeMouseLockController then
+                CameraModule.activeMouseLockController:EnableMouseLock(false)
+            end
+        end
 
-		task.wait(0.2)
+        local baseOrientation = HRP.CFrame - HRP.CFrame.Position
+        local camoffset = Vector3.new(6, -1.5, 15) 
+        local camworldpos = HRP.Position + baseOrientation:VectorToWorldSpace(camoffset)
+        local TargetCframe = CFrame.lookAt(camworldpos, middlePosition)
 
-		local trackingConnection
-		local fovInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		local fovTween = TS:Create(cam, fovInfo, { FieldOfView = 75 })
-		
-		trackingConnection = RunService.RenderStepped:Connect(function()
-			if char and char.Parent and echar and echar.Parent then
-				local currentHRP = char.HumanoidRootPart
-				local currentEHRP = echar.HumanoidRootPart
-				
-				local liveMiddle = currentHRP.Position:Lerp(currentEHRP.Position, 0.5)
-				local liveCamWorldPos = (currentHRP.CFrame * camoffset).Position
-				
-				cam.CFrame = CFrame.lookAt(liveCamWorldPos, liveMiddle)
-			else
-				trackingConnection:Disconnect()
-			end
-		end)
+        cam.CameraType = Enum.CameraType.Scriptable
+        cam.CFrame = TargetCframe
+        cam.FieldOfView = 55
+        module.HideUI(char)
 
-		fovTween:Play()
+        task.wait(0.2) 
 
-		fovTween.Completed:Connect(function()
-			if trackingConnection then
-				trackingConnection:Disconnect()
-			end
-			cam.CameraType = Enum.CameraType.Custom
-			module.ShowUI()
-		end)
-	end
+        local trackingConnection
+        local fovInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local fovTween = TS:Create(cam, fovInfo, { FieldOfView = 70 })
+        
+        trackingConnection = RunService.RenderStepped:Connect(function()
+            if char and char.Parent and echar and echar.Parent then
+                local currentHRP = char.HumanoidRootPart
+                local currentEHRP = echar.HumanoidRootPart
+                
+                local liveMiddle = currentHRP.Position:Lerp(currentEHRP.Position, 0.5)
+                local liveCamWorldPos = currentHRP.Position + baseOrientation:VectorToWorldSpace(camoffset)
+                
+                cam.CFrame = CFrame.lookAt(liveCamWorldPos, liveMiddle)
+            else
+                trackingConnection:Disconnect()
+            end
+        end)
+
+        fovTween:Play()
+
+        fovTween.Completed:Connect(function()
+            if trackingConnection then
+                trackingConnection:Disconnect()
+            end
+            cam.CameraType = Enum.CameraType.Custom
+
+            localplr.CameraMode = Enum.CameraMode.Classic
+
+            local PlayerScripts = localplr:FindFirstChild("PlayerScripts")
+            local PlayerModule = PlayerScripts and PlayerScripts:FindFirstChild("PlayerModule")
+            if PlayerModule then
+                local CameraModule = require(PlayerModule):GetCameras()
+                if CameraModule and CameraModule.activeMouseLockController then
+                    CameraModule.activeMouseLockController:EnableMouseLock(true)
+                end
+            end
+
+            char.Humanoid.AutoRotate = true
+            module.ShowUI()
+        end)
+    end
 end
+
+
 module.DestroyEffects = function(char, effect)
 	for i, v in pairs(workspace.VFX:GetChildren()) do
 		if v.Name == effect.Name then

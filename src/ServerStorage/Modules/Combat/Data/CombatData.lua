@@ -15,6 +15,7 @@ CombatData.ActiveStatusEffects = {}
 
 CombatData.SuccessfulParry = {}
 CombatData.SuccessfulHyprParry = {}
+CombatData.ActiveRecoveryTracks = {}
 
 
 CombatData.ActiveNPCs = {} -- Last resort for getting npcs
