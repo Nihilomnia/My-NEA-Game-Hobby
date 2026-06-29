@@ -104,13 +104,14 @@ function module.Normal_Hitbox(char,weapon,eHum,npc,Hit,...)
 		local stop, result = HelpfulModule.CheckForStatus(eChar,char,Enpc,BaseDmg,Hit.CFrame,true,true,true,true)
 		print(result,"helpful result")
 		if stop then return result end
+
 		
 	
         
 
 		local PassiveCheckDmg, isCrit, damageAlreadydealt = PassiveManger.M1LandedPassive(char,eChar,Truedamage,STAT_POINTS)
 			
-			
+		print(PassiveCheckDmg)
 
 		
 		if damageAlreadydealt == false then

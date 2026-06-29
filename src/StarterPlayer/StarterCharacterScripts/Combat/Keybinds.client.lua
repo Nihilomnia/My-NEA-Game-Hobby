@@ -180,7 +180,6 @@ uis.InputBegan:Connect(function(input, gp)
 		if not moveentobj then 
 			moveentobj = Movement.GetMovementObj(plr)
 		end
-		print("dodoging",moveentobj)
 		Dodge.Dodge(moveentobj)
     end
 end)

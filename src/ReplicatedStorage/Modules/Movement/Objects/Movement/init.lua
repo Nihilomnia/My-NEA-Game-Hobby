@@ -5,7 +5,6 @@ local Events = RS.Events
 
 local MovementEvent:RemoteEvent  = Events.Movement
 
-
 local Movement = {}
 Movement.__index = Movement
 
@@ -18,298 +17,303 @@ local BOTTOM_HIDDEN = UDim2.new(-0.034, 0, 1.1, 0)
 local Tilt_TOP_HIDDEN_LEFT = UDim2.new(-1.325, 0, -2, 0)
 local Tilt_BOTTOM_HIDDEN_LEFT = UDim2.new(-1.325, 0, 2, 0)
 
-
 local Utils = require(script.Utils)
 
 local objTable = {} -- This stores the movementobjs
 
 local function Ui_init(movementObJ: Type.MovementObj)
-	local plr = movementObJ.identifer
-	if plr == nil then
-		return
-	end
-	local UItable = movementObJ.UI
-	local MovementUI = plr:WaitForChild("PlayerGui"):WaitForChild("MovementUI")
-	movementObJ.UI.top = MovementUI:WaitForChild("Top")
-	UItable.bottom = MovementUI:WaitForChild("Bottom")
-	UItable.top_tilt = MovementUI:WaitForChild("Top_Tilt")
-	UItable.bottom_tilt = MovementUI:WaitForChild("Bottom_Tilt")
+    local plr = movementObJ.identifer
+    if plr == nil or not plr:IsA("Player") then
+        return
+    end
+    local UItable = movementObJ.UI
+    local PlayerGui = plr:WaitForChild("PlayerGui", 5)
+    if not PlayerGui then return end
+    
+    local MovementUI = PlayerGui:WaitForChild("MovementUI", 5)
+    if not MovementUI then return end
 
-	UItable.top.Position = TOP_HIDDEN
-	UItable.bottom.Position = BOTTOM_HIDDEN
+    movementObJ.UI.top = MovementUI:WaitForChild("Top")
+    UItable.bottom = MovementUI:WaitForChild("Bottom")
+    UItable.top_tilt = MovementUI:WaitForChild("Top_Tilt")
+    UItable.bottom_tilt = MovementUI:WaitForChild("Bottom_Tilt")
 
-	UItable.top_tilt.Position = Tilt_TOP_HIDDEN_LEFT
-	UItable.bottom_tilt.Position = Tilt_BOTTOM_HIDDEN_LEFT
+    UItable.top.Position = TOP_HIDDEN
+    UItable.bottom.Position = BOTTOM_HIDDEN
 
-	UItable.top_tilt.Rotation = 0
-	UItable.bottom_tilt.Rotation = 0
+    UItable.top_tilt.Position = Tilt_TOP_HIDDEN_LEFT
+    UItable.bottom_tilt.Position = Tilt_BOTTOM_HIDDEN_LEFT
+
+    UItable.top_tilt.Rotation = 0
+    UItable.bottom_tilt.Rotation = 0
 end
 
 --[Module Functions]--
-function Movement.new(identifer): Type.MovementObj -- Creates the new movement object for the player/ npc
-	local self = (
-		setmetatable({
-			identifer = nil,
-			char = identifer.Character,
-			IsReady = false,
+function Movement.new(identifer): Type.MovementObj 
+    -- Clean up previous tracks if this identifier already had an object mapped to prevent memory leaks
+    if objTable[identifer] then
+        pcall(function()
+            objTable[identifer]:ClearWalkAnims()
+        end)
+    end
 
-			IsActing = {
-				Dodging = false,
-				WallRunning = false,
-				Climbing = false,
-				IsSprinting = false,
-				IsEXSprinting = false,
-			},
-			States = {
-				IsGrounded = false,
-				IsInAir = false,
-				IsOnWall = false,
-				IsCrouching = false,
-				ISSliding = false,
-				IsResting = false,
-			},
+    local self = (
+        setmetatable({
+            identifer = identifer,
+            char = identifer.Character or (identifer:IsA("Player") and identifer.CharacterAdded:Wait()),
+            IsReady = false,
 
-			InfoTable = { -- Table for storing important info for the movement system (like wallrun dir, climb dir, etc.)
-				Wallrun = {
-					Side = 0, -- Side of the wall (1 is right, -1 is left)
-					Normal = Vector3.new(0, 0, 0), -- Normal of the wall
-					Stop = "",
-				},
+            IsActing = {
+                Dodging = false,
+                WallRunning = false,
+                Climbing = false,
+                IsSprinting = false,
+                IsEXSprinting = false,
+            },
+            States = {
+                IsGrounded = false,
+                IsInAir = false,
+                IsOnWall = false,
+                IsCrouching = false,
+                ISSliding = false,
+                IsResting = false,
+            },
 
-				Dodge = {
-					Dir = "", -- Direction of the dodge (forward, back, left, right and spot)
-					Type = "", -- Type of dodge (standard, airdash,)
-					Speed = 0,
-					Stop = function() end,
-				},
+            InfoTable = { 
+                Wallrun = {
+                    Side = 0, 
+                    Normal = Vector3.new(0, 0, 0), 
+                    Stop = "",
+                },
 
-				Climb = {
-					Stop = function() end,
-				},
+                Dodge = {
+                    Dir = Vector3.zero, 
+                    Type = "", 
+                    Speed = 0,
+                    Stop = function() end,
+                },
 
-				Sprint = {
-					Stop = function() end,
-				},
+                Climb = {
+                    Stop = function() end,
+                },
 
-				EXSprint = {
-					Stop = function() end,
-				},
+                Sprint = {
+                    Stop = function() end,
+					SprintAnim = nil,
+                },
 
-				WallHold = {
-					Type = "", -- Type of wall hold (Ledge, Parallel, etc.)
-					Stop = function() end,
-				},
+                EXSprint = {
+                    Stop = function() end,
+                },
 
-				Crouch = {
-					Stop = function() end,
-				},
+                WallHold = {
+                    Type = "", 
+                    Stop = function() end,
+                },
 
-				Slide = {
-					Stop = function() end,
-				}
-			},
+                Crouch = {
+                    Stop = function() end,
+                },
 
-			WalkCycleAnims = {
-				WalkForward = nil,
-				WalkRight = nil,
-				WalkLeft = nil,
-				WalkBack = nil,
-			},
+                Slide = {
+                    Stop = function() end,
+                }
+            },
 
-			UI = {
-				top = nil,
-				bottom = nil,
-				top_tilt = nil,
-				bottom_tilt = nil,
-			},
-		}, Movement) :: any
-	) :: Type.MovementObj
-	self.identifer = identifer
+            WalkCycleAnims = {
+                WalkForward = nil,
+                WalkRight = nil,
+                WalkLeft = nil,
+                WalkBack = nil,
+            },
 
-	if objTable[identifer] == nil then
-		objTable[identifer] = self
-		print(objTable)
-	end
+            UI = {
+                top = nil,
+                bottom = nil,
+                top_tilt = nil,
+                bottom_tilt = nil,
+            },
+        }, Movement) :: any
+    ) :: Type.MovementObj
 
-	Ui_init(self) -- Set up the Ui for players
+    -- CRITICAL FIX: Always overwrite cache with the fresh lifecycle reference
+    objTable[identifer] = self
 
-	self.IsReady = true
+    local plrflag = game:GetService("Players"):GetPlayerFromCharacter(self.char) 
+    if plrflag then
+        Ui_init(self) 
+    end
 
-	return self
+    self.IsReady = true
+    return self
 end
 
-function Movement.GetMovementObj(Identifer): Type.MovementObj? -- this function lowkey might be useless but oh well :P
-	if objTable[Identifer] ~= nil then
-		return objTable[Identifer]
-	else
-		print("[MovementObjects]: Identifer or the movementObj was nil")
-		print(objTable)
-		print(Identifer)
-		return nil
-	end
+function Movement.GetMovementObj(Identifer): Type.MovementObj? 
+    if objTable[Identifer] ~= nil then
+        return objTable[Identifer]
+    else
+        warn("[MovementObjects]: Identifier or the movementObj was nil")
+        return nil
+    end
 end
 
 function Movement:BarTween(infoTable)
     local plrflag = self.identifer
-	if plrflag:IsA("Player") then plrflag = nil end 
-	if plrflag then return end 
-	
-	local action = infoTable.Action
+    if plrflag:IsA("Player") then plrflag = nil end 
+    if plrflag then return end 
+    
+    local action = infoTable.Action
 
-	if action == "Wallrun" then
-		local side = self.InfoTable.Wallrun.Side
-		Utils.StartWallrunBars(side, self)
-	end
+    if action == "Wallrun" then
+        local side = self.InfoTable.Wallrun.Side
+        Utils.StartWallrunBars(side, self)
+    end
 
-	if action == "Dodge" then
-		local Speed = self.InfoTable.Dodge.Speed
-		Utils.StartDodgeCam(Speed)
-	end
+    if action == "Dodge" then
+        local Speed = self.InfoTable.Dodge.Speed
+        Utils.StartDodgeCam(Speed)
+    end
 end
 
 function Movement:BarTweenStop(infoTable)
  local plrflag = self.identifer
-	if plrflag:IsA("Player") then plrflag = nil end 
-	if plrflag then return end 
-	local action = infoTable.Action
+    if plrflag:IsA("Player") then plrflag = nil end 
+    if plrflag then return end 
+    local action = infoTable.Action
 
-	if action == "Wallrun" then
-		local side = self.InfoTable.Wallrun.Side
-		Utils.StopWallrunBars(side, self, nil)
-	end
+    if action == "Wallrun" then
+        local side = self.InfoTable.Wallrun.Side
+        Utils.StopWallrunBars(side, self, nil)
+    end
 
-	if action == "Dodge" then 
-		Utils.RestDodgeCam()
-	end
+    if action == "Dodge" then 
+        Utils.RestDodgeCam()
+    end
 end
 
 function Movement:UpdateWalkTracks()
-	
-	local AnimationsTable = self.WalkCycleAnims
+    local AnimationsTable = self.WalkCycleAnims
 
-	for i, track in pairs(AnimationsTable) do
-		if track ~= nil then
-			track:Stop(0.1)
-			track:Destroy()
-		end
-	end
+    for i, track in pairs(AnimationsTable) do
+        if track ~= nil then
+            track:Stop(0.1)
+            track:Destroy()
+        end
+    end
 
-	local char = self.char
-	local hum = char.Humanoid
-	local isEquipped = char:GetAttribute("Equipped")
-	local currentWeapon = char:GetAttribute("CurrentWeapon")
-	local IsLow = char:GetAttribute("IsLow")
-	local HasCombatTag = char:GetAttribute("InCombat")
-	local TargetFolder
+    local char = self.char
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    
+    local isEquipped = char:GetAttribute("Equipped")
+    local currentWeapon = char:GetAttribute("CurrentWeapon")
+    local IsLow = char:GetAttribute("IsLow")
+    local HasCombatTag = char:GetAttribute("InCombat")
+    local TargetFolder
 
-	if isEquipped and currentWeapon and not  self.States.IsCrouching  and  AnimationsFolder.Weapons:FindFirstChild(currentWeapon) then
-		if IsLow and HasCombatTag then
-			TargetFolder = AnimationsFolder.Weapons[currentWeapon].IsLow
-		else
-			TargetFolder = AnimationsFolder.Weapons[currentWeapon]
-		end
-	else
-		if IsLow and HasCombatTag then
-			TargetFolder = AnimationsFolder.IsLow
-		else
-			TargetFolder = AnimationsFolder
-		end
-	end
+    if isEquipped and currentWeapon and not self.States.IsCrouching and AnimationsFolder.Weapons:FindFirstChild(currentWeapon) then
+        if IsLow and HasCombatTag then
+            TargetFolder = AnimationsFolder.Weapons[currentWeapon].IsLow
+        else
+            TargetFolder = AnimationsFolder.Weapons[currentWeapon]
+        end
+    else
+        if IsLow and HasCombatTag then
+            TargetFolder = AnimationsFolder.IsLow
+        else
+            TargetFolder = AnimationsFolder
+        end
+    end
 
-	AnimationsTable.WalkForward = hum:LoadAnimation(TargetFolder.WalkForward)
-	AnimationsTable.WalkRight = hum:LoadAnimation(TargetFolder.WalkRight)
-	AnimationsTable.WalkLeft = hum:LoadAnimation(TargetFolder.WalkLeft)
-	AnimationsTable.WalkBack = hum:LoadAnimation(TargetFolder.WalkBack)
+    AnimationsTable.WalkForward = hum:LoadAnimation(TargetFolder.WalkForward)
+    AnimationsTable.WalkRight = hum:LoadAnimation(TargetFolder.WalkRight)
+    AnimationsTable.WalkLeft = hum:LoadAnimation(TargetFolder.WalkLeft)
+    AnimationsTable.WalkBack = hum:LoadAnimation(TargetFolder.WalkBack)
 
-	for i, track in pairs(AnimationsTable) do
-		track:Play(0.1, 0, 0)
-	end
+    for i, track in pairs(AnimationsTable) do
+        if track then track:Play(0.1, 0, 0) end
+    end
 end
 
 function Movement:WalkCycle()
-	local char = self.char
-	local HRP = char.HumanoidRootPart
-	local Hum = char.Humanoid
-	local AnimationsTable = self.WalkCycleAnims
-	if not AnimationsTable.WalkForward then
-		return
-	end
+    local char = self.char
+    local HRP = char:FindFirstChild("HumanoidRootPart")
+    local Hum = char:FindFirstChildOfClass("Humanoid")
+    local AnimationsTable = self.WalkCycleAnims
+    
+    if not HRP or not Hum or not AnimationsTable.WalkForward then
+        return
+    end
 
-	local DirectionOfMovement = HRP.CFrame:VectorToObjectSpace(HRP.AssemblyLinearVelocity)
-	local walkSpeed = Hum.WalkSpeed
+    local DirectionOfMovement = HRP.CFrame:VectorToObjectSpace(HRP.AssemblyLinearVelocity)
+    local walkSpeed = Hum.WalkSpeed
 
-	local Forward = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, -1, -0.001))
-	local Backwards = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, 0.001, 1))
-	local Right = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, 0.001, 1))
-	local Left = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, -1, -0.001))
-	local SpeedUnit = DirectionOfMovement.Magnitude / walkSpeed
+    local Forward = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, -1, -0.001))
+    local Backwards = math.abs(math.clamp(DirectionOfMovement.Z / walkSpeed, 0.001, 1))
+    local Right = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, 0.001, 1))
+    local Left = math.abs(math.clamp(DirectionOfMovement.X / walkSpeed, -1, -0.001))
+    local SpeedUnit = DirectionOfMovement.Magnitude / walkSpeed
 
-	if DirectionOfMovement.Z / walkSpeed < 0.1 then
-		AnimationsTable.WalkForward:AdjustWeight(Forward)
-		AnimationsTable.WalkBack:AdjustWeight(Backwards)
-		AnimationsTable.WalkRight:AdjustWeight(Right)
-		AnimationsTable.WalkLeft:AdjustWeight(Left)
+    if DirectionOfMovement.Z / walkSpeed < 0.1 then
+        AnimationsTable.WalkForward:AdjustWeight(Forward)
+        AnimationsTable.WalkBack:AdjustWeight(Backwards)
+        AnimationsTable.WalkRight:AdjustWeight(Right)
+        AnimationsTable.WalkLeft:AdjustWeight(Left)
 
-		local playbackSpeed = (DirectionOfMovement.Z > 0) and SpeedUnit or -SpeedUnit
-		AnimationsTable.WalkForward:AdjustSpeed(playbackSpeed)
-		AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit)
-		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit)
-		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit)
-	else
-		AnimationsTable.WalkForward:AdjustWeight(Forward)
-		AnimationsTable.WalkBack:AdjustWeight(Backwards)
-		AnimationsTable.WalkRight:AdjustWeight(Left)
-		AnimationsTable.WalkLeft:AdjustWeight(Right)
+        local playbackSpeed = (DirectionOfMovement.Z > 0) and SpeedUnit or -SpeedUnit
+        AnimationsTable.WalkForward:AdjustSpeed(playbackSpeed)
+        AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit)
+        AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit)
+        AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit)
+    else
+        AnimationsTable.WalkForward:AdjustWeight(Forward)
+        AnimationsTable.WalkBack:AdjustWeight(Backwards)
+        AnimationsTable.WalkRight:AdjustWeight(Left)
+        AnimationsTable.WalkLeft:AdjustWeight(Right)
 
-		AnimationsTable.WalkForward:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit * -1)
-		AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit * -1)
-	end
+        AnimationsTable.WalkForward:AdjustSpeed(SpeedUnit * -1)
+        AnimationsTable.WalkBack:AdjustSpeed(SpeedUnit * -1)
+        AnimationsTable.WalkRight:AdjustSpeed(SpeedUnit * -1)
+        AnimationsTable.WalkLeft:AdjustSpeed(SpeedUnit * -1)
+    end
 end
 
 function Movement:ClearWalkAnims()
-	local AnimationsTable = self.WalkCycleAnims
+    local AnimationsTable = self.WalkCycleAnims
 
-	for i, track in pairs(AnimationsTable) do
-		if track ~= nil then
-			track:Stop(0.1)
-			track:Destroy()
-			AnimationsTable[i] = nil
-		end
-	end
+    for i, track in pairs(AnimationsTable) do
+        if track ~= nil then
+            track:Stop(0.1)
+            track:Destroy()
+            AnimationsTable[i] = nil
+        end
+    end
 end
 
 function Movement:ServerRequest(action)
-	if action  == "CrouchStart" then MovementEvent:FireServer(action) end
-	if action == "CrouchEnd" then MovementEvent:FireServer(action) end
-	if action == "Dodge" then MovementEvent:FireServer(action) end
-	
+    if action == "CrouchStart" then MovementEvent:FireServer(action) end
+    if action == "CrouchEnd" then MovementEvent:FireServer(action) end
+    if action == "Dodge" then MovementEvent:FireServer(action) end
+    if action == "DodgeCancel" then MovementEvent:FireServer(action) end 
+	if action == "ExSprintStart" then MovementEvent:FireServer(action) end
+	if action == "ExSprintEnd" then MovementEvent:FireServer(action) end 
 end
 
+function Movement:StateChecker(self:Types.MovementObj, action, Ignore)  
+    local Fail = false
+    if not action then 
+        warn("["..script.Name.."] - You forgot to add the action for a StateChecker") 
+        return true 
+    end
 
+    if action == "Dodge" then 
+        if self.IsActing.Climbing then return true end 
+        if self.IsActing.WallRunning then return true end
+        if self.States.IsResting then return true end 
+        if not Ignore and self.IsActing.Dodging then return true end 
+    end
 
-
-function Movement:StateChecker(self:Types.MovementObj,action,Ignore)  -- Not complte yet
-	local Fail = false
-	if not action then warn("["..script.Name.."] - You forgot to add the action for a StateChecker") Fail = true return Fail end
-
-	if action == "Dodge" then 
-
-		if self.IsActing.Climbing then Fail = true return Fail end 
-		if self.IsActing.WallRunning then Fail = true return Fail end
-		if self.States.IsResting then Fail = true return Fail end 
-		if not Ignore and self.IsActing.Dodging then Fail = true return end 
-	end
-
-
-
-
-	
-
-	return Fail
+    return Fail
 end
-
-
 
 return Movement

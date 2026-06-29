@@ -6,7 +6,7 @@ local SSModules = SS.Modules
 -- Module references
 local ElementInfo = require(SSModules.Dictionaries.ElementInfo)
 local HelpfulModule = require(SSModules.Other.Helpful)
-local Textmod = require(SSModules.text)
+local Textmod = require(RS.Modules.text)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 
 -- Tables

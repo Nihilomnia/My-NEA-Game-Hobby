@@ -142,56 +142,56 @@ function module.ResetMobility(char)
 end
 
 function module.CheckForStatus(
-	eChar,
-	char,
-	npc,
-	blockingDamage,
-	hitPos,
-	CheckForBlocking,
-	CheckForParrying,
-	checkForDodging,
-	checkForHyprParry
+    eChar,
+    char,
+    npc,
+    blockingDamage,
+    hitPos,
+    CheckForBlocking,
+    CheckForParrying,
+    checkForDodging,
+    checkForHyprParry
 )
-	local stop = false
-	local Result = "HitLanded"
+    if eChar.Humanoid.Health <= 0 or eChar:GetAttribute("Iframes") then
+        return true, "HitLanded"
+    end
 
-	if CheckForParrying and not stop then
-		if
-			eChar:GetAttribute("Parrying")
-			or eChar:GetAttribute("HyprParrying") and module.CheckInFront(char, eChar)
-		then
-			Result = BlockingModule.Parrying(char, eChar, hitPos, npc)
-			stop = true
-		end
-	end
+    local stop = false
+    local Result = "HitLanded"
 
-	if CheckForBlocking and not stop then
-		if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char, eChar) then
-			Result = BlockingModule.Blocking(char, eChar, blockingDamage, hitPos)
-			stop = true
-		end
-	end
+    if checkForHyprParry and not stop then
+        if eChar:GetAttribute("HyprParry") and module.CheckInFront(char, eChar) then
+            Result = BlockingModule.HyprParrying(char, eChar, hitPos, npc)
+            stop = true
+        end
+    end
 
-	if checkForDodging and not stop then
-		if eChar:GetAttribute("Dodging") then
-			BlockingModule.Dodging(char, eChar, hitPos)
-			stop = true
-		end
-	end
+    if CheckForParrying and not stop then
+        if eChar:GetAttribute("Parrying") and module.CheckInFront(char, eChar) then
+            Result = BlockingModule.Parrying(char, eChar, hitPos, npc)
+            stop = true
+        end
+    end
 
-	if checkForHyprParry and not stop then
-		if eChar:GetAttribute("HyprParry") then
-			BlockingModule.HyprParrying(char, eChar, hitPos, npc)
-			stop = true
-		end
-	end
+    if CheckForBlocking and not stop then
+        if eChar:GetAttribute("IsBlocking") and module.CheckInFront(char, eChar) then
+            Result = BlockingModule.Blocking(char, eChar, blockingDamage, hitPos)
+            stop = true
+        end
+    end
 
-	if eChar.Humanoid.Health <= 0 or eChar:GetAttribute("Iframes") then
-		stop = true
-	end
+    if checkForDodging and not stop then
+        if eChar:GetAttribute("Dodging") then
+            BlockingModule.Dodging(char, eChar, hitPos)
+            stop = true
+        end
+    end
 
-	return stop, Result
+    return stop, Result
 end
+
+
+
 
 function module.CheckForAttributes(char, attack, swing, stun, ragdoll, equipped, blocking, Dodging, Sprinting)
 	local attacking = char:GetAttribute("Attacking")
@@ -199,7 +199,7 @@ function module.CheckForAttributes(char, attack, swing, stun, ragdoll, equipped,
 	local stunned = char:GetAttribute("Stunned")
 	local isEquipped = char:GetAttribute("Equipped")
 	local isRagdoll = char:GetAttribute("IsRagdoll")
-	local isBlocking = char:GetAttribute("isBlocking")
+	local isBlocking = char:GetAttribute("IsBlocking")
 	local isDodging = char:GetAttribute("Dodging")
 	local isSprinting = char:GetAttribute("Sprinting")
 
@@ -261,58 +261,69 @@ function module.Ragdoll(char, ragdollTime)
 		char:SetAttribute("iframes", false)
 	end)
 end
-
 function module.ManageStamina(char, action)
-	local Stamina = char:GetAttribute("Stamina")
-	local Fail = false
-	local plr = Players:GetPlayerFromCharacter(char)
+    local Stamina = char:GetAttribute("Stamina")
+    local Fail = false
+    local plr = Players:GetPlayerFromCharacter(char)
 
-	if action == "Dodge" then
-		if Stamina >= 20 then
-			Fail = false
-			char:SetAttribute("Stamina", (Stamina - 20))
-			return Fail
-		else
-			Fail = true
-			print(char, "Did not have enough stamina to perform a dodge")
-			return Fail
-		end
-	end
+    if action == "Dodge" then
+        if Stamina >= 20 then
+            Fail = false
+            char:SetAttribute("Stamina", (Stamina - 20))
+            return Fail
+        else
+            Fail = true
+            print(char, "Did not have enough stamina to perform a dodge")
+            return Fail
+        end
+    end
 
-	if action == "Swing" then
-		if Stamina >= 2 then
-			Fail = false
-			char:SetAttribute("Stamina", (Stamina - 2))
-			return Fail
-		else
-			Fail = true
-			if plr then
-				StaminaEvent:FireClient(plr, 10)
-			end
-			return Fail
-		end
-	end
+    if action == "Swing" then
+        if Stamina >= 2 then
+            Fail = false
+            char:SetAttribute("Stamina", (Stamina - 2))
+            return Fail
+        else
+            Fail = true
+            if plr then
+                StaminaEvent:FireClient(plr, 10)
+            end
+            return Fail
+        end
+    end
 
-	if action == "Climb" then
-		if Stamina >= 10 then
-			Fail = false
-			char:SetAttribute("Stamina", (Stamina - 10))
-			return Fail
-		else
-			print(char, "Did not have enough stamina to climb")
-			Fail = true
-			return Fail
-		end
-	end
+    if action == "Climb" then
+        if Stamina >= 10 then
+            Fail = false
+            char:SetAttribute("Stamina", (Stamina - 10))
+            return Fail
+        else
+            print(char, "Did not have enough stamina to climb")
+            Fail = true
+            return Fail
+        end
+    end
 
-	return Fail
+    -- Add ExSprint Tick Cost
+    if action == "ExSprint" then
+        if Stamina >= 5 then -- Change 5 to your preferred drain amount per tick
+            Fail = false
+            char:SetAttribute("Stamina", (Stamina - 5))
+            return Fail
+        else
+            Fail = true
+            return Fail
+        end
+    end
+
+    return Fail
 end
 
 function module.RefundStamina(char, action)
 	local Stamina = char:GetAttribute("Stamina")
-	local Fail = false
 
-	if action == "Dodge" then
+
+	if action == "DodgeCancel" then
 		char:SetAttribute("Stamina", (Stamina + 20))
 	end
 
@@ -320,7 +331,13 @@ function module.RefundStamina(char, action)
 		char:SetAttribute("Stamina", (Stamina + 2))
 	end
 
-	return Fail
+	if action == "ExSprint" then
+		local drain = 5
+		while Stamina >=  drain do
+			char:SetAttribute("Stamina",(Stamina - 5))
+		end
+	end
+
 end
 
 function module.ManageMana(char, Skill)

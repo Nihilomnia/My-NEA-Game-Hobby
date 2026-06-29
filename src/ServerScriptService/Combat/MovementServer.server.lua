@@ -172,7 +172,8 @@ MovementEvent.OnServerEvent:Connect(function(plr, action, ...)
 	end
 
 	if action == "DodgeCancel" then 
-		
+		if Helpful.CheckForAttributes(char, true, true, true, true, false, true, false, false) then plr:Kick("Illgal action: State Stacking done on dodge cancel") end 
+		Helpful.RefundStamina(char, action)
 	end
 
 	if action == "WallRunStart" then
@@ -182,4 +183,31 @@ MovementEvent.OnServerEvent:Connect(function(plr, action, ...)
 	if action == "WallRunEnd" then
 	 -- end stuff
 	end
+
+	if action == "ExSprintStart" then
+        local isOutOfStamina = Helpful.ManageStamina(char, "ExSprint")
+        
+        if isOutOfStamina then
+            char:SetAttribute("IsEXSprinting", false)
+            char:SetAttribute("Sprinting", false)
+            if MovementObj then
+                MovementObj.IsActing.IsEXSprinting = false
+                MovementObj.IsActing.IsSprinting = false
+            end
+        else
+            char:SetAttribute("IsEXSprinting", true)
+            char:SetAttribute("Sprinting", true)
+            if MovementObj then 
+                MovementObj.IsActing.IsEXSprinting = true 
+                MovementObj.IsActing.IsSprinting = true
+            end
+        end
+    end
+
+    if action == "ExSprintEnd" then
+        char:SetAttribute("IsEXSprinting", false)
+        if MovementObj then 
+            MovementObj.IsActing.IsEXSprinting = false 
+        end
+    end
 end)

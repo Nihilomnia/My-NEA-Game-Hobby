@@ -43,6 +43,7 @@ export type MovementObjData = {
 
 			Sprint: {
 				Stop : () -> (),
+				SprintAnim: AnimationTrack
 			},
 
 			EXSprint: {
@@ -72,10 +73,10 @@ export type MovementObjData = {
 		
 
 		WalkCycleAnims: {
-			WalkForward: Animation,
-			WalkRight: Animation,
-			WalkLeft: Animation,
-			WalkBack: Animation,
+			WalkForward: AnimationTrack,
+			WalkRight: AnimationTrack,
+			WalkLeft: AnimationTrack,
+			WalkBack: AnimationTrack,
 		},
 
 		UI: {

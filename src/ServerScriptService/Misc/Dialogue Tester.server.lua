@@ -1,15 +1,29 @@
 local RS= game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
+local Prox:ProximityPrompt = workspace.Tester.STart
 
 local DialogueParams ={
-	Range = 10,
+	Range = 1000000,
 	Position = Vector3.new(0,0,0),
-	Speaker ="Nigga Killer"
+	Speaker ="Tutorial",
+	Font = "MinecraftFont"
 }
 
-task.wait(5)
+local DialogueParams2 ={
+	Range = 1000000,
+	Position = Vector3.new(0,0,0),
+	Speaker ="Tutorial",
+	Font = "ComicSans"
+}
+
+
+task.wait(10)
 print("Yo Bro Dialouge InComing")
-RS:FindFirstChild("DialogueRemote",true):FireAllClients(RS.Dialogues.Dialogue_Configs.TestDialogue,DialogueParams)
+RS:FindFirstChild("DialogueRemote",true):FireAllClients(RS.Dialogues.Dialogue_Configs.Tutorial,DialogueParams)
+
+
+Prox.Triggered:Connect(function()
+RS:FindFirstChild("DialogueRemote",true):FireAllClients(RS.Dialogues.Dialogue_Configs.TestDialogue,DialogueParams2)
+end)
 
 --[[
 This is the gist of everything

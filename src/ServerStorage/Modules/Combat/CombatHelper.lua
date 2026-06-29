@@ -126,17 +126,15 @@ function module.Attack(char, npc)
 		HitBoxes[Identifier].VelocityPrediction = true
 		HitBoxes[Identifier].Visualizer = true
 		HitBoxes[Identifier].Offset = WeaponStats.HitboxOffset
+		HitBoxes[Identifier].DetectionMode = "HitOnce"
 
 		local params = OverlapParams.new()
         params.FilterDescendantsInstances = {char}
         params.FilterType = Enum.RaycastFilterType.Exclude
         HitBoxes[Identifier].OverlapParams = params
 
-		if type(HitBoxes[Identifier].Start) == "function" then
-            HitBoxes[Identifier]:Start()
-        end
+        HitBoxes[Identifier]:Start()
 
-		print(HitBoxes[Identifier])
 
 		HitBoxes[Identifier].Touched:Connect(function(hit, humanoid)
 			local Result = HitServiceModule.Normal_Hitbox(char, currentWeapon, humanoid, npc, hit, HitAnim)
@@ -157,7 +155,7 @@ function module.Attack(char, npc)
 			HitBoxes[Identifier] = nil -- Clear reference so it can't be stopped again
 		end
 		char:SetAttribute("Swing", false)
-		print("stopped hitend")
+	
 
 		if char:GetAttribute("Combo") == MaxCombo then
 			task.wait(swingReset + 0.5)
@@ -166,9 +164,12 @@ function module.Attack(char, npc)
 		end
 
 		char:SetAttribute("Attacking", false)
-
-		hitEndConn:Disconnect()
+		if hitEndConn then
+			hitEndConn:Disconnect()
 		hitEndConn = nil
+		end
+
+		
 		Connections[Identifier].HitEnd = nil
 		FeintFlags[Identifier] = false
 	end)
@@ -223,6 +224,7 @@ function module.RevengeCounter(char: Model, npc)
 	end
 
 	char:SetAttribute("CanRevenge", false)
+	char:SetAttribute("Iframes", true)
 
 	local echar = tag.Value
 	if not echar then
@@ -290,15 +292,30 @@ function module.RevengeCounter(char: Model, npc)
 		local comboValue = char:GetAttribute("Combo") :: number
 		local HitAnim = WeaponsAnimations[currentWeapon].Hit["Hit" .. comboValue]
 
-		-- FIX: Pass HRP directly instead of a temporary attachment to bypass replication lag
-
 		local RevengeHitbox = MuchachoHitbox.CreateHitbox()
 		RevengeHitbox.Size = size
-		RevengeHitbox.CFrame = HRP.CFrame * CFrame.new(0, 0, -3)
+		RevengeHitbox.CFrame = HRP.CFrame
+		RevengeHitbox.Offset = CFrame.new(0,-3,0)
+		local params = OverlapParams.new()
+        params.FilterDescendantsInstances = {char}
+        params.FilterType = Enum.RaycastFilterType.Exclude
+		RevengeHitbox.OverlapParams = params
+
+		RevengeHitbox:Start()
 
 		RevengeHitbox.Touched:Connect(function(hit, humanoid)
 			return HitServiceModule.Normal_Hitbox(char, currentWeapon, humanoid, npc, hit, HitAnim)
 		end)
+
+		task.wait(0.2) -- would replace with a anim event 
+		if RevengeHitbox then
+		pcall(function()
+			RevengeHitbox:Stop()
+		end)
+		RevengeHitbox= nil 
+	end
+
+
 	end
 
 	if not plr then
@@ -339,7 +356,10 @@ function module.RevengeCounter(char: Model, npc)
 
 		task.delay(0.2, function()
 			TriggerRevengeHitbox()
+			char:SetAttribute("Iframes", false)
 		end)
+
+		
 	end
 end
 function module.Blink(char, npc, target)
@@ -364,15 +384,25 @@ function module.Blink(char, npc, target)
 	--SoundsModule.PlaySound(WeaponSounds[currentWeapon].Combat.Blink, HRP) will uncomment when blink sound is added
 	local Size = Vector3.new(5, 5, 5)
 	local BlinkHitbox = MuchachoHitbox.CreateHitbox()
-	BlinkHitbox.WorldCFrame = HRP.CFrame * CFrame.new(0, -2, 0)
+	BlinkHitbox.WorldCFrame = HRP.CFrame 
 	BlinkHitbox.Size = Size
+	BlinkHitbox.Offset =  CFrame.new(0, -2, 0)
+	local params = OverlapParams.new()
+    params.FilterDescendantsInstances = {char}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+	BlinkHitbox:Start()
 
 	BlinkHitbox.Touched:Connect(function(hit, humanoid)
 		HitServiceModule.Blink_Hitbox(char, currentWeapon, humanoid, npc, hit, Hit2nim)
 	end)
 
 	task.delay(0.5, function() -- would replace with anim event when added so its actually possbile to parry it
-		BlinkHitbox:Stop()
+		if BlinkHitbox then
+		pcall(function()
+			BlinkHitbox:Stop()
+		end)
+		BlinkHitbox= nil 
+		end
 	end)
 end
 

@@ -48,12 +48,14 @@ local Dictionaries = SSModules.Dictionaries
 local NPC_Dictionary = require(Dictionaries.NPC_Info)
 local BlockModule = require(SSModules.BlockModule)
 local ParryModule = require(SSModules.Parrying)
-local DodgeModule = require(SSModules.DodgeModule)
+local DodgeModule = require(RS.Modules.Movement.Mechnanics.Dodge)
 local ModeModule = require(SSModules.Combat.Mode_Module)
 local CombatHelper = require(SSModules.Combat.CombatHelper)
 local Combat_Data = require(SSModules.Combat.Data.CombatData)
 local EquipModule = require(SSModules.Combat.EquipModule)
 local HelpfullModule = require(ServerStorage.Modules.Other.Helpful)
+local Movement = require(RS.Modules.Movement.Objects.Movement)
+local MovementTypes = require(RS.Modules.Movement.Objects.Movement.Types)
 
 local Brain_Folder = SS.Brains
 local NPCFolder = game.workspace.NPC
@@ -75,6 +77,8 @@ export type NPC = typeof(setmetatable(
 		talents: {},
 		skills: {},
 		drops: {},
+		MovementObj: MovementTypes.MovementObj
+
 	},
 	npc
 ))
@@ -110,6 +114,7 @@ end
 
 
 function npc.new(NpcName: string, char: Model?): NPC
+	print("➔ npc.new() called! NpcName provided:", tostring(NpcName), "| Type:", type(NpcName))
 	local self = setmetatable({
 		FirstName = "",
 		LastName = "",
@@ -124,11 +129,13 @@ function npc.new(NpcName: string, char: Model?): NPC
 	}, npc) :: NPC
 
 	local NPCinfo = NPC_Dictionary.getStats(NpcName)
-	print(NpcName)
 	print(NPCinfo)
+	print(NPC_Dictionary)
 	self.MobType = NPCinfo.Mobtype
 	self.Difficulty = NPCinfo.Difficulty
 	self.Character = char or CreateModel(NpcName, self.Difficulty, self.MobType)
+
+	self.MovementObj= Movement.new(self)
 
 	if self.FirstName ~= "" and self.LastName ~= "" then
 		self.Character.Name = self.FirstName .. self.LastName
@@ -155,9 +162,14 @@ function npc.new(NpcName: string, char: Model?): NPC
 			self.Character:SetAttribute(i, v)
 		end
 
-		self.Character:SetAttribute("CurrentWeapon", "Fists")
 
-		if self.Type == "Boss" then
+
+		self.Character:SetAttribute("CurrentWeapon", "Fractured_Kunai")  -- defulat is meant to fists for tesing purposes i am using the kunai
+		local Torso = self.Character:FindFirstChild("Torso")
+		HelpfullModule.ChangeWeapon(self, self.Character,Torso)
+		self:EquipWeapon()
+	
+		if self.Difficulty== "Boss" then
 			self.Element = NPCinfo.Element
 			self.Character:SetAttribute("Element", self.Element)
 		elseif self.Type == "Humanoid" then
@@ -166,7 +178,7 @@ function npc.new(NpcName: string, char: Model?): NPC
 			self.Element = NPCinfo.Element
 			self.Character:SetAttribute("Element", self.Element)
 		else
-			-- These are non-humanoids that dont use an element
+			-- These are non-humanoids that dont use an element -- I might be wrong here though since mobs would have their own movesets so might create thier own element class for it
 			self.Element = "None"
 			self.Character:SetAttribute("Element", "None")
 		end
@@ -264,7 +276,9 @@ function npc:Dodge(Direction)
 	if self.Character:GetAttribute("IsTransforming") then
 		return
 	end
-	DodgeModule.Dodge(self.Character, Direction, self)
+
+	DodgeModule.Dodge(self.MovementObj)
+	
 end
 
 function npc:Parry()

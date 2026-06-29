@@ -1,17 +1,16 @@
 local RestingModule = {}
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
-local RunService = game:GetService("RunService")
 local RSModules = RS.Modules
 local SSModules = SS.Modules
 local MovementTypes = require(RSModules.Movement.Objects.Movement.Types)
 local HelpfulModule = require(SSModules.Other.Helpful)
 local WeaponAnimations = RS.Animations.Weapons
 
+local Restcooldowns = {}
+
 
 local function StartResting(MovementObj:MovementTypes.MovementObj)
-    local elapsed = 0
-    local conn = nil
     local char = MovementObj.char
     local currentWeapon = char:GetAttribute("CurrentWeapon")
     local hum = char.Humanoid
@@ -19,6 +18,7 @@ local function StartResting(MovementObj:MovementTypes.MovementObj)
     local restingAnim = hum.Animator:LoadAnimation(WeaponAnimations[currentWeapon].Movement.Resting)
     restingAnim:Play()
     MovementObj.States.IsResting = true
+    MovementObj:ClearWalkAnims()
     
 
 
@@ -27,23 +27,16 @@ local function StartResting(MovementObj:MovementTypes.MovementObj)
         if not MovementObj.States.IsResting then return end 
         restingAnim:Stop()
         HelpfulModule.ResetMobility(char)
+        Restcooldowns[MovementObj] = tick()
+        MovementObj:UpdateWalkTracks()
     end
-
-
-    
-    
-    
-
 end
 
-function RestingModule.Start(MovementObj:MovementTypes.MovementObjData)
-    
+function RestingModule.Start(MovementObj:MovementTypes.MovementObj)
+    if Restcooldowns[MovementObj] and tick() - Restcooldowns[MovementObj] < 0.25 then return end  -- just a debounce not an actual cooldown
+    if MovementObj.States.IsResting then return end 
+    StartResting(MovementObj)
     
 end
-
-
-
-
-
 
 return RestingModule

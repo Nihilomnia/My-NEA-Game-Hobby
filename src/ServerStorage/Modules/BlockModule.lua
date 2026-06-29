@@ -188,6 +188,14 @@ function module.HyprParrying(char, eChar, hitpos, npc)
 	local Result = "Hitlanded"
 	SuccssfulHypr[identifer] = true
 
+	eChar:SetAttribute("HyprParry", false)
+    eChar:SetAttribute("Parrying", false)
+    if ParryAnims[identifer] then
+        pcall(function()
+            ParryAnims[identifer]:Stop()
+        end)
+    end
+
 	local DistOffset = CFrame.new(0, 0, -3.5) -- this is the pffset for how far apart the attack (char) would be from defnder(echar)
 	local rotation = CFrame.Angles(0, math.rad(180), 0) -- same as above but for raotion
 
@@ -278,7 +286,7 @@ function module.HyprParrying(char, eChar, hitpos, npc)
 	end)
 
 
-	StunHandler.Stun(char.Humanoid, 1.5, 2, 0)
+	StunHandler.Stun(char.Humanoid, 0.7, 2, 0)
 
 	Result = "Hypr-Parried"
 

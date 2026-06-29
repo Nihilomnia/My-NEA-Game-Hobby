@@ -243,7 +243,7 @@ function Wallrun.Start(MovementObj: MovementTypes.MovementObj)
    local hit, side = WallChecker(char)
    if not hit then return end
 
-   MovementObj:UpdateWalkTracks()
+   MovementObj:ClearWalkAnims()
 
    StartWallRun(MovementObj, hit,side)
 end

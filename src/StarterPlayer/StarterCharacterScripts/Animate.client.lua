@@ -14,6 +14,7 @@ local Cast = require(RS.Modules.Cast)
 local Movement = require(RS.Modules.Movement.Objects.Movement)
 local Crouch = require(RS.Modules.Movement.Mechnanics.Crouch)
 local Wallrun = require(RS.Modules.Movement.Mechnanics.Wallrun)
+local Sprint = require(RS.Modules.Movement.Mechnanics.Sprinting)
 --[Player Variables]--
 local plr = Players.LocalPlayer
 local char = plr.Character or plr.CharacterAdded:Wait()
@@ -47,14 +48,9 @@ local object = Movement.new(plr)
 
 --[Animation Setup]--
 local WeaponAnimations = RS.Animations.Weapons
-local AnimationsFolder = script.Animations
 local MovementAnimationsFolder = WeaponAnimations[CurrentWeapon].Movement
 
 local WallClimbAnim = Hum.Animator:LoadAnimation(MovementAnimationsFolder.WallClimb)
-
-local SprintAnim = nil
-local SprintTrack = nil
-local conn
 
 --[State]--
 local canClimb = false
@@ -64,18 +60,12 @@ local IsHoldingLedge = false
 local LedgeGrabCoolDown = false
 
 
-local debounce = false
 
 local LastKeyPressTime = 0
 local doubleTapThreshold = 0.3
 local velocityDecay = 0.3
 local MaxClimbheight = 40
 
-local AirBorneStates = {
-	[Enum.HumanoidStateType.Jumping] = true,
-	[Enum.HumanoidStateType.Freefall] = true,
-	[Enum.HumanoidStateType.FallingDown] = true,
-}
 
 -- Offscreen positions (top slides up, bottom slides down)
 local TOP_HIDDEN = UDim2.new(-0.001, 0, -0.4, 0)
@@ -185,148 +175,56 @@ end
 -------------------------------------------------
 -- SPRINT SYSTEM
 -------------------------------------------------
+
+
 local baseSpeed = StarterPlayer.CharacterWalkSpeed
 
-local function canSprint()
-	return not (
-		char:GetAttribute("Stunned")
-		or char:GetAttribute("IsRagdoll")
-		or char:GetAttribute("IsBlocking")
-		or char:GetAttribute("Attacking")
-		or char:GetAttribute("IsCrouching")
-		or object.IsActing.Climbing
-		or object.IsActing.WallRunning
-		or object.States.IsCrouching
-	)
-end
 
-local function ResetSpeedCheck()
-	return not (
-		char:GetAttribute("Stunned")
-		and not char:GetAttribute("IsBlocking")
-		and not char:GetAttribute("Attacking")
-		and not char:GetAttribute("IsCrouching")
-		and not object.IsActing.Climbing
-		and not object.IsActing.WallRunning
 
-	)
-end
 
-local function selectSprintAnim()
-	if SprintAnim then
-		SprintAnim:Stop()
-	end
 
-	if char:GetAttribute("Equipped") == true then
-		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-			SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].IsLow.Sprint
-		else
-			SprintTrack = AnimationsFolder.Weapons[char:GetAttribute("CurrentWeapon")].Sprint
-		end
-	elseif char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-		SprintTrack = AnimationsFolder.IsLow.Sprint
-	else
-		SprintTrack = AnimationsFolder.Sprint
-	end
-
-	if char:GetAttribute("Sprinting") then
-		SprintAnim = Hum.Animator:LoadAnimation(SprintTrack)
-		SprintAnim:Play(0.25)
-	end
-end
-
-local function toggleSprintState()
-	if object.IsActing.IsSprinting and not debounce  then
-		debounce = true
-
-		if ResetSpeedCheck() then
-			Hum.WalkSpeed = baseSpeed
-		end
-
-		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 })
-			:Play()
-		object.IsActing.IsSprinting = false
-
-		if SprintAnim then
-			SprintAnim:Stop()
-		end
-		if conn then
-			conn:Disconnect()
-		end
-
-		object:UpdateWalkTracks()
-		char:SetAttribute("Sprinting", false)
-		task.wait(0.1)
-		debounce = false
-	elseif not object.IsActing.IsSprinting and not debounce then
-		char:SetAttribute("Sprinting", true)
-
-		if char:GetAttribute("InCombat") and char:GetAttribute("IsLow") then
-			Hum.WalkSpeed = baseSpeed * 1.25
-		else
-			Hum.WalkSpeed = baseSpeed * 2
-		end
-
-		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 80 })
-			:Play()
-		object.IsActing.IsSprinting = true
-
-		selectSprintAnim()
-
-		conn = RunService.Heartbeat:Connect(function()
-			if AirBorneStates[Hum:GetState()] then
-				SprintAnim:AdjustSpeed(0.25)
-			else
-				SprintAnim:AdjustSpeed(1)
-			end
-		end)
-
-		object:ClearWalkAnims()
-	end
-end
-
-local function OnCharStateChanged()
-	if not canSprint() or HRP.Anchored then
-		if object.IsActing.IsSprinting then
-			toggleSprintState()
-		end
-	end
-end
 
 MovementEvent.OnClientEvent:Connect(function(action)
-	if action == "AstralDodge" then
-		local PastState = false
-		if object.IsActing.IsSprinting then
-			PastState = true
-			toggleSprintState()
-		end
+    if action == "AstralDodge" then
+        local WasSprinting = object.IsActing.IsSprinting
+        local WasExSprinting = object.IsActing.IsEXSprinting
 
-		local dodgeSpeed = baseSpeed * 5
-		Hum.WalkSpeed = dodgeSpeed
-		TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 160 })
-			:Play()
+        if WasSprinting or WasExSprinting then
+            Sprint.NormalToggle(object)
+        end
 
-		task.delay(5, function()
-			if not object.IsActing.IsSprinting then
-				Hum.WalkSpeed = baseSpeed
-				TS:Create(
-					cam,
-					TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-					{ FieldOfView = 70 }
-				):Play()
+        local dodgeSpeed = baseSpeed * 5
+        Hum.WalkSpeed = dodgeSpeed
+        TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 160 }):Play()
 
-				if PastState == true then
-					toggleSprintState()
-				end
-			end
-		end)
-	end
+        task.delay(5, function()
+            if not object.IsActing.IsSprinting and not object.IsActing.IsEXSprinting then
+                Hum.WalkSpeed = baseSpeed
+                TS:Create(cam, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { FieldOfView = 70 }):Play()
+
+                if WasSprinting then
+                    Sprint.NormalToggle(object)
+                    if WasExSprinting then
+                        Sprint.ExToggle(object)
+                    end
+                end
+            end
+        end)
+    end
 end)
 
-char:GetAttributeChangedSignal("Equipped"):Connect(selectSprintAnim)
-char:GetAttributeChangedSignal("Attacking"):Connect(OnCharStateChanged)
-char:GetAttributeChangedSignal("Stunned"):Connect(OnCharStateChanged)
-char:GetAttributeChangedSignal("IsBlocking"):Connect(OnCharStateChanged)
+
+char:GetAttributeChangedSignal("Attacking"):Connect(function()
+    Sprint.OnCharStateChanged(object)
+end)
+
+char:GetAttributeChangedSignal("Stunned"):Connect(function()
+    Sprint.OnCharStateChanged(object)
+end)
+
+char:GetAttributeChangedSignal("IsBlocking"):Connect(function()
+    Sprint.OnCharStateChanged(object)
+end)
 
 -------------------------------------------------
 -- RENDER STEPPED — Walk weights
@@ -386,89 +284,85 @@ end
 -- INPUT
 -------------------------------------------------
 UIS.InputBegan:Connect(function(input, isTyping)
-	if isTyping then
-		return
-	end
-	local key = input.KeyCode
+    if isTyping then
+        return
+    end
+    local key = input.KeyCode
 
-	if key == Enum.KeyCode.W then
-		heldKeys.W = true
+    if key == Enum.KeyCode.W then
+        heldKeys.W = true
 
-		if canSprint() then
-			local currentTime = tick()
-			if currentTime - LastKeyPressTime <= doubleTapThreshold then
-				toggleSprintState()
-			end
-			LastKeyPressTime = currentTime
-		end
-	elseif key == Enum.KeyCode.S then
-		if IsHoldingLedge then
-			IsHoldingLedge = false
-			char:SetAttribute("LedgeHold", false)
-			MovementEvent:FireServer("ReleaseLedge", false)
-			TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 70 })
-				:Play()
-			return
-		end
-	end
+        if Sprint.CanSprint(object) then
+            local currentTime = tick()
+            if currentTime - LastKeyPressTime <= doubleTapThreshold then
+                Sprint.NormalToggle(object)
+            end
+            LastKeyPressTime = currentTime
+        end
+    elseif key == Enum.KeyCode.LeftAlt then
+        Sprint.ExToggle(object)
+    elseif key == Enum.KeyCode.S then
+        if IsHoldingLedge then
+            IsHoldingLedge = false
+            char:SetAttribute("LedgeHold", false)
+            MovementEvent:FireServer("ReleaseLedge", false)
+            TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
+            return
+        end
+    end
 
-	if key == Enum.KeyCode.Space then
-		if IsHoldingLedge then
-			IsHoldingLedge = false
-			char:SetAttribute("LedgeHold", true)
-			MovementEvent:FireServer("ReleaseLedge", true)
-			TS:Create(cam, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = 95 })
-				:Play()
+    if key == Enum.KeyCode.Space then
+        if IsHoldingLedge then
+            IsHoldingLedge = false
+            char:SetAttribute("LedgeHold", true)
+            MovementEvent:FireServer("ReleaseLedge", true)
+            TS:Create(cam, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = 95 }):Play()
 
-			if top.Position ~= TOP_HIDDEN then
-				slideOutBars()
-			end
-			task.delay(0.15, function()
-				TS
-					:Create(
-						cam,
-						TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-						{ FieldOfView = 70 }
-					)
-					:Play()
-			end)
-			return
-		end
+            if top.Position ~= TOP_HIDDEN then
+                slideOutBars()
+            end
+            task.delay(0.15, function()
+                TS:Create(cam, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { FieldOfView = 70 }):Play()
+            end)
+            return
+        end
 
-		FindFowardwall(char)
+        FindFowardwall(char)
 
-		if object.States.IsInAir and heldKeys.W and canClimb and not object.IsActing.Climbing then
-			if object.IsActing.IsSprinting then
-				toggleSprintState()
-				task.wait(0.15)
-			end
-			triggerWallClimb()
-		end
+        if object.States.IsInAir and heldKeys.W and canClimb and not object.IsActing.Climbing then
+            if object.IsActing.IsSprinting or object.IsActing.IsEXSprinting then
+                Sprint.NormalToggle(object)
+                task.wait(0.15)
+            end
+            triggerWallClimb()
+        end
 
-		if object.IsActing.WallRunning then
-			Wallrun.Jump(object)
-		
-		end
-		
-		
-	end
+        if object.IsActing.WallRunning then
+            Wallrun.Jump(object)
+        end
+    end
 
-	if key == Enum.KeyCode.LeftControl then
-		Crouch.Start(object)
-	end
+    if key == Enum.KeyCode.LeftControl then
+        Crouch.Start(object)
+    end
 end)
-UIS.InputEnded:Connect(function(input, isTyping)
-	if isTyping then
-		return
-	end
-	local key = input.KeyCode
 
-	if key == Enum.KeyCode.W then
-		heldKeys.W = nil
-		if object.IsActing.IsSprinting then
-			toggleSprintState()
-		end
-	end
+UIS.InputEnded:Connect(function(input, isTyping)
+    if isTyping then
+        return
+    end
+    local key = input.KeyCode
+
+    if key == Enum.KeyCode.W then
+        heldKeys.W = nil
+        if object.IsActing.IsSprinting or object.IsActing.IsEXSprinting then
+            Sprint.NormalToggle(object)
+        end
+    elseif key == Enum.KeyCode.LeftAlt then
+        if object.IsActing.IsEXSprinting then
+            Sprint.ExToggle(object)
+        end
+    end
 end)
 
 -------------------------------------------------

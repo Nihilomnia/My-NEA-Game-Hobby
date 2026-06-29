@@ -5,7 +5,7 @@ local RSModules = RS.Modules
 
 
 
-local ClientMovementCoolDowns = {}
+
 
 
 
@@ -32,7 +32,7 @@ function module.CheckForAttributes(char, attack, swing, stun, ragdoll, equipped,
 	local stunned = char:GetAttribute("Stunned")
 	local isEquipped = char:GetAttribute("Equipped")
 	local isRagdoll = char:GetAttribute("IsRagdoll")
-	local isBlocking = char:GetAttribute("isBlocking")
+	local isBlocking = char:GetAttribute("IsBlocking")
 	local isDodging = char:GetAttribute("Dodging")
 	local isSprinting = char:GetAttribute("Sprinting")
 
@@ -69,6 +69,18 @@ function module.CheckStamina(char, action)
 	local Stamina = char:GetAttribute("Stamina")
 	local Fail = false
 
+	if action == "ExSprint" then
+        local drain = 5
+        if Stamina >= drain then
+            return false -- Did not fail, they can sprint!
+        else
+            return true -- Failed, stop the sprint
+        end
+    end
+
+
+
+
 	if action == "Dodge" then
 		if Stamina >= 20 then
 			Fail = false
@@ -89,6 +101,7 @@ function module.CheckStamina(char, action)
 			return Fail
 		end
 	end
+	
 
 	if action == "Climb" then
 		if Stamina >= 10 then
