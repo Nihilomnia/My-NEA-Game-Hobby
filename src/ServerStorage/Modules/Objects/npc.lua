@@ -308,6 +308,7 @@ end
 
 function npc:WallRun()
 	-- My wrap round to use the already made wall run module but i dont want to require it each time so i put it here
+	print("the npc wall ran")
 end
 
 return npc
